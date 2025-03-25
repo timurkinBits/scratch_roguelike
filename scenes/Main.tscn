@@ -1,0 +1,192 @@
+[gd_scene load_steps=16 format=3 uid="uid://x83t6t456pdf"]
+
+[ext_resource type="PackedScene" uid="uid://pllgtdsxxw2s" path="res://scenes/table.tscn" id="1_2gx6p"]
+[ext_resource type="Script" uid="uid://bs0f6ystj1uo2" path="res://scripts/table.gd" id="2_wk856"]
+[ext_resource type="PackedScene" uid="uid://bti8fmdpm8cgl" path="res://scenes/block.tscn" id="3_jfkan"]
+[ext_resource type="PackedScene" uid="uid://ds71pq7djg3au" path="res://scenes/room.tscn" id="4_r2l36"]
+[ext_resource type="Script" uid="uid://df21f7ju361lo" path="res://scripts/command_executor.gd" id="5_a1joa"]
+[ext_resource type="PackedScene" uid="uid://dfndr3lvfsah5" path="res://scenes/player.tscn" id="5_k4xvw"]
+[ext_resource type="PackedScene" uid="uid://befuuhuf4myhq" path="res://scenes/command_menu.tscn" id="5_wp0k4"]
+[ext_resource type="PackedScene" uid="uid://b405a6pxtd1vg" path="res://scenes/Enemy.tscn" id="8_uc31q"]
+[ext_resource type="PackedScene" uid="uid://kolp0x0ucfeh" path="res://scenes/defense_bar.tscn" id="9_lhr70"]
+[ext_resource type="Script" uid="uid://jcjkaqukp4lb" path="res://scripts/ui.gd" id="9_wp0k4"]
+[ext_resource type="PackedScene" uid="uid://b1n1mnvax3cup" path="res://scenes/hp_bar.tscn" id="10_wp0k4"]
+[ext_resource type="LabelSettings" uid="uid://ciom6t00pwwk3" path="res://new_label_settings.tres" id="13_qmy6f"]
+
+[sub_resource type="InputEventKey" id="InputEventKey_u50so"]
+device = -1
+keycode = 32
+unicode = 32
+
+[sub_resource type="Shortcut" id="Shortcut_gdhsm"]
+events = [SubResource("InputEventKey_u50so")]
+
+[sub_resource type="LabelSettings" id="LabelSettings_q8u5g"]
+font_size = 110
+font_color = Color(0, 0, 0, 1)
+
+[node name="Main" type="Node2D"]
+metadata/_edit_horizontal_guides_ = [-43.0]
+
+[node name="Table" parent="." instance=ExtResource("1_2gx6p")]
+position = Vector2(121, 91)
+script = ExtResource("2_wk856")
+
+[node name="Block" parent="Table" instance=ExtResource("3_jfkan")]
+position = Vector2(218, 20)
+scale = Vector2(0.9, 0.9)
+type = 1
+text = "начало хода"
+
+[node name="Block2" parent="Table" instance=ExtResource("3_jfkan")]
+position = Vector2(219, 147)
+scale = Vector2(0.9, 0.9)
+type = 2
+text = "начало хода"
+
+[node name="CommandExecutor" type="Node" parent="Table"]
+script = ExtResource("5_a1joa")
+
+[node name="CommandMenu" parent="Table" instance=ExtResource("5_wp0k4")]
+position = Vector2(-117, 3)
+
+[node name="Room" parent="." instance=ExtResource("4_r2l36")]
+position = Vector2(480, 39)
+scale = Vector2(1.08, 1.08)
+
+[node name="Player" parent="Room" instance=ExtResource("5_k4xvw")]
+position = Vector2(167.593, 454.63)
+scale = Vector2(2.41, 2.41)
+
+[node name="Enemy" parent="Room" instance=ExtResource("8_uc31q")]
+position = Vector2(503.704, 312.037)
+scale = Vector2(1.604, 1.604)
+speed = 3
+damage = 3
+
+[node name="Enemy2" parent="Room" instance=ExtResource("8_uc31q")]
+position = Vector2(262.963, 312.037)
+scale = Vector2(1.604, 1.604)
+speed = 3
+damage = 3
+
+[node name="UI" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 0
+offset_left = 809.0
+offset_top = 591.0
+offset_right = 1125.0
+offset_bottom = 643.0
+script = ExtResource("9_wp0k4")
+metadata/_edit_use_anchors_ = true
+
+[node name="Button" type="Button" parent="UI"]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = -2.17675
+anchor_top = 0.346308
+anchor_right = -0.712419
+anchor_bottom = 1.09646
+offset_left = -0.147949
+offset_top = -0.00799561
+offset_right = 0.124008
+offset_bottom = -0.0160007
+shortcut = SubResource("Shortcut_gdhsm")
+text = "Запуск"
+metadata/_edit_use_anchors_ = true
+
+[node name="GameOver" type="Label" parent="UI"]
+visible = false
+layout_mode = 0
+offset_left = -549.0
+offset_top = -375.0
+offset_right = 107.0
+offset_bottom = -224.0
+text = "Конец игры"
+label_settings = SubResource("LabelSettings_q8u5g")
+
+[node name="defense_bar" parent="UI" instance=ExtResource("9_lhr70")]
+offset_left = -688.0
+offset_top = -591.0
+offset_right = -174.0
+offset_bottom = -544.0
+scale = Vector2(0.9, 1)
+
+[node name="hp_bar" parent="UI" instance=ExtResource("10_wp0k4")]
+offset_left = -688.0
+offset_top = -547.0
+offset_right = -174.0
+offset_bottom = -500.0
+scale = Vector2(0.9, 1)
+
+[node name="WalkRect" type="ColorRect" parent="UI"]
+visible = false
+layout_mode = 0
+offset_left = -794.0
+offset_top = -589.0
+offset_right = -754.0
+offset_bottom = -549.0
+color = Color(0, 0, 1, 1)
+
+[node name="WalkLabel" type="Label" parent="UI/WalkRect"]
+layout_mode = 0
+offset_left = -2.0
+offset_top = -6.0
+offset_right = 38.0
+offset_bottom = 43.0
+label_settings = ExtResource("13_qmy6f")
+horizontal_alignment = 1
+
+[node name="AttackRect" type="ColorRect" parent="UI"]
+visible = false
+layout_mode = 0
+offset_left = -746.0
+offset_top = -589.0
+offset_right = -706.0
+offset_bottom = -549.0
+color = Color(1, 0, 0, 1)
+
+[node name="AttackLabel" type="Label" parent="UI/AttackRect"]
+layout_mode = 0
+offset_left = -2.0
+offset_top = -6.0
+offset_right = 38.0
+offset_bottom = 43.0
+label_settings = ExtResource("13_qmy6f")
+horizontal_alignment = 1
+
+[node name="DefenseRect" type="ColorRect" parent="UI"]
+visible = false
+layout_mode = 0
+offset_left = -746.0
+offset_top = -542.0
+offset_right = -706.0
+offset_bottom = -502.0
+color = Color(0.752941, 0.752941, 0.752941, 1)
+
+[node name="DefenseLabel" type="Label" parent="UI/DefenseRect"]
+layout_mode = 0
+offset_left = -2.0
+offset_top = -6.0
+offset_right = 38.0
+offset_bottom = 43.0
+label_settings = ExtResource("13_qmy6f")
+horizontal_alignment = 1
+
+[node name="HealRect" type="ColorRect" parent="UI"]
+visible = false
+layout_mode = 0
+offset_left = -794.0
+offset_top = -542.0
+offset_right = -754.0
+offset_bottom = -502.0
+color = Color(0, 1, 0, 1)
+
+[node name="HealLabel" type="Label" parent="UI/HealRect"]
+layout_mode = 0
+offset_left = -2.0
+offset_top = -6.0
+offset_right = 38.0
+offset_bottom = 43.0
+label_settings = ExtResource("13_qmy6f")
+horizontal_alignment = 1

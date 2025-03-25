@@ -1,0 +1,98 @@
+[gd_scene load_steps=13 format=3 uid="uid://x83t6t456pdf"]
+
+[ext_resource type="PackedScene" uid="uid://pllgtdsxxw2s" path="res://scenes/table.tscn" id="1_2gx6p"]
+[ext_resource type="Script" uid="uid://bs0f6ystj1uo2" path="res://scripts/table.gd" id="2_wk856"]
+[ext_resource type="PackedScene" uid="uid://bti8fmdpm8cgl" path="res://scenes/block.tscn" id="3_jfkan"]
+[ext_resource type="Script" uid="uid://ccsgyid1ukg78" path="res://scripts/player_hand.gd" id="4_67itr"]
+[ext_resource type="PackedScene" uid="uid://ds71pq7djg3au" path="res://scenes/room.tscn" id="4_r2l36"]
+[ext_resource type="Script" uid="uid://df21f7ju361lo" path="res://scripts/command_executor.gd" id="5_a1joa"]
+[ext_resource type="PackedScene" uid="uid://dfndr3lvfsah5" path="res://scenes/player.tscn" id="5_k4xvw"]
+[ext_resource type="PackedScene" uid="uid://di7g3716u81" path="res://scenes/HPbar.tscn" id="8_qj103"]
+[ext_resource type="PackedScene" uid="uid://b405a6pxtd1vg" path="res://scenes/Enemy.tscn" id="8_uc31q"]
+
+[sub_resource type="InputEventKey" id="InputEventKey_u50so"]
+device = -1
+keycode = 32
+unicode = 32
+
+[sub_resource type="Shortcut" id="Shortcut_gdhsm"]
+events = [SubResource("InputEventKey_u50so")]
+
+[sub_resource type="LabelSettings" id="LabelSettings_q8u5g"]
+font_size = 110
+font_color = Color(0, 0, 0, 1)
+
+[node name="Main" type="Node2D"]
+metadata/_edit_horizontal_guides_ = [-43.0]
+
+[node name="Table" parent="." instance=ExtResource("1_2gx6p")]
+position = Vector2(-620, 29)
+script = ExtResource("2_wk856")
+
+[node name="Block" parent="Table" instance=ExtResource("3_jfkan")]
+position = Vector2(812, 61)
+scale = Vector2(1.1, 1.1)
+type = 1
+text = "начало хода"
+
+[node name="Block2" parent="Table" instance=ExtResource("3_jfkan")]
+position = Vector2(815, 226)
+scale = Vector2(1.1, 1.1)
+type = 2
+text = "начало хода"
+loop_count = 5
+
+[node name="PlayerHand" type="Node" parent="Table"]
+script = ExtResource("4_67itr")
+
+[node name="CommandExecutor" type="Node" parent="Table"]
+script = ExtResource("5_a1joa")
+
+[node name="Room" parent="." instance=ExtResource("4_r2l36")]
+position = Vector2(424, -56)
+
+[node name="Player" parent="Room" instance=ExtResource("5_k4xvw")]
+position = Vector2(331.5, 602)
+scale = Vector2(2.7, 2.7)
+
+[node name="Enemy" parent="Room" instance=ExtResource("8_uc31q")]
+position = Vector2(668.5, 433)
+scale = Vector2(1.98373, 1.98373)
+speed = 3
+damage = 3
+
+[node name="UI" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 0
+offset_left = 809.0
+offset_top = 578.0
+offset_right = 1125.0
+offset_bottom = 630.0
+metadata/_edit_use_anchors_ = true
+
+[node name="Button" type="Button" parent="UI"]
+layout_mode = 0
+offset_left = -272.0
+offset_top = -17.0
+offset_right = 343.0
+offset_bottom = 69.0
+shortcut = SubResource("Shortcut_gdhsm")
+text = "Запуск"
+metadata/_edit_use_anchors_ = true
+
+[node name="HPbar" parent="UI" instance=ExtResource("8_qj103")]
+offset_left = -809.0
+offset_top = -21.0
+offset_right = -272.0
+offset_bottom = 70.0
+metadata/_edit_use_anchors_ = true
+
+[node name="GameOver" type="Label" parent="UI"]
+visible = false
+layout_mode = 0
+offset_left = -549.0
+offset_top = -375.0
+offset_right = 107.0
+offset_bottom = -224.0
+text = "Конец игры"
+label_settings = SubResource("LabelSettings_q8u5g")

@@ -1,0 +1,73 @@
+[gd_scene load_steps=5 format=3 uid="uid://bti8fmdpm8cgl"]
+
+[ext_resource type="Script" uid="uid://cuagnks6lfimo" path="res://scripts/Block.gd" id="1_xy3v5"]
+[ext_resource type="Texture2D" uid="uid://cxl7er26gyo03" path="res://sprites/AbilityIcon.svg" id="2_7jrvm"]
+[ext_resource type="LabelSettings" uid="uid://di7qwojobxj1y" path="res://command/Command.tres" id="2_pghf5"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_omwid"]
+size = Vector2(19.4111, 18.3651)
+
+[node name="Block" type="Node2D"]
+z_index = 1
+script = ExtResource("1_xy3v5")
+
+[node name="Texture" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 0
+mouse_filter = 2
+metadata/_edit_use_anchors_ = true
+
+[node name="TextureUp" type="ColorRect" parent="Texture"]
+layout_mode = 0
+offset_right = 217.0
+offset_bottom = 22.0
+mouse_filter = 2
+metadata/_edit_use_anchors_ = true
+
+[node name="TextureDown" type="ColorRect" parent="Texture"]
+layout_mode = 0
+offset_top = 90.0
+offset_right = 217.0
+offset_bottom = 112.0
+mouse_filter = 2
+metadata/_edit_use_anchors_ = true
+
+[node name="TextureLeft" type="ColorRect" parent="Texture"]
+layout_mode = 0
+offset_right = 20.0
+offset_bottom = 112.0
+mouse_filter = 2
+metadata/_edit_use_anchors_ = true
+
+[node name="Icon" type="Sprite2D" parent="Texture"]
+position = Vector2(11.0683, 11)
+scale = Vector2(0.122142, 0.127158)
+texture = ExtResource("2_7jrvm")
+
+[node name="Area2D" type="Area2D" parent="."]
+collision_layer = 2
+
+[node name="CollisionUp" type="CollisionShape2D" parent="Area2D"]
+position = Vector2(109, 11)
+scale = Vector2(11.16, 1.2)
+shape = SubResource("RectangleShape2D_omwid")
+
+[node name="CollisionDown" type="CollisionShape2D" parent="Area2D"]
+position = Vector2(109, 100.981)
+scale = Vector2(11.16, 1.2)
+shape = SubResource("RectangleShape2D_omwid")
+
+[node name="CollisionLeft" type="CollisionShape2D" parent="Area2D"]
+position = Vector2(10, 56)
+rotation = -3.14159
+scale = Vector2(1.03034, -6.10681)
+shape = SubResource("RectangleShape2D_omwid")
+
+[node name="Label" type="Label" parent="."]
+offset_left = 22.0
+offset_top = -1.0
+offset_right = 217.0
+offset_bottom = 22.0
+label_settings = ExtResource("2_pghf5")
+horizontal_alignment = 1
+metadata/_edit_use_anchors_ = true

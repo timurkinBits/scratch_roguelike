@@ -1,0 +1,89 @@
+[gd_scene load_steps=15 format=3 uid="uid://x83t6t456pdf"]
+
+[ext_resource type="PackedScene" uid="uid://pllgtdsxxw2s" path="res://scenes/table.tscn" id="1_2gx6p"]
+[ext_resource type="Script" path="res://scripts/table.gd" id="2_wk856"]
+[ext_resource type="PackedScene" uid="uid://bti8fmdpm8cgl" path="res://scenes/block.tscn" id="3_jfkan"]
+[ext_resource type="Script" path="res://scripts/player_hand.gd" id="4_67itr"]
+[ext_resource type="PackedScene" uid="uid://ds71pq7djg3au" path="res://scenes/room.tscn" id="4_r2l36"]
+[ext_resource type="Script" path="res://scripts/command_executor.gd" id="5_a1joa"]
+[ext_resource type="PackedScene" uid="uid://dfndr3lvfsah5" path="res://scenes/player.tscn" id="5_k4xvw"]
+[ext_resource type="Script" path="res://scripts/DragManager.gd" id="6_ixr7s"]
+[ext_resource type="Script" path="res://scripts/HandVisuals.gd" id="7_80j87"]
+[ext_resource type="Script" path="res://scripts/player.gd" id="8_a04x0"]
+[ext_resource type="Script" path="res://scripts/CommandEffects.gd" id="8_nhxy2"]
+[ext_resource type="Script" path="res://scripts/Cleanup.gd" id="9_bcv3s"]
+
+[sub_resource type="InputEventKey" id="InputEventKey_u50so"]
+device = -1
+keycode = 32
+unicode = 32
+
+[sub_resource type="Shortcut" id="Shortcut_gdhsm"]
+events = [SubResource("InputEventKey_u50so")]
+
+[node name="Main" type="Node2D"]
+metadata/_edit_horizontal_guides_ = [-43.0]
+
+[node name="Table" parent="." instance=ExtResource("1_2gx6p")]
+script = ExtResource("2_wk856")
+
+[node name="Block4" parent="Table" instance=ExtResource("3_jfkan")]
+position = Vector2(782, 5)
+type = 1
+text = "start turn"
+
+[node name="Block5" parent="Table" instance=ExtResource("3_jfkan")]
+position = Vector2(801, 212)
+type = 2
+text = "start turn"
+
+[node name="PlayerHand" type="Node" parent="Table"]
+script = ExtResource("4_67itr")
+
+[node name="CommandExecutor" type="Node" parent="Table"]
+script = ExtResource("5_a1joa")
+
+[node name="DragManager" type="Node" parent="Table"]
+script = ExtResource("6_ixr7s")
+
+[node name="HandVisuals" type="Node" parent="Table"]
+script = ExtResource("7_80j87")
+
+[node name="CommandEffects" type="Node" parent="Table"]
+script = ExtResource("8_nhxy2")
+
+[node name="CleanUp" type="Node" parent="Table"]
+script = ExtResource("9_bcv3s")
+
+[node name="Room" parent="." instance=ExtResource("4_r2l36")]
+position = Vector2(424, -56)
+
+[node name="Player" parent="Room" instance=ExtResource("5_k4xvw")]
+position = Vector2(194, 532)
+scale = Vector2(2.72, 2.72)
+script = ExtResource("8_a04x0")
+
+[node name="UI" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 0
+offset_left = 809.0
+offset_top = 578.0
+offset_right = 1125.0
+offset_bottom = 630.0
+
+[node name="Button" type="Button" parent="UI"]
+layout_mode = 0
+offset_left = -272.0
+offset_top = -17.0
+offset_right = 343.0
+offset_bottom = 69.0
+shortcut = SubResource("Shortcut_gdhsm")
+text = "Запуск"
+
+[node name="ColorRect" type="ColorRect" parent="UI"]
+layout_mode = 0
+offset_left = -809.0
+offset_top = 23.0
+offset_right = -273.0
+offset_bottom = 70.0
+color = Color(1, 0, 0, 1)
