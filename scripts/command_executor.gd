@@ -29,8 +29,8 @@ func _on_button_pressed() -> void:
 		if block.type == Block.BlockType.CONDITION and block.text == "начало хода":
 			await execute_block(block)
 	for enemy in get_tree().get_nodes_in_group('enemies'):
-		await enemy.take_turn()
-	#await get_tree().create_timer(0.3).timeout
+		if enemy:
+			await enemy.take_turn()
 	await clear_all()
 
 func _on_player_dead() -> void:

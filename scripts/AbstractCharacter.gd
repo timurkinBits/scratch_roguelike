@@ -99,6 +99,8 @@ func play_death_animation() -> void:
 	death_tween.parallel().tween_property(self, "rotation_degrees", 180, 0.5)
 	await death_tween.finished
 	queue_free()
+	remove_from_group('characters')
+	remove_from_group('enemies')
 
 # Получение урона
 func take_damage(damage_amount: int) -> void:
