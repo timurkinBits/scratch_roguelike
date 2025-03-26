@@ -3,9 +3,8 @@ class_name Enemy
 
 var player: Node2D
 
-@export var speed: int = 1
-@export var damage: int = 1
-var stuck_counter: int = 0
+@export var speed: int = 1  # Скорость врага (задается в инспекторе)
+@export var damage: int = 1 # Урон врага
 
 func _ready() -> void:
 	super._ready()
@@ -21,220 +20,129 @@ func take_turn() -> void:
 	if should_skip_action():
 		return
 	
-	var enemy_tile = get_tile_position()
-	var player_tile = player.get_tile_position()
+	var path = find_path_to_player()
 	
-	# Атака, если игрок рядом
-	if calculate_path_length(enemy_tile, player_tile) == 1 and !is_dead:
-		current_direction = get_direction_to_player()
-		await attack_player()
-		return
-	
-	# Движение к игроку
-	var remaining_steps = speed
-	
-	while remaining_steps > 0:
-		enemy_tile = get_tile_position()
-		player_tile = player.get_tile_position()
-		
-		# Проверка, достигнут ли игрок
-		if calculate_path_length(enemy_tile, player_tile) == 1:
-			break
-		
-		# Определяем оптимальное направление движения
-		current_direction = get_optimal_direction(enemy_tile, player_tile)
-		var direction_vector = DIRECTION_VECTORS[current_direction]
-		var next_tile = enemy_tile + direction_vector
-		
-		# Проверяем возможность движения
-		if not can_move_to_tile(next_tile):
-			current_direction = find_path_around_obstacle(enemy_tile, player_tile)
-			if current_direction == "":
-				stuck_counter += 1
-				if stuck_counter >= 3:
-					current_direction = get_random_direction()
-					stuck_counter = 0
+	if path.size() > 1:
+		var steps = min(speed, path.size() - 1)
+		for i in range(steps):
+			var next_tile = path[i + 1]
+			var direction_vector = next_tile - get_tile_position()
+			current_direction = get_direction_from_vector(direction_vector)
+			var target_pos = get_world_position_from_tile(next_tile)
+			await animate_movement(target_pos)
 			
-			direction_vector = DIRECTION_VECTORS[current_direction]
-			next_tile = enemy_tile + direction_vector
-			
-			# Последняя проверка возможности движения
-			if not can_move_to_tile(next_tile):
-				break
-		
-		# Выполняем движение
-		var target_pos = get_world_position_from_tile(next_tile)
-		await animate_movement(target_pos)
-		
-		remaining_steps -= 1
+			# Проверяем, можем ли атаковать игрока после шага
+			var distance_to_player = calculate_path_length(get_tile_position(), player.get_tile_position())
+			if distance_to_player == 1:
+				await attack_player()
+				return
+	else:
+		var distance_to_player = calculate_path_length(get_tile_position(), player.get_tile_position())
+		if distance_to_player == 1:
+			await attack_player()
+
+# Поиск пути к ближайшей клетке рядом с игроком
+func find_path_to_player() -> Array:
+	var start = get_tile_position()
+	var player_pos = player.get_tile_position()
 	
-	# Атака, если добрались до игрока
-	if calculate_path_length(get_tile_position(), player.get_tile_position()) == 1 and !is_dead:
-		current_direction = get_direction_to_player()
-		await attack_player()
+	# Если уже рядом с игроком, остаемся на месте
+	var distance_to_player = calculate_path_length(start, player_pos)
+	if distance_to_player <= 1:
+		return [start]
+	
+	# Находим ближайшую доступную клетку рядом с игроком
+	var goal = get_closest_reachable_tile(player_pos)
+	if goal == start:
+		return [start]
+	
+	var open_set = [start]
+	var came_from = {}
+	var g_score = {start: 0}
+	var f_score = {start: calculate_path_length(start, goal)}
+	
+	while not open_set.is_empty():
+		var current = get_lowest_f_score(open_set, f_score)
+		if current == goal:
+			var path = reconstruct_path(came_from, current)
+			return path
 		
-func get_random_direction() -> String:
-	var directions = ["up", "down", "left", "right"]
-	directions.shuffle()
+		open_set.erase(current)
+		var neighbors = get_neighbors(current)
+		for neighbor in neighbors:
+			var tentative_g_score = g_score[current] + 1
+			if not g_score.has(neighbor) or tentative_g_score < g_score[neighbor]:
+				came_from[neighbor] = current
+				g_score[neighbor] = tentative_g_score
+				f_score[neighbor] = tentative_g_score + calculate_path_length(neighbor, goal)
+				if not neighbor in open_set:
+					open_set.append(neighbor)
+	
+	return [start]
+
+# Нахождение ближайшей доступной клетки рядом с игроком
+func get_closest_reachable_tile(player_pos: Vector2) -> Vector2:
+	var directions = DIRECTION_VECTORS.values()
+	var closest_tile = player_pos
+	var min_distance = INF
+	
 	for dir in directions:
-		if can_move_to_tile(get_tile_position() + DIRECTION_VECTORS[dir]):
-			return dir
-	return ""
+		var candidate = player_pos + dir
+		if can_move_to_tile(candidate):
+			var distance = calculate_path_length(get_tile_position(), candidate)
+			if distance < min_distance:
+				min_distance = distance
+				closest_tile = candidate
 	
-func is_tile_walkable(tile_pos: Vector2) -> bool:
-	# Проверяем, находится ли тайл в пределах карты
-	if not tilemap.get_used_rect().has_point(tile_pos):
-		return false
-	# Проверяем наличие барьеров
-	var barrier_group = get_tree().get_nodes_in_group("barrier")
-	for barrier in barrier_group:
-		if barrier.get_tile_position() == tile_pos:
-			return false
-	# Проверяем наличие других персонажей
-	var all_characters = get_tree().get_nodes_in_group("characters")
-	for character in all_characters:
-		if character != self and is_instance_valid(character):
-			if character.get_tile_position() == tile_pos:
-				return false
-	return true
+	return closest_tile
+
+# Выбор узла с минимальной F-стоимостью
+func get_lowest_f_score(open_set: Array, f_score: Dictionary) -> Vector2:
+	var lowest = open_set[0]
+	for node in open_set:
+		if f_score[node] < f_score[lowest]:
+			lowest = node
+	return lowest
+
+# Получение соседних клеток
+func get_neighbors(tile: Vector2) -> Array:
+	var neighbors = []
+	for dir in DIRECTION_VECTORS.values():
+		var neighbor = tile + dir
+		if can_move_to_tile(neighbor):
+			neighbors.append(neighbor)
+	return neighbors
+
+# Восстановление пути
+func reconstruct_path(came_from: Dictionary, current: Vector2) -> Array:
+	var path = [current]
+	while came_from.has(current):
+		current = came_from[current]
+		path.append(current)
+	path.reverse()
+	return path
+
+# Определение направления по вектору
+func get_direction_from_vector(vector: Vector2) -> String:
+	if vector.x > 0:
+		return "right"
+	elif vector.x < 0:
+		return "left"
+	elif vector.y > 0:
+		return "down"
+	elif vector.y < 0:
+		return "up"
+	return current_direction
 
 # Атака игрока
 func attack_player() -> void:
-	if is_dead:
+	if is_dead or not player or not is_instance_valid(player):
 		return
+	
+	# Определяем направление к игроку
+	current_direction = get_direction_from_vector(player.get_tile_position() - get_tile_position())
+	
+	# Выполняем анимацию атаки
 	await animate_attack()
 	if player and player.has_method("take_damage"):
 		player.take_damage(damage)
-
-# Направление к игроку
-func get_direction_to_player() -> String:
-	if not player:
-		return ""
-	
-	var enemy_tile = get_tile_position()
-	var player_tile = player.get_tile_position()
-	
-	var dx = player_tile.x - enemy_tile.x
-	var dy = player_tile.y - enemy_tile.y
-	
-	if abs(dx) > abs(dy):
-		return "right" if dx > 0 else "left"
-	else:
-		return "down" if dy > 0 else "up"
-
-# Оптимальное направление движения
-func get_optimal_direction(enemy_tile: Vector2, player_tile: Vector2) -> String:
-	var dx = player_tile.x - enemy_tile.x
-	var dy = player_tile.y - enemy_tile.y
-	
-	if abs(dx) >= abs(dy) and dx != 0:
-		return "right" if dx > 0 else "left"
-	elif dy != 0:
-		return "down" if dy > 0 else "up"
-	return "up"
-
-# Альтернативное направление
-func find_alternate_direction(enemy_tile: Vector2, player_tile: Vector2) -> String:
-	var alternate_direction = find_advanced_path(enemy_tile, player_tile)
-	
-	# Если расширенный поиск не нашел путь, используем старую логику
-	if alternate_direction == "":
-		var directions = ["up", "down", "left", "right"]
-		var best_direction = ""
-		var best_distance = INF
-		
-		for dir in directions:
-			var dir_vector = DIRECTION_VECTORS[dir]
-			var next_tile = enemy_tile + dir_vector
-			
-			if can_move_to_tile(next_tile):
-				var new_distance = calculate_path_length(next_tile, player_tile)
-				if new_distance < best_distance:
-					best_distance = new_distance
-					best_direction = dir
-		
-		return best_direction
-	
-	return alternate_direction
-	
-func find_advanced_path(enemy_tile: Vector2, player_tile: Vector2) -> String:
-	var directions = ["up", "down", "left", "right"]
-	var potential_paths = []
-	
-	# Проверяем каждое возможное направление
-	for dir in directions:
-		var initial_dir_vector = DIRECTION_VECTORS[dir]
-		var next_tile = enemy_tile + initial_dir_vector
-		
-		# Если первый шаг возможен
-		if can_move_to_tile(next_tile):
-			# Пробуем сделать второй шаг в сторону
-			var perpendicular_dirs = []
-			match dir:
-				"up", "down":
-					perpendicular_dirs = ["left", "right"]
-				"left", "right":
-					perpendicular_dirs = ["up", "down"]
-			
-			for perp_dir in perpendicular_dirs:
-				var perp_vector = DIRECTION_VECTORS[perp_dir]
-				var path_tile = next_tile + perp_vector
-				
-				# Проверяем, можно ли пройти боковым шагом
-				if can_move_to_tile(path_tile):
-					var path_length = calculate_path_length(path_tile, player_tile)
-					potential_paths.append({
-						"direction": dir,
-						"length": path_length
-					})
-	
-	# Сортируем потенциальные пути по близости к игроку
-	if potential_paths:
-		potential_paths.sort_custom(func(a, b): return a["length"] < b["length"])
-		return potential_paths[0]["direction"]
-	
-	return ""
-	
-func find_path_around_obstacle(enemy_tile: Vector2, player_tile: Vector2) -> String:
-	var directions = ["up", "down", "left", "right"]
-	var best_direction = ""
-	var best_score = -INF
-	
-	# Проверяем все возможные направления
-	for dir in directions:
-		var dir_vector = DIRECTION_VECTORS[dir]
-		var next_tile = enemy_tile + dir_vector
-		
-		# Проверяем, можно ли двигаться в этом направлении
-		if can_move_to_tile(next_tile):
-			var score = 0
-			
-			# Основной критерий: приближение к игроку
-			var distance_to_player = calculate_path_length(next_tile, player_tile)
-			score += 100 - distance_to_player
-			
-			# Штраф за препятствие впереди (через одну клетку)
-			var ahead_tile = next_tile + dir_vector
-			if not can_move_to_tile(ahead_tile):
-				score -= 20  # Уменьшаем приоритет, если впереди тупик
-			
-			# Бонус за возможность двигаться в стороны (обход)
-			var perpendicular_dirs = []
-			match dir:
-				"up", "down":
-					perpendicular_dirs = ["left", "right"]
-				"left", "right":
-					perpendicular_dirs = ["up", "down"]
-			
-			for perp_dir in perpendicular_dirs:
-				var perp_vector = DIRECTION_VECTORS[perp_dir]
-				var side_tile = next_tile + perp_vector
-				if can_move_to_tile(side_tile):
-					score += 10  # Бонус за открытый путь в сторону
-			
-			# Выбираем направление с лучшим score
-			if score > best_score:
-				best_score = score
-				best_direction = dir
-	
-	return best_direction

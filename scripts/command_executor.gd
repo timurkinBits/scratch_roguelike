@@ -3,7 +3,10 @@ extends Node
 @onready var button: Button = $"../../UI/Button"
 @onready var player: Player = $"../../Room/Player"
 @onready var hp_bar: UI = $"../../UI"
-@onready var game_over_label: Label = $"../../UI/GameOver"
+@onready var defeat_label: Label = $"../../UI/DefeatLabel"
+@onready var win_label: Label = $"../../UI/WinLabel"
+@onready var ui_node: UI = $"../../UI/"
+@onready var room: Node2D = $"../../Room"
 
 var is_player_alive: bool = true
 var outline_panels: Array[Node] = []
@@ -20,18 +23,34 @@ func _ready() -> void:
 func _on_button_pressed() -> void:
 	if not is_player_alive or not is_instance_valid(player) or not is_inside_tree():
 		return
-	# Сбрасываем доступные очки перед началом нового хода
-	Global.reset_remaining_points()
-	
+		
+	# Сразу после нажатия
+	button.disabled = true
 	for command in get_tree().get_nodes_in_group("commands"):
 		command.change_settings(false)
+		
+	# Выполнение команд
 	for block in get_tree().get_nodes_in_group("blocks"):
 		if block.type == Block.BlockType.CONDITION and block.text == "начало хода":
 			await execute_block(block)
+			
+	await clear_all()
+	
+	# Ход врага
 	for enemy in get_tree().get_nodes_in_group('enemies'):
 		if enemy:
 			await enemy.take_turn()
-	await clear_all()
+			
+	await get_tree().create_timer(0.2).timeout
+	
+	# После хода врага
+	Global.reset_remaining_points()
+	ui_node.reset_defense()
+	button.disabled = false
+	
+	if !get_tree().get_nodes_in_group('enemies').size():
+		room.visible = false
+		win_label.visible = true
 
 func _on_player_dead() -> void:
 	if not is_player_alive:
@@ -44,6 +63,8 @@ func _on_player_dead() -> void:
 	await clear_all()
 	if button:
 		button.disabled = true
+	room.visible = false
+	defeat_label.visible = true
 
 func execute_block(block: Block) -> void:
 	if not is_instance_valid(block):
