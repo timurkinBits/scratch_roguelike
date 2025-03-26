@@ -1,4 +1,4 @@
-[gd_scene load_steps=17 format=3 uid="uid://x83t6t456pdf"]
+[gd_scene load_steps=18 format=3 uid="uid://x83t6t456pdf"]
 
 [ext_resource type="PackedScene" uid="uid://pllgtdsxxw2s" path="res://scenes/table.tscn" id="1_2gx6p"]
 [ext_resource type="Script" uid="uid://bs0f6ystj1uo2" path="res://scripts/table.gd" id="2_wk856"]
@@ -23,8 +23,10 @@ unicode = 32
 events = [SubResource("InputEventKey_u50so")]
 
 [sub_resource type="LabelSettings" id="LabelSettings_q8u5g"]
-font_size = 110
-font_color = Color(0, 0, 0, 1)
+font_size = 83
+
+[sub_resource type="LabelSettings" id="LabelSettings_qmy6f"]
+font_size = 121
 
 [node name="Main" type="Node2D"]
 metadata/_edit_horizontal_guides_ = [-43.0]
@@ -56,19 +58,25 @@ position = Vector2(480, 39)
 scale = Vector2(1.08, 1.08)
 
 [node name="Player" parent="Room" instance=ExtResource("5_k4xvw")]
-position = Vector2(167.593, 454.63)
+position = Vector2(167.593, 312.037)
 scale = Vector2(2.41, 2.41)
 
 [node name="Enemy" parent="Room" instance=ExtResource("8_uc31q")]
-position = Vector2(503.704, 312.037)
+position = Vector2(457.407, 262.963)
 scale = Vector2(1.604, 1.604)
-speed = 5
+speed = 3
+damage = 2
+
+[node name="Enemy3" parent="Room" instance=ExtResource("8_uc31q")]
+position = Vector2(312.037, 120.37)
+scale = Vector2(1.604, 1.604)
+speed = 3
 damage = 2
 
 [node name="Enemy2" parent="Room" instance=ExtResource("8_uc31q")]
-position = Vector2(262.963, 312.037)
+position = Vector2(551.852, 408.333)
 scale = Vector2(1.604, 1.604)
-speed = 3
+speed = 4
 damage = 3
 
 [node name="Wall" parent="Room" instance=ExtResource("9_qmy6f")]
@@ -80,8 +88,35 @@ position = Vector2(263.889, 262.037)
 [node name="Wall3" parent="Room" instance=ExtResource("9_qmy6f")]
 position = Vector2(312.037, 311.111)
 
+[node name="Wall9" parent="Room" instance=ExtResource("9_qmy6f")]
+position = Vector2(312.037, 360.185)
+
+[node name="Wall10" parent="Room" instance=ExtResource("9_qmy6f")]
+position = Vector2(312.037, 455.556)
+
+[node name="Wall12" parent="Room" instance=ExtResource("9_qmy6f")]
+position = Vector2(408.333, 455.556)
+
+[node name="Wall13" parent="Room" instance=ExtResource("9_qmy6f")]
+position = Vector2(408.333, 407.407)
+
+[node name="Wall15" parent="Room" instance=ExtResource("9_qmy6f")]
+position = Vector2(408.333, 312.963)
+
+[node name="Wall17" parent="Room" instance=ExtResource("9_qmy6f")]
+position = Vector2(408.333, 214.815)
+
+[node name="Wall19" parent="Room" instance=ExtResource("9_qmy6f")]
+position = Vector2(361.111, 168.519)
+
+[node name="Wall20" parent="Room" instance=ExtResource("9_qmy6f")]
+position = Vector2(312.963, 168.519)
+
+[node name="Wall23" parent="Room" instance=ExtResource("9_qmy6f")]
+position = Vector2(167.593, 214.815)
+
 [node name="Wall4" parent="Room" instance=ExtResource("9_qmy6f")]
-position = Vector2(311.111, 408.333)
+position = Vector2(216.667, 359.259)
 
 [node name="Wall5" parent="Room" instance=ExtResource("9_qmy6f")]
 position = Vector2(216.667, 120.37)
@@ -90,10 +125,10 @@ position = Vector2(216.667, 120.37)
 position = Vector2(504.63, 215.741)
 
 [node name="Wall7" parent="Room" instance=ExtResource("9_qmy6f")]
-position = Vector2(456.481, 454.63)
+position = Vector2(215.741, 409.259)
 
 [node name="Wall8" parent="Room" instance=ExtResource("9_qmy6f")]
-position = Vector2(359.259, 167.593)
+position = Vector2(263.889, 455.556)
 
 [node name="UI" type="Control" parent="."]
 layout_mode = 3
@@ -119,16 +154,6 @@ offset_bottom = -0.0160007
 shortcut = SubResource("Shortcut_gdhsm")
 text = "Запуск"
 metadata/_edit_use_anchors_ = true
-
-[node name="GameOver" type="Label" parent="UI"]
-visible = false
-layout_mode = 0
-offset_left = -549.0
-offset_top = -375.0
-offset_right = 107.0
-offset_bottom = -224.0
-text = "Конец игры"
-label_settings = SubResource("LabelSettings_q8u5g")
 
 [node name="defense_bar" parent="UI" instance=ExtResource("9_lhr70")]
 offset_left = -688.0
@@ -211,3 +236,24 @@ offset_right = 39.0
 offset_bottom = 43.0
 label_settings = ExtResource("13_qmy6f")
 horizontal_alignment = 1
+
+[node name="DefeatLabel" type="Label" parent="UI"]
+visible = false
+layout_mode = 0
+offset_left = -214.0
+offset_top = -353.0
+offset_right = 339.0
+offset_bottom = -239.0
+text = "Поражение..."
+label_settings = SubResource("LabelSettings_q8u5g")
+
+[node name="WinLabel" type="Label" parent="UI"]
+visible = false
+z_index = -2
+layout_mode = 0
+offset_left = -175.0
+offset_top = -393.0
+offset_right = 310.0
+offset_bottom = -227.0
+text = "Победа!"
+label_settings = SubResource("LabelSettings_qmy6f")

@@ -81,6 +81,10 @@ func death():
 		return
 	is_dead = true
 	player.dead()
+	
+func reset_defense():
+	current_defense = 0
+	update_health_bar()
 
 func reset_health():
 	if is_instance_valid(health_bar):
