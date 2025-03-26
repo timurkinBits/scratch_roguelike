@@ -52,30 +52,33 @@ func update_appearance() -> void:
 			command.update_buttons_state()
 
 func set_number(new_value):
-	# First release points from current value
+	# Освобождаем очки текущего значения
 	if !is_menu_command and value > 0:
 		Global.release_points(type, value)
 	
-	# Get maximum available points
+	# Получаем максимальное количество доступных очков
 	var max_available = Global.get_remaining_points(type)
 	
-	# For non-menu commands, add back the current value since we just released it
+	# Для не-меню команд добавляем обратно текущее значение, так как мы его только что освободили
 	if !is_menu_command:
 		max_available += value
 		
-	# Strictly clamp the value
+	# Ограничиваем значение
 	var clamped_value = min(new_value, max_available)
 	clamped_value = max(1, clamped_value)
 	
-	# Set the new value and use points
+	# Устанавливаем новое значение и используем очки
 	value = clamped_value
 	if !is_menu_command:
 		Global.use_points(type, value)
+		# Обновляем UI с актуальными оставшимися очками
+		if ui_node and is_instance_valid(ui_node):
+			ui_node.change_scores(type)
 	
-	# Update text
+	# Обновляем текст
 	num_label.text = str(value).substr(0, MAX_LENGTH)
 	
-	# Update button states
+	# Обновляем состояние кнопок
 	if is_settings:
 		for command in get_tree().get_nodes_in_group("commands"):
 			command.update_buttons_state()
@@ -150,10 +153,12 @@ func _exit_tree() -> void:
 		parent_block = slot.block
 		slot.command = null  # Очищаем ссылку на эту команду в слоте
 	
-	# Возвращаем очки в общий пул
+	# Возвращаем очки в общий пул и обновляем UI
 	if !is_menu_command and value > 0:
 		Global.release_points(type, value)
-	
+		if ui_node and is_instance_valid(ui_node):
+			ui_node.change_scores(type)
+		
 	# Обновляем блок после всех изменений
 	if parent_block and is_instance_valid(parent_block):
 		parent_block.call_deferred("update_slots")

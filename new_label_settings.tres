@@ -2,3 +2,4 @@
 
 [resource]
 font_size = 35
+font_color = Color(0, 0, 0, 1)

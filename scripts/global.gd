@@ -4,16 +4,15 @@ signal points_changed
 
 var points: Dictionary = {
 	Command.TypeCommand.MOVE: 10,
-	Command.TypeCommand.ATTACK: 10,
-	Command.TypeCommand.HEAL: 10,
-	Command.TypeCommand.DEFENSE: 10
+	Command.TypeCommand.ATTACK: 5,
+	Command.TypeCommand.HEAL: 3,
+	Command.TypeCommand.DEFENSE: 3
 }
 
-# Оставшиеся доступные очки для каждого типа команды
-var remaining_move_points: int = 10
-var remaining_attack_points: int = 10
-var remaining_heal_points: int = 10
-var remaining_defense_points: int = 10
+var remaining_move_points: int
+var remaining_attack_points: int
+var remaining_heal_points: int
+var remaining_defense_points: int
 
 func reset_remaining_points() -> void:
 	remaining_move_points = points[Command.TypeCommand.MOVE]
@@ -48,7 +47,7 @@ func use_points(command_type, value) -> void:
 	
 	points_changed.emit()
 
-# Вернуть очки в общий пул (используется при удалении команды)
+# Вернуть очки в общий пул
 func release_points(command_type, value) -> void:
 	match command_type:
 		Command.TypeCommand.MOVE: 
