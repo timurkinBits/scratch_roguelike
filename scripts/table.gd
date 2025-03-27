@@ -14,38 +14,34 @@ var original_positions: Dictionary = {}
 var has_shifted_commands: bool = false
 
 @onready var table_texture: ColorRect = $Texture
-# Загружаем сцену Command (скорректируйте путь)
 var command_scene = preload('res://scenes/Command.tscn')
 
 func _process(delta: float) -> void:
 	if not dragged_card:
 		return
 	var mouse_pos = get_global_mouse_position()
-	
-	# Получаем глобальный прямоугольник стола в координатах холста
 	var table_canvas_rect = table_texture.get_global_rect()
-	
-	# Преобразуем его в мировые координаты
 	var canvas_to_world = get_viewport().canvas_transform.inverse()
 	var table_top_left_world = canvas_to_world * table_canvas_rect.position
 	var table_bottom_right_world = canvas_to_world * (table_canvas_rect.position + table_canvas_rect.size)
 	var table_global_rect_world = Rect2(table_top_left_world, table_bottom_right_world - table_top_left_world)
 	
-	# Применяем границы в мировых координатах
 	enforce_table_boundaries(dragged_card, mouse_pos + drag_offset, table_global_rect_world)
-	
 	if dragged_card is Block:
-		update_block_cards(table_global_rect_world)
+		dragged_card.update_command_positions(Z_INDEX_DRAGGING)
 	
 	update_hovered_slot()
 	if hovered_slot:
 		hover_timer += delta
-		if hover_timer >= HOVER_THRESHOLD:
-			shift_commands_down()
+		if hover_timer >= HOVER_THRESHOLD and not has_shifted_commands:
+			affected_block = hovered_slot.block
+			affected_block.prepare_for_insertion(hovered_slot)
+			has_shifted_commands = true
 	else:
-		hover_timer = max(0.0, hover_timer - delta)
-		if affected_block:
-			restore_positions()
+		if has_shifted_commands and affected_block:
+			affected_block.cancel_insertion()
+			has_shifted_commands = false
+		hover_timer = 0.0
 
 # Обрабатывает ввод мыши для начала и завершения перетаскивания
 func _input(event: InputEvent) -> void:
@@ -56,7 +52,7 @@ func _input(event: InputEvent) -> void:
 			finish_drag()
 
 func enforce_table_boundaries(card: Node2D, target_position: Vector2, table_rect: Rect2) -> void:
-	var size = get_card_size_with_scale(card)
+	var size = get_card_size(card)
 	var new_position = target_position
 	
 	if new_position.x < table_rect.position.x:
@@ -72,7 +68,7 @@ func enforce_table_boundaries(card: Node2D, target_position: Vector2, table_rect
 	card.global_position = new_position
 
 # Получает размер карты с учетом масштаба
-func get_card_size_with_scale(card: Node2D) -> Vector2:
+func get_card_size(card: Node2D) -> Vector2:
 	var size = Vector2.ZERO
 	if card is Block:
 		size = card.get_full_size() * card.scale
@@ -108,17 +104,6 @@ func find_card_slot(card: Node2D) -> CommandSlot:
 					return slot
 	return null
 
-# Получает максимальный z-индекс среди всех блоков и команд
-func get_highest_z_index() -> int:
-	var max_z_index = 1
-	for block in get_tree().get_nodes_in_group("blocks"):
-		if is_instance_valid(block) and block != dragged_card:
-			max_z_index = max(max_z_index, block.z_index + 1)
-	for command in get_tree().get_nodes_in_group("commands"):
-		if is_instance_valid(command) and command != dragged_card:
-			max_z_index = max(max_z_index, command.z_index + 1)
-	return max_z_index
-
 # Начинает операцию перетаскивания карты под курсором
 func start_drag() -> void:
 	var card = raycast_for_card()
@@ -137,7 +122,6 @@ func start_drag() -> void:
 func finish_drag() -> void:
 	if not dragged_card:
 		return
-	var new_z_index = get_highest_z_index()
 	
 	# Получаем границы стола
 	var table_global_rect = Rect2(
@@ -150,7 +134,6 @@ func finish_drag() -> void:
 		if would_fit_in_boundaries(dragged_card, hovered_slot, table_global_rect):
 			hovered_slot.add_command(dragged_card)
 			dragged_card.position = Vector2.ZERO
-			dragged_card.z_index = new_z_index
 			hovered_slot.block.update_slots()
 			
 			# После добавления в слот проверяем границы для всего блока
@@ -158,11 +141,7 @@ func finish_drag() -> void:
 		else:
 			# Если не помещается, оставляем на текущей позиции с проверкой границ
 			enforce_table_boundaries(dragged_card, dragged_card.global_position, table_global_rect)
-	elif affected_block:
-		restore_positions()
-		dragged_card.z_index = new_z_index
-	else:
-		dragged_card.z_index = new_z_index
+	dragged_card.z_index = 1
 	
 	dragged_card = null
 	affected_block = null
@@ -216,7 +195,7 @@ func would_fit_in_boundaries(card: Node2D, slot: CommandSlot, table_rect: Rect2)
 		return false
 	
 	# Получаем размер карты с учетом масштаба
-	var card_size = get_card_size_with_scale(card)
+	var card_size = get_card_size(card)
 	
 	# Получаем позицию слота в глобальных координатах
 	var slot_global_pos = slot.global_position
@@ -242,134 +221,6 @@ func update_hovered_slot() -> void:
 		if obj is CommandSlot and obj != dragged_card:
 			hovered_slot = obj
 			break
-
-# Сдвигает команды вниз в блоке, освобождая место для перетаскиваемой карты
-func shift_commands_down() -> void:
-	if not hovered_slot or not is_instance_valid(hovered_slot.block) or has_shifted_commands:
-		return
-	
-	# Получаем границы стола
-	var table_global_rect = Rect2(
-		table_texture.global_position,
-		table_texture.size * table_texture.get_global_transform().get_scale()
-	)
-	
-	# Проверяем, поместится ли карта в слот без выхода за границы
-	if not would_fit_in_boundaries(dragged_card, hovered_slot, table_global_rect):
-		return
-	
-	affected_block = hovered_slot.block
-	var block_slots = affected_block.slots
-	var hover_index = block_slots.find(hovered_slot)
-	
-	if original_positions.is_empty():
-		for i in range(hover_index, block_slots.size()):
-			if block_slots[i].command:
-				original_positions[block_slots[i].command] = block_slots[i].command.global_position
-	
-	if block_slots.back().command:
-		affected_block.create_slot()
-		block_slots = affected_block.slots  # Обновляем список слотов
-	
-	for i in range(block_slots.size() - 1, hover_index, -1):
-		block_slots[i].command = block_slots[i - 1].command
-	
-	block_slots[hover_index].command = null
-	affected_block.update_all_slot_positions()
-	
-	for slot in block_slots:
-		if slot.command:
-			slot.command.global_position = slot.global_position
-	
-	hover_timer = 0.0
-	has_shifted_commands = true
-	
-	# Проверяем, не выходит ли блок за границы после сдвига команд
-	check_parent_block_boundaries(affected_block, table_global_rect)
-
-# Восстанавливает команды на их исходные позиции при отмене перетаскивания
-func restore_positions() -> void:
-	if original_positions.is_empty() or not affected_block:
-		return
-	var block_slots = affected_block.slots
-	for slot in block_slots:
-		slot.command = null
-	for command in original_positions:
-		if is_instance_valid(command):
-			for slot in block_slots:
-				if slot.global_position == original_positions[command]:
-					slot.command = command
-					break
-	original_positions.clear()
-	affected_block.update_slots()
-	affected_block = null
-
-# Обновляет позиции команд внутри перетаскиваемого блока
-func update_block_cards(table_rect: Rect2) -> void:
-	if not dragged_card is Block:
-		return
-		
-	for slot in dragged_card.slots:
-		if slot.command and is_instance_valid(slot.command):
-			# Вычисляем глобальную позицию слота
-			var slot_global_pos = dragged_card.to_global(slot.position)
-			
-			# Обновляем позицию команды в слоте
-			slot.command.global_position = slot_global_pos
-			slot.command.visible = true
-			slot.command.z_index = Z_INDEX_DRAGGING - 1
-			
-			# Проверяем, не выходит ли команда за границы стола
-			var command_size = get_card_size_with_scale(slot.command)
-			
-			# Проверяем правую и нижнюю границы
-			var right_edge = slot_global_pos.x + command_size.x
-			var bottom_edge = slot_global_pos.y + command_size.y
-			
-			# Если команда выходит за границы, корректируем позицию родительского блока
-			if right_edge > table_rect.position.x + table_rect.size.x:
-				var offset = right_edge - (table_rect.position.x + table_rect.size.x)
-				dragged_card.global_position.x -= offset
-			
-			if bottom_edge > table_rect.position.y + table_rect.size.y:
-				var offset = bottom_edge - (table_rect.position.y + table_rect.size.y)
-				dragged_card.global_position.y -= offset
-			
-			# Если команда выходит за левую или верхнюю границу, тоже корректируем
-			if slot_global_pos.x < table_rect.position.x:
-				var offset = table_rect.position.x - slot_global_pos.x
-				dragged_card.global_position.x += offset
-			
-			if slot_global_pos.y < table_rect.position.y:
-				var offset = table_rect.position.y - slot_global_pos.y
-				dragged_card.global_position.y += offset
-			
-			# После корректировки родительского блока обновляем позиции всех команд
-			for update_slot in dragged_card.slots:
-				if update_slot.command and is_instance_valid(update_slot.command):
-					update_slot.command.global_position = dragged_card.to_global(update_slot.position)
-					
-					# Рекурсивно обновляем позиции для вложенных блоков
-					if update_slot.command is Block:
-						update_nested_block_positions(update_slot.command, table_rect)
-
-# Рекурсивно обновляет позиции вложенных блоков
-func update_nested_block_positions(block: Block, table_rect: Rect2) -> void:
-	if not is_instance_valid(block):
-		return
-	
-	# Обновляем позиции слотов для вложенного блока
-	block.update_all_slot_positions()
-	
-	# Проверяем каждый слот на наличие команд
-	for slot in block.slots:
-		if slot.command and is_instance_valid(slot.command):
-			# Устанавливаем позицию команды
-			slot.command.global_position = block.to_global(slot.position)
-			
-			# Если команда - блок, рекурсивно обновляем и для него
-			if slot.command is Block:
-				update_nested_block_positions(slot.command, table_rect)
 
 func create_command(type: int) -> void:
 	var remaining_points = Global.get_remaining_points(type)

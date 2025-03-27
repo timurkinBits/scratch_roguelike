@@ -6,19 +6,23 @@ var current_health := max_hp
 var current_defense := 0
 var is_dead := false
 
-@onready var health_bar: ColorRect = $"hp_bar/HealthRect"
-@onready var defense_bar: ColorRect = $"defense_bar/DefenseRect"
-@onready var player: Player = $"../Room/Player"
-@onready var walk_label: Label = $'WalkRect/WalkLabel'
-@onready var attack_label: Label = $'AttackRect/AttackLabel'
-@onready var heal_label: Label = $'HealRect/HealLabel'
-@onready var defense_label: Label = $'DefenseRect/DefenseLabel'
+
+@export var player: Player
+@export var max_scores: Control
+@export var bars: Control
+@onready var health_bar: ColorRect = bars.get_node('hp_bar/HealthRect')
+@onready var defense_bar: ColorRect = bars.get_node('defense_bar/DefenseRect')
+@onready var move_label: Label = max_scores.get_node('MoveRect/MoveLabel')
+@onready var attack_label: Label = max_scores.get_node('AttackRect/AttackLabel')
+@onready var heal_label: Label = max_scores.get_node('HealRect/HealLabel')
+@onready var defense_label: Label = max_scores.get_node('DefenseRect/DefenseLabel')
+
 
 func _ready():
 	if not player:
 		print("Player not found in HPbar!")
 	update_health_bar()
-	walk_label.text = str(Global.get_remaining_points(Command.TypeCommand.MOVE))
+	move_label.text = str(Global.get_remaining_points(Command.TypeCommand.MOVE))
 	attack_label.text = str(Global.get_remaining_points(Command.TypeCommand.ATTACK))
 	defense_label.text = str(Global.get_remaining_points(Command.TypeCommand.DEFENSE))
 	heal_label.text = str(Global.get_remaining_points(Command.TypeCommand.HEAL))
@@ -27,7 +31,7 @@ func change_scores(type: Command.TypeCommand) -> void:
 	var remaining = Global.get_remaining_points(type)
 	match type:
 		Command.TypeCommand.MOVE:
-			walk_label.text = str(remaining)
+			move_label.text = str(remaining)
 		Command.TypeCommand.ATTACK:
 			attack_label.text = str(remaining)
 		Command.TypeCommand.DEFENSE:

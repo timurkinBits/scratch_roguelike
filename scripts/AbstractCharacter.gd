@@ -51,24 +51,6 @@ func can_move_to_tile(next_tile: Vector2) -> bool:
 	
 	return true
 
-# Метод движения
-func move(value: int) -> void:
-	if should_skip_action():
-		return
-	
-	var current_tile = get_tile_position()
-	
-	for _i in value:
-		var direction_vector = DIRECTION_VECTORS[current_direction]
-		var next_tile = current_tile + direction_vector
-		
-		if not can_move_to_tile(next_tile):
-			break
-		
-		var target_pos = get_world_position_from_tile(next_tile)
-		await animate_movement(target_pos)
-		current_tile = next_tile
-
 # Проверка, можно ли выполнить действие
 func should_skip_action() -> bool:
 	return is_dead || !is_instance_valid(self) || !is_inside_tree()
@@ -111,7 +93,7 @@ func take_damage(damage_amount: int) -> void:
 	var hit_tween = create_tween()
 	hit_tween.tween_property(self, "modulate", Color(1, 0.5, 0.5), 0.1)
 	hit_tween.tween_property(self, "modulate", Color(1, 1, 1), 0.1)
-	
+
 	if hp <= 0:
 		dead()
 

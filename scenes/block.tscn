@@ -64,10 +64,10 @@ scale = Vector2(1.03034, -6.10681)
 shape = SubResource("RectangleShape2D_omwid")
 
 [node name="Label" type="Label" parent="."]
-offset_left = 22.0
-offset_top = -1.0
-offset_right = 217.0
-offset_bottom = 22.0
+offset_left = 13.0
+offset_top = -4.0
+offset_right = 220.0
+offset_bottom = 24.0
 label_settings = ExtResource("2_pghf5")
 horizontal_alignment = 1
 metadata/_edit_use_anchors_ = true

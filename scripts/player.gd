@@ -9,19 +9,16 @@ class_name Player
 	"down": $SpriteDown
 }
 
-# Movement tracking
 var is_moving: bool = false
 
-# Health bar reference
 @onready var hp_bar = $"../../UI"
 
 func _ready() -> void:
-	hp = 10  # Player-specific starting health
+	hp = 10
 	add_to_group("characters")  # Добавление в группу персонажей
 	super._ready()
 	update_visual()
 
-# Переопределение метода move для обновления визуала
 func move(value: int) -> void:
 	if should_skip_action():
 		return
@@ -29,7 +26,21 @@ func move(value: int) -> void:
 	is_moving = true
 	update_visual()
 	
-	await super.move(value)
+	if should_skip_action():
+		return
+	
+	var current_tile = get_tile_position()
+	
+	for _i in value:
+		var direction_vector = DIRECTION_VECTORS[current_direction]
+		var next_tile = current_tile + direction_vector
+		
+		if not can_move_to_tile(next_tile):
+			break
+		
+		var target_pos = get_world_position_from_tile(next_tile)
+		await animate_movement(target_pos)
+		current_tile = next_tile
 	
 	is_moving = false
 	update_visual()
@@ -46,17 +57,10 @@ func update_visual() -> void:
 	else:
 		sprites[current_direction].play("idle")
 
-# Изменяет значения здоровья у игрока с анимацией получения урона
+# Изменяет значения здоровья у игрока
 func take_damage(damage_amount: int) -> void:
-	if is_dead:
-		return
-	
+	super.take_damage(damage_amount)
 	hp_bar.hp_change(-damage_amount)
-	hp = hp_bar.current_health / 10.0
-	
-	var hit_tween = create_tween()
-	hit_tween.tween_property(self, "modulate", Color(1, 0.5, 0.5), 0.1)
-	hit_tween.tween_property(self, "modulate", Color(1, 1, 1), 0.1)
 
 # Переопределение анимации смерти
 func play_death_animation() -> void:

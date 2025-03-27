@@ -25,6 +25,7 @@ const MAX_LOOP_SLOTS := 3
 var slots: Array[CommandSlot] = []
 var parent_slot: CommandSlot = null
 var config: Dictionary  # Кэшированная конфигурация для типа блока
+var original_slot_commands: Array = []
 
 # Конфигурация типов блоков
 var block_configs = {
@@ -108,11 +109,12 @@ func update_all_slot_positions() -> void:
 			continue
 		slot.position = Vector2(slot_offset_start.x, current_y)
 		var increment = SLOT_OFFSET
-		if slot.command and slot.command is Block:
-			increment = slot.command.get_total_height() + SLOT_HEIGHT_INCREMENT
+		if slot.command and is_instance_valid(slot.command):
+			slot.command.global_position = to_global(slot.position)  # Синхронизируем позицию команды
+			if slot.command is Block:
+				increment = slot.command.get_total_height() + SLOT_HEIGHT_INCREMENT
 		current_y += increment
 
-# Обновляет размеры и позиции текстур и коллизий
 func update_texture_sizes() -> void:
 	var total_height = get_total_height()
 	texture_down.position.y = total_height
@@ -121,7 +123,6 @@ func update_texture_sizes() -> void:
 	if parent_slot and is_instance_valid(parent_slot) and parent_slot.block:
 		parent_slot.block.call_deferred("update_slots")
 
-# Пересоздает коллизии на основе текущего размера
 func recreate_collision_shapes(total_height: float) -> void:
 	for child in area.get_children():
 		child.queue_free()
@@ -129,7 +130,6 @@ func recreate_collision_shapes(total_height: float) -> void:
 	_create_bottom_collision(total_height)
 	_create_left_collision(total_height)
 
-# Создает верхнюю коллизию
 func _create_top_collision() -> void:
 	var collision = CollisionShape2D.new()
 	collision.name = "CollisionUp"
@@ -139,7 +139,6 @@ func _create_top_collision() -> void:
 	collision.position = Vector2(texture_up.size.x / 2, texture_up.size.y / 2)
 	area.add_child(collision)
 
-# Создает нижнюю коллизию
 func _create_bottom_collision(total_height: float) -> void:
 	var collision = CollisionShape2D.new()
 	collision.name = "CollisionDown"
@@ -149,7 +148,6 @@ func _create_bottom_collision(total_height: float) -> void:
 	collision.position = Vector2(texture_down.size.x / 2, total_height + texture_down.size.y / 2)
 	area.add_child(collision)
 
-# Создает левую коллизию
 func _create_left_collision(total_height: float) -> void:
 	var collision = CollisionShape2D.new()
 	collision.name = "CollisionLeft"
@@ -159,7 +157,6 @@ func _create_left_collision(total_height: float) -> void:
 	collision.position = Vector2(texture_left.size.x / 2, texture_up.size.y + shape.size.y / 2)
 	area.add_child(collision)
 
-# Обновляет все слоты: сдвигает команды вверх, регулирует количество и обновляет позиции
 func update_slots() -> void:
 	shift_commands_up()
 	adjust_slot_count()
@@ -168,23 +165,46 @@ func update_slots() -> void:
 
 # Сдвигает команды вверх, убирая промежутки
 func shift_commands_up() -> void:
-	var commands = slots.filter(func(s): return s.command != null).map(func(s): return s.command)
+	var commands = slots.filter(func(s): return s.command != null and is_instance_valid(s.command)).map(func(s): return s.command)
 	for i in slots.size():
-		slots[i].command = commands[i] if i < commands.size() else null
-		if slots[i].command and is_instance_valid(slots[i].command):
-			slots[i].command.global_position = slots[i].global_position
+		if i < commands.size():
+			slots[i].command = commands[i]
+			if is_instance_valid(slots[i].command):
+				if slots[i].command is Command:
+					slots[i].command.slot = slots[i]
+				slots[i].command.global_position = slots[i].global_position
+		else:
+			slots[i].command = null
 
 # Регулирует количество слотов в зависимости от команд
 func adjust_slot_count() -> void:
 	if slots.is_empty():
+		create_slot()
 		return
-	var command_count = slots.filter(func(s): return s.command != null).size()
-	var target_count = command_count + 1
+	
+	# Подсчитываем количество занятых слотов
+	var command_count = slots.filter(func(s): return s.command != null and is_instance_valid(s.command)).size()
+	
+	# Определяем целевое количество слотов
+	var target_count = command_count + 1  # Всегда оставляем один пустой слот
 	if type == BlockType.LOOP:
-		target_count = min(command_count + 1, MAX_LOOP_SLOTS)
-	while slots.size() > target_count and not slots.back().command:
-		slots.pop_back().queue_free()
-	if slots.size() < target_count:
+		target_count = min(command_count + 1, MAX_LOOP_SLOTS)  # Для циклов учитываем лимит
+	
+	# Удаляем все лишние пустые слоты с конца
+	while slots.size() > target_count:
+		var last_slot = slots.back()
+		if not last_slot.command and is_instance_valid(last_slot):
+			slots.pop_back()
+			last_slot.queue_free()
+		else:
+			break  # Прерываем, если последний слот занят, чтобы не удалить нужное
+	
+	# Если слотов меньше, чем нужно, добавляем новый
+	while slots.size() < target_count:
+		create_slot()
+	
+	# Убеждаемся, что остался хотя бы один слот
+	if slots.is_empty():
 		create_slot()
 
 # Вычисляет полный размер блока, включая текстуры и слоты
@@ -219,3 +239,39 @@ func get_full_size() -> Vector2:
 		base_size.y = max(base_size.y, command_bottom)
 	
 	return base_size
+	
+func prepare_for_insertion(target_slot: CommandSlot) -> void:
+	if slots.is_empty() or target_slot not in slots:
+		return
+	original_slot_commands = []
+	for slot in slots:
+		original_slot_commands.append(slot.command)
+	var hover_index = slots.find(target_slot)
+	if slots.back().command:
+		create_slot()
+	for i in range(slots.size() - 1, hover_index, -1):
+		slots[i].command = slots[i - 1].command
+	slots[hover_index].command = null
+	update_all_slot_positions()
+	for slot in slots:
+		if slot.command and is_instance_valid(slot.command):
+			slot.command.global_position = to_global(slot.position)
+			
+func cancel_insertion() -> void:
+	if original_slot_commands.is_empty():
+		return
+	for i in range(min(slots.size(), original_slot_commands.size())):
+		slots[i].command = original_slot_commands[i]
+	for i in range(original_slot_commands.size(), slots.size()):
+		slots[i].command = null
+	original_slot_commands = []
+	update_slots()
+	
+func update_command_positions(base_z_index: int) -> void:
+	for slot in slots:
+		if slot.command and is_instance_valid(slot.command):
+			slot.command.global_position = to_global(slot.position)
+			slot.command.visible = true
+			slot.command.z_index = base_z_index - 1
+			if slot.command is Block:
+				slot.command.update_command_positions(base_z_index - 1)
