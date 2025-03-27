@@ -407,7 +407,6 @@ animation = &"idle"
 autoplay = "idle"
 
 [node name="SpriteUp" type="AnimatedSprite2D" parent="."]
-visible = false
 sprite_frames = SubResource("SpriteFrames_y4r1p")
 animation = &"idle"
 autoplay = "idle"

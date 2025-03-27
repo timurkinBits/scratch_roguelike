@@ -3,14 +3,15 @@ class_name Enemy
 
 var player: Node2D
 
-@export var speed: int = 1  # Скорость врага (задается в инспекторе)
+@export var speed: int = 1  # Скорость врага
 @export var damage: int = 1 # Урон врага
+@export var heal_points: int = 3
 
 func _ready() -> void:
 	super._ready()
 	add_to_group("enemies")
 	add_to_group("characters")
-	hp = 3
+	hp = heal_points
 	player = get_parent().get_node("Player")
 	if not player:
 		push_error("Player not found!")
@@ -144,5 +145,4 @@ func attack_player() -> void:
 	
 	# Выполняем анимацию атаки
 	await animate_attack()
-	if player and player.has_method("take_damage"):
-		player.take_damage(damage)
+	player.take_damage(damage)

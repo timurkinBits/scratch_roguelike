@@ -3,10 +3,11 @@ extends Node
 @onready var button: Button = $"../../UI/Button"
 @onready var player: Player = $"../../Room/Player"
 @onready var hp_bar: UI = $"../../UI"
-@onready var defeat_label: Label = $"../../UI/DefeatLabel"
-@onready var win_label: Label = $"../../UI/WinLabel"
-@onready var ui_node: UI = $"../../UI/"
-@onready var room: Node2D = $"../../Room"
+
+@export var ui_node: UI
+@export var room: Node2D
+@onready var win_label: Label = ui_node.get_node('Labels/WinLabel')
+@onready var defeat_label: Label = ui_node.get_node('Labels/DefeatLabel')
 
 var is_player_alive: bool = true
 var outline_panels: Array[Node] = []
@@ -72,6 +73,10 @@ func execute_block(block: Block) -> void:
 	current_block = block
 	var outline = create_outline_panel(block)
 	var iterations = max(1, block.loop_count) if block.type == Block.BlockType.LOOP else 1
+	if block.type == Block.BlockType.ABILITY:
+		for slot in block.slots:
+			if slot.command is Command:
+				slot.command.additional_properties = block.text
 	for i in iterations:
 		for slot in block.slots:
 			if not is_instance_valid(slot.command):
@@ -109,6 +114,10 @@ func execute_command(command: Command) -> void:
 	if not is_instance_valid(command):
 		return
 	var outline = create_outline_panel(command)
+	if command.additional_properties == '+1 урон' and command.type == Command.TypeCommand.ATTACK:
+		command.value += 1
+	if command.additional_properties == '+1 перемещение' and command.type == Command.TypeCommand.MOVE:
+		command.value += 1
 	match command.type:
 		Command.TypeCommand.MOVE: await player.move(command.value)
 		Command.TypeCommand.TURN_LEFT: await player.turn("left")

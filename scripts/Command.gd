@@ -5,14 +5,12 @@ enum TypeCommand { NONE, TURN_LEFT, TURN_RIGHT, TURN_AROUND, ATTACK, MOVE, HEAL,
 
 @export var type: TypeCommand
 var value: int = 0
-var target_required: bool = false
-var direction: Vector2 = Vector2(0, 0)
 var chances: Array[int] = [0, 2, 2, 2, 6, 7, 1, 1]
 var is_menu_command: bool = false
 var is_settings: bool = false
 var slot: CommandSlot
 var block: Block
-var previous_value: int = 0  # Для отслеживания предыдущего значения при изменении
+var additional_properties: String
 
 signal menu_command_clicked(type: int)
 
@@ -21,7 +19,6 @@ signal menu_command_clicked(type: int)
 @onready var up_button: Button = $Texture/Up
 @onready var down_button: Button = $Texture/Down
 @onready var ui_node: UI = $'../../../UI'
-const MAX_LENGTH := 5
 
 func _ready() -> void:
 	num_label.visible = false
@@ -31,6 +28,7 @@ func _ready() -> void:
 	
 	if get_parent().name == "CommandMenu":
 		is_menu_command = true  # Устанавливаем для команд в меню
+		#$Area2D/CollisionShape2D.shape.size.x += 20
 	if chances.size() < TypeCommand.size():
 		chances.resize(TypeCommand.size())
 		for i in range(1, TypeCommand.size()):
@@ -76,7 +74,7 @@ func set_number(new_value):
 			ui_node.change_scores(type)
 	
 	# Обновляем текст
-	num_label.text = str(value).substr(0, MAX_LENGTH)
+	num_label.text = str(value)
 	
 	# Обновляем состояние кнопок
 	if is_settings:
@@ -124,7 +122,6 @@ func _on_area_2d_input_event(_viewport: Node, event: InputEvent, _shape_idx: int
 		if event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 			if is_menu_command:
 				menu_command_clicked.emit(type)
-				
 			else:
 				is_settings = false
 				change_settings(is_settings)
@@ -161,7 +158,7 @@ func _exit_tree() -> void:
 		
 	# Обновляем блок после всех изменений
 	if parent_block and is_instance_valid(parent_block):
-		parent_block.call_deferred("update_slots")
+		parent_block.update_slots()  # Убираем call_deferred для немедленного обновления
 
 func _on_num_area_input_event(_viewport: Node, event: InputEvent, _shape_idx: int) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
@@ -172,6 +169,6 @@ func _on_num_area_input_event(_viewport: Node, event: InputEvent, _shape_idx: in
 			for command in get_tree().get_nodes_in_group("commands"):
 				command.update_buttons_state()
 			
-func change_settings(is_settings: bool):
-	up_button.visible = is_settings
-	down_button.visible = is_settings
+func change_settings(settings: bool):
+	up_button.visible = settings
+	down_button.visible = settings
