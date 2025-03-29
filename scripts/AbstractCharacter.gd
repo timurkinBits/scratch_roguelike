@@ -85,11 +85,10 @@ func play_death_animation() -> void:
 	remove_from_group('enemies')
 
 # Получение урона
-func take_damage(damage_amount: int) -> void:
+func take_damage(_damage_amount: int) -> void:
 	if is_dead:
 		return
 	
-	hp -= damage_amount
 	var hit_tween = create_tween()
 	hit_tween.tween_property(self, "modulate", Color(1, 0.5, 0.5), 0.1)
 	hit_tween.tween_property(self, "modulate", Color(1, 1, 1), 0.1)

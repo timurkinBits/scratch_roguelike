@@ -12,6 +12,7 @@ extends Node
 var is_player_alive: bool = true
 var outline_panels: Array[Node] = []
 var current_block: Block = null
+var game_finished: bool = false
 
 func _ready() -> void:
 	if button:
@@ -22,7 +23,7 @@ func _ready() -> void:
 	Global.reset_remaining_points()
 
 func _on_button_pressed() -> void:
-	if not is_player_alive or not is_instance_valid(player) or not is_inside_tree():
+	if not is_player_alive or not is_instance_valid(player) or not is_inside_tree() or game_finished:
 		return
 		
 	# Сразу после нажатия
@@ -35,40 +36,79 @@ func _on_button_pressed() -> void:
 		if block.type == Block.BlockType.CONDITION and block.text == "начало хода":
 			await execute_block(block)
 			
+			# Проверяем состояние игрока после выполнения блока
+			if not is_player_alive or not is_instance_valid(player):
+				await end_game_player_dead()
+				return
+			
 	await clear_all()
+	
+	# Если игрок умер во время выполнения своих команд, заканчиваем игру
+	if not is_player_alive or not is_instance_valid(player):
+		await end_game_player_dead()
+		return
 	
 	# Ход врага
 	for enemy in get_tree().get_nodes_in_group('enemies'):
-		if enemy:
+		if enemy and not game_finished:
 			await enemy.take_turn()
 			
-	await get_tree().create_timer(0.2).timeout
+			# Проверяем состояние игрока после хода каждого врага
+			if not is_player_alive or not is_instance_valid(player):
+				await end_game_player_dead()
+				return
 	
-	# После хода врага
-	Global.reset_remaining_points()
-	ui_node.reset_defense()
-	button.disabled = false
-	
-	if !get_tree().get_nodes_in_group('enemies').size():
-		room.visible = false
-		win_label.visible = true
+	# Если после всех ходов игрок остался жив
+	if is_player_alive and not game_finished:
+		await get_tree().create_timer(0.2).timeout
+		
+		# После хода врага
+		Global.reset_remaining_points()
+		ui_node.reset_defense()
+		button.disabled = false
+		
+		# Проверяем условие победы
+		if !get_tree().get_nodes_in_group('enemies').size():
+			game_finished = true
+			room.visible = false
+			win_label.visible = true
 
 func _on_player_dead() -> void:
 	if not is_player_alive:
 		return
 	is_player_alive = false
+	await end_game_player_dead()
+
+# Функция завершения игры после смерти игрока
+func end_game_player_dead() -> void:
+	if game_finished:
+		return
+		
+	game_finished = true
+	
+	# Остановка всех текущих процессов
 	for panel in outline_panels:
 		if is_instance_valid(panel):
 			panel.queue_free()
 	outline_panels.clear()
 	await clear_all()
+	
+	# Отключение кнопки
 	if button:
 		button.disabled = true
+	
+	# Остановка всех врагов
+	if is_inside_tree():
+		for enemy in get_tree().get_nodes_in_group('enemies'):
+			if enemy:
+				enemy.stop_movement()
+	
+	# Отображение экрана поражения
 	room.visible = false
 	defeat_label.visible = true
 
 func execute_block(block: Block) -> void:
-	if not is_instance_valid(block):
+	if game_finished or not is_player_alive or not is_instance_valid(block):
 		return
 	current_block = block
 	var outline = create_outline_panel(block)
@@ -78,14 +118,20 @@ func execute_block(block: Block) -> void:
 			if slot.command is Command:
 				slot.command.additional_properties = block.text
 	for i in iterations:
+		# Прерываем выполнение блока, если игра завершена
+		if game_finished or not is_player_alive:
+			break
 		for slot in block.slots:
+			# Прерываем выполнение слота, если игра завершена
+			if game_finished or not is_player_alive:
+				break
 			if not is_instance_valid(slot.command):
 				continue
 			if slot.command is Block:
 				await execute_block(slot.command)
 			elif slot.command is Command:
 				await execute_command(slot.command)
-		if i < iterations - 1:
+		if i < iterations - 1 and not game_finished and is_player_alive:
 			await get_tree().create_timer(0.2).timeout
 	if is_instance_valid(outline):
 		outline_panels.erase(outline)
@@ -111,7 +157,7 @@ func create_outline_panel(node: Node2D) -> Panel:
 
 # Выполнение команды с обводкой текущей выполняемой команды
 func execute_command(command: Command) -> void:
-	if not is_instance_valid(command):
+	if game_finished or not is_player_alive or not is_instance_valid(command) or not is_instance_valid(player):
 		return
 	var outline = create_outline_panel(command)
 	if command.additional_properties == '+1 урон' and command.type == Command.TypeCommand.ATTACK:
@@ -124,9 +170,17 @@ func execute_command(command: Command) -> void:
 		Command.TypeCommand.TURN_RIGHT: await player.turn("right")
 		Command.TypeCommand.TURN_AROUND: await player.turn("around")
 		Command.TypeCommand.ATTACK: await player.attack(command.value)
-		Command.TypeCommand.HEAL: await hp_bar.hp_change(command.value)
-		Command.TypeCommand.DEFENSE: await hp_bar.add_defense(command.value)
-	if is_player_alive and is_instance_valid(outline):
+		Command.TypeCommand.HEAL: await player.add_hp(command.value)
+		Command.TypeCommand.DEFENSE: await player.add_defense(command.value)
+	
+	# Проверяем, жив ли игрок после выполнения команды
+	if not is_player_alive or not is_instance_valid(player):
+		if is_instance_valid(outline):
+			outline_panels.erase(outline)
+			outline.queue_free()
+		return
+	
+	if is_instance_valid(outline):
 		outline_panels.erase(outline)
 		outline.queue_free()
 
