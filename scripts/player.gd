@@ -10,8 +10,10 @@ class_name Player
 }
 
 var is_moving: bool = false
+var defense: int = 0
 
 @onready var hp_bar = $"../../UI"
+@onready var command_executor = $"../../Table/CommandExecutor"
 
 func _ready() -> void:
 	hp = 10
@@ -59,13 +61,31 @@ func update_visual() -> void:
 
 # Изменяет значения здоровья у игрока
 func take_damage(damage_amount: int) -> void:
-	super.take_damage(damage_amount)
 	hp_bar.hp_change(-damage_amount)
+	hp = ceil(hp_bar.current_health / 10)
+	
+	# Проверка на смерть игрока
+	if hp <= 0 or hp_bar.current_health <= 0:
+		command_executor.is_player_alive = false
+	
+	super.take_damage(damage_amount)
+	
+func add_defense(defense_amount: int):
+	await hp_bar.add_defense(defense_amount)
+	defense = ceil(hp_bar.current_defense / 10)
 
+func add_hp(heal_amount: int):
+	await hp_bar.hp_change(heal_amount)
+	hp = ceil(hp_bar.current_health / 10)
+	
 # Переопределение анимации смерти
 func play_death_animation() -> void:
 	for sprite_key in sprites:
 		sprites[sprite_key].stop()
+	
+	# Установка флага смерти игрока
+	command_executor.is_player_alive = false
+	
 	super.play_death_animation()
 
 # Поворот игрока

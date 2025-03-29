@@ -1,4 +1,4 @@
-[gd_scene load_steps=18 format=3 uid="uid://x83t6t456pdf"]
+[gd_scene load_steps=20 format=3 uid="uid://x83t6t456pdf"]
 
 [ext_resource type="PackedScene" uid="uid://pllgtdsxxw2s" path="res://scenes/table.tscn" id="1_2gx6p"]
 [ext_resource type="Script" uid="uid://bs0f6ystj1uo2" path="res://scripts/table.gd" id="2_wk856"]
@@ -12,6 +12,8 @@
 [ext_resource type="PackedScene" uid="uid://d3hruys1lpbf3" path="res://scenes/wall.tscn" id="9_qmy6f"]
 [ext_resource type="Script" uid="uid://jcjkaqukp4lb" path="res://scripts/ui.gd" id="9_wp0k4"]
 [ext_resource type="PackedScene" uid="uid://b1n1mnvax3cup" path="res://scenes/hp_bar.tscn" id="10_wp0k4"]
+[ext_resource type="Script" uid="uid://okdqbifhl0ui" path="res://scripts/enemy_stats.gd" id="13_3p2gp"]
+[ext_resource type="PackedScene" uid="uid://cqa3vxgvdii24" path="res://scenes/heal_point.tscn" id="13_mwfav"]
 [ext_resource type="LabelSettings" uid="uid://ciom6t00pwwk3" path="res://new_label_settings.tres" id="13_qmy6f"]
 
 [sub_resource type="InputEventKey" id="InputEventKey_u50so"]
@@ -66,23 +68,21 @@ scale = Vector2(2.41, 2.41)
 [node name="Enemy" parent="Room" instance=ExtResource("8_uc31q")]
 position = Vector2(263.889, 71.2962)
 scale = Vector2(1.604, 1.604)
-speed = 3
+speed = 5
 damage = 2
 heal_points = 2
 
 [node name="Enemy3" parent="Room" instance=ExtResource("8_uc31q")]
 position = Vector2(455.556, 168.519)
 scale = Vector2(1.604, 1.604)
-speed = 3
-damage = 2
-heal_points = 2
+damage = 4
+heal_points = 5
 
 [node name="Enemy2" parent="Room" instance=ExtResource("8_uc31q")]
 position = Vector2(455.556, 359.259)
 scale = Vector2(1.604, 1.604)
-speed = 4
+speed = 3
 damage = 3
-heal_points = 2
 
 [node name="Wall" parent="Room" instance=ExtResource("9_qmy6f")]
 position = Vector2(216.667, 311.111)
@@ -135,7 +135,7 @@ position = Vector2(215.741, 408.333)
 [node name="Wall8" parent="Room" instance=ExtResource("9_qmy6f")]
 position = Vector2(263.889, 455.556)
 
-[node name="UI" type="Control" parent="." node_paths=PackedStringArray("player", "max_scores", "bars")]
+[node name="UI" type="Control" parent="." node_paths=PackedStringArray("player", "max_scores", "player_bars")]
 layout_mode = 3
 anchors_preset = 0
 offset_left = 809.0
@@ -145,7 +145,7 @@ offset_bottom = 643.0
 script = ExtResource("9_wp0k4")
 player = NodePath("../Room/Player")
 max_scores = NodePath("MaxScores")
-bars = NodePath("Bars")
+player_bars = NodePath("PlayerBars")
 metadata/_edit_use_anchors_ = true
 
 [node name="Button" type="Button" parent="UI"]
@@ -189,24 +189,54 @@ offset_bottom = -227.0
 text = "Победа!"
 label_settings = SubResource("LabelSettings_qmy6f")
 
-[node name="Bars" type="Control" parent="UI"]
+[node name="PlayerBars" type="Control" parent="UI"]
 anchors_preset = 0
 offset_right = 40.0
 offset_bottom = 40.0
 
-[node name="defense_bar" parent="UI/Bars" instance=ExtResource("9_lhr70")]
+[node name="defense_bar" parent="UI/PlayerBars" instance=ExtResource("9_lhr70")]
 offset_left = -688.0
 offset_top = -591.0
 offset_right = -174.0
 offset_bottom = -544.0
 scale = Vector2(0.9, 1)
 
-[node name="hp_bar" parent="UI/Bars" instance=ExtResource("10_wp0k4")]
+[node name="hp_bar" parent="UI/PlayerBars" instance=ExtResource("10_wp0k4")]
 offset_left = -688.0
 offset_top = -547.0
 offset_right = -174.0
 offset_bottom = -500.0
 scale = Vector2(0.9, 1)
+
+[node name="EnemyStats" type="Control" parent="UI"]
+anchors_preset = 0
+offset_left = 516.0
+offset_top = -34.0
+offset_right = 556.0
+offset_bottom = 6.0
+script = ExtResource("13_3p2gp")
+hp_scene = ExtResource("13_mwfav")
+
+[node name="heal_points" type="Control" parent="UI/EnemyStats"]
+anchors_preset = 0
+offset_left = -507.0
+offset_top = -554.0
+offset_right = -467.0
+offset_bottom = -514.0
+
+[node name="SpeedLabel" type="Label" parent="UI/EnemyStats"]
+layout_mode = 0
+offset_left = -733.0
+offset_top = -514.0
+offset_right = -693.0
+offset_bottom = -491.0
+
+[node name="DamageLabel" type="Label" parent="UI/EnemyStats"]
+layout_mode = 0
+offset_left = -732.0
+offset_top = -495.0
+offset_right = -692.0
+offset_bottom = -472.0
 
 [node name="MaxScores" type="Control" parent="UI"]
 anchors_preset = 0

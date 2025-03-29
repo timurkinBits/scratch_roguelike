@@ -1,4 +1,4 @@
-[gd_scene load_steps=16 format=3 uid="uid://b405a6pxtd1vg"]
+[gd_scene load_steps=17 format=3 uid="uid://b405a6pxtd1vg"]
 
 [ext_resource type="Script" uid="uid://bnvc7d2a5yuan" path="res://scripts/enemy.gd" id="1_pwemg"]
 [ext_resource type="Texture2D" uid="uid://cni2isbjoq12d" path="res://sprites/Tileset.png" id="1_y0fb1"]
@@ -100,6 +100,9 @@ animations = [{
 "speed": 5.0
 }]
 
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_55jtl"]
+size = Vector2(19, 26.5)
+
 [node name="Enemy" type="Node2D"]
 script = ExtResource("1_pwemg")
 
@@ -107,3 +110,18 @@ script = ExtResource("1_pwemg")
 sprite_frames = SubResource("SpriteFrames_takp4")
 animation = &"idle"
 autoplay = "idle"
+
+[node name="Area2D" type="Area2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D"]
+shape = SubResource("RectangleShape2D_55jtl")
+
+[node name="SelectedRect" type="ColorRect" parent="."]
+offset_left = -8.0
+offset_top = -12.0
+offset_right = 8.0
+offset_bottom = 13.0
+mouse_filter = 2
+color = Color(0.111, 0.111, 0.111, 0.265)
+
+[connection signal="input_event" from="Area2D" to="." method="_on_area_2d_input_event"]

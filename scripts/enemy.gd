@@ -7,43 +7,84 @@ var player: Node2D
 @export var damage: int = 1 # Урон врага
 @export var heal_points: int = 3
 
+@onready var ui_stats: EnemyStats = $'../../UI/EnemyStats'
+@onready var selected_rect: ColorRect = $SelectedRect
+@onready var command_executor = $"../../Table/CommandExecutor"
+
+var is_selected: bool = false
+var is_turn_in_progress: bool = false
+
 func _ready() -> void:
 	super._ready()
 	add_to_group("enemies")
 	add_to_group("characters")
 	hp = heal_points
+	selected_rect.visible = false
 	player = get_parent().get_node("Player")
 	if not player:
 		push_error("Player not found!")
+
+# Остановка движения врага
+func stop_movement() -> void:
+	# Останавливаем любое текущее движение
+	is_turn_in_progress = false
+	set_process(false)
+	set_physics_process(false)
 
 # Логика хода врага
 func take_turn() -> void:
 	if should_skip_action():
 		return
 	
+	if not is_instance_valid(player) or not command_executor.is_player_alive:
+		return  # Ничего не делаем, если игрок мертв
+	
+	is_turn_in_progress = true
+	
 	var path = find_path_to_player()
 	
 	if path.size() > 1:
 		var steps = min(speed, path.size() - 1)
 		for i in range(steps):
+			# Проверяем, жив ли игрок перед каждым шагом
+			if not is_instance_valid(player) or not command_executor.is_player_alive:
+				is_turn_in_progress = false
+				return
+				
 			var next_tile = path[i + 1]
 			var direction_vector = next_tile - get_tile_position()
 			current_direction = get_direction_from_vector(direction_vector)
 			var target_pos = get_world_position_from_tile(next_tile)
 			await animate_movement(target_pos)
 			
+			# Проверяем еще раз после анимации движения
+			if not is_instance_valid(player) or not command_executor.is_player_alive:
+				is_turn_in_progress = false
+				return
+			
 			# Проверяем, можем ли атаковать игрока после шага
 			var distance_to_player = calculate_path_length(get_tile_position(), player.get_tile_position())
 			if distance_to_player == 1:
 				await attack_player()
+				is_turn_in_progress = false
 				return
 	else:
+		# Проверяем, жив ли игрок перед атакой
+		if not is_instance_valid(player) or not command_executor.is_player_alive:
+			is_turn_in_progress = false
+			return
+			
 		var distance_to_player = calculate_path_length(get_tile_position(), player.get_tile_position())
 		if distance_to_player == 1:
 			await attack_player()
+	
+	is_turn_in_progress = false
 
 # Поиск пути к ближайшей клетке рядом с игроком
 func find_path_to_player() -> Array:
+	if not is_instance_valid(player) or not command_executor.is_player_alive:
+		return [get_tile_position()]  # Возвращаем текущую позицию, если игрок мертв
+		
 	var start = get_tile_position()
 	var player_pos = player.get_tile_position()
 	
@@ -137,7 +178,7 @@ func get_direction_from_vector(vector: Vector2) -> String:
 
 # Атака игрока
 func attack_player() -> void:
-	if is_dead or not player or not is_instance_valid(player):
+	if is_dead or not is_instance_valid(player) or not command_executor.is_player_alive:
 		return
 	
 	# Определяем направление к игроку
@@ -145,4 +186,41 @@ func attack_player() -> void:
 	
 	# Выполняем анимацию атаки
 	await animate_attack()
-	player.take_damage(damage)
+	
+	# Проверяем, жив ли игрок перед нанесением урона
+	if is_instance_valid(player) and command_executor.is_player_alive:
+		player.take_damage(damage)
+	
+func take_damage(damage_amount: int):
+	hp -= damage_amount
+	
+	# Instead of directly calling sub_hp, just update the UI if this enemy is selected
+	if is_selected:
+		ui_stats.reset_hp(hp)  # Reset with current hp
+	
+	super.take_damage(damage_amount)
+	
+func dead():
+	ui_stats.change_stats(self, false)
+	super.dead()
+
+func _on_area_2d_input_event(_viewport: Node, event: InputEvent, _shape_idx: int) -> void:
+	if event is InputEventMouseButton:
+		if event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+			# First check if this enemy is already selected
+			if is_selected:
+				# If already selected, deselect it
+				is_selected = false
+				selected_rect.visible = false
+				ui_stats.change_stats(self, false)
+			else:
+				# If not selected, deselect all other enemies first
+				for enemy in get_tree().get_nodes_in_group('enemies'):
+					if enemy != self and enemy.is_selected:  # Only deselect other enemies
+						enemy.is_selected = false
+						enemy.selected_rect.visible = false
+						
+				# Then select this enemy
+				is_selected = true
+				selected_rect.visible = true
+				ui_stats.change_stats(self, true)

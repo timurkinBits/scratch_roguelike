@@ -9,9 +9,9 @@ var is_dead := false
 
 @export var player: Player
 @export var max_scores: Control
-@export var bars: Control
-@onready var health_bar: ColorRect = bars.get_node('hp_bar/HealthRect')
-@onready var defense_bar: ColorRect = bars.get_node('defense_bar/DefenseRect')
+@export var player_bars: Control
+@onready var health_bar: ColorRect = player_bars.get_node('hp_bar/HealthRect')
+@onready var defense_bar: ColorRect = player_bars.get_node('defense_bar/DefenseRect')
 @onready var move_label: Label = max_scores.get_node('MoveRect/MoveLabel')
 @onready var attack_label: Label = max_scores.get_node('AttackRect/AttackLabel')
 @onready var heal_label: Label = max_scores.get_node('HealRect/HealLabel')
