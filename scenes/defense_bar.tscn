@@ -1,0 +1,110 @@
+[gd_scene format=3 uid="uid://kolp0x0ucfeh"]
+
+[node name="defense_bar" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 514.0
+offset_bottom = 26.0
+
+[node name="DefenseRect" type="ColorRect" parent="."]
+layout_mode = 0
+offset_top = 3.0
+offset_right = 511.0
+offset_bottom = 23.0
+color = Color(0.483759, 0.391847, 0.416974, 1)
+
+[node name="ColorRect8" type="ColorRect" parent="."]
+z_index = -1
+layout_mode = 0
+offset_right = 514.0
+offset_bottom = 23.0
+color = Color(0, 0, 0, 1)
+
+[node name="ColorRect4" type="ColorRect" parent="."]
+layout_mode = 0
+offset_right = 514.0
+offset_bottom = 3.0
+color = Color(0.384314, 0.0745098, 0.0196078, 1)
+
+[node name="ColorRect18" type="ColorRect" parent="."]
+layout_mode = 0
+offset_top = 23.0
+offset_right = 514.0
+offset_bottom = 26.0
+color = Color(0.384314, 0.0745098, 0.0196078, 1)
+
+[node name="ColorRect19" type="ColorRect" parent="."]
+layout_mode = 0
+offset_left = 457.0
+offset_right = 460.0
+offset_bottom = 26.0
+color = Color(0.384314, 0.0745098, 0.0196078, 1)
+
+[node name="ColorRect29" type="ColorRect" parent="."]
+layout_mode = 0
+offset_left = 511.0
+offset_right = 514.0
+offset_bottom = 26.0
+color = Color(0.384314, 0.0745098, 0.0196078, 1)
+
+[node name="ColorRect20" type="ColorRect" parent="."]
+layout_mode = 0
+offset_left = 407.0
+offset_right = 410.0
+offset_bottom = 26.0
+color = Color(0.384314, 0.0745098, 0.0196078, 1)
+
+[node name="ColorRect21" type="ColorRect" parent="."]
+layout_mode = 0
+offset_left = 356.0
+offset_right = 359.0
+offset_bottom = 26.0
+color = Color(0.384314, 0.0745098, 0.0196078, 1)
+
+[node name="ColorRect22" type="ColorRect" parent="."]
+layout_mode = 0
+offset_left = 306.0
+offset_right = 309.0
+offset_bottom = 26.0
+color = Color(0.384314, 0.0745098, 0.0196078, 1)
+
+[node name="ColorRect23" type="ColorRect" parent="."]
+layout_mode = 0
+offset_left = 253.0
+offset_right = 256.0
+offset_bottom = 26.0
+color = Color(0.384314, 0.0745098, 0.0196078, 1)
+
+[node name="ColorRect24" type="ColorRect" parent="."]
+layout_mode = 0
+offset_left = 204.0
+offset_right = 207.0
+offset_bottom = 26.0
+color = Color(0.384314, 0.0745098, 0.0196078, 1)
+
+[node name="ColorRect25" type="ColorRect" parent="."]
+layout_mode = 0
+offset_left = 150.0
+offset_right = 153.0
+offset_bottom = 26.0
+color = Color(0.384314, 0.0745098, 0.0196078, 1)
+
+[node name="ColorRect26" type="ColorRect" parent="."]
+layout_mode = 0
+offset_left = 99.0
+offset_right = 102.0
+offset_bottom = 26.0
+color = Color(0.384314, 0.0745098, 0.0196078, 1)
+
+[node name="ColorRect27" type="ColorRect" parent="."]
+layout_mode = 0
+offset_left = 49.0
+offset_right = 52.0
+offset_bottom = 26.0
+color = Color(0.384314, 0.0745098, 0.0196078, 1)
+
+[node name="ColorRect28" type="ColorRect" parent="."]
+layout_mode = 0
+offset_right = 3.0
+offset_bottom = 26.0
+color = Color(0.384314, 0.0745098, 0.0196078, 1)

@@ -1,0 +1,309 @@
+[gd_scene load_steps=23 format=3 uid="uid://x83t6t456pdf"]
+
+[ext_resource type="PackedScene" uid="uid://pllgtdsxxw2s" path="res://scenes/table.tscn" id="1_2gx6p"]
+[ext_resource type="Script" uid="uid://bs0f6ystj1uo2" path="res://scripts/table.gd" id="2_wk856"]
+[ext_resource type="PackedScene" uid="uid://bti8fmdpm8cgl" path="res://scenes/block.tscn" id="3_jfkan"]
+[ext_resource type="PackedScene" uid="uid://ds71pq7djg3au" path="res://scenes/room.tscn" id="4_r2l36"]
+[ext_resource type="Script" uid="uid://df21f7ju361lo" path="res://scripts/command_executor.gd" id="5_a1joa"]
+[ext_resource type="PackedScene" uid="uid://dfndr3lvfsah5" path="res://scenes/player.tscn" id="5_k4xvw"]
+[ext_resource type="PackedScene" uid="uid://befuuhuf4myhq" path="res://scenes/command_menu.tscn" id="5_wp0k4"]
+[ext_resource type="PackedScene" uid="uid://b405a6pxtd1vg" path="res://scenes/Enemy.tscn" id="8_uc31q"]
+[ext_resource type="PackedScene" uid="uid://kolp0x0ucfeh" path="res://scenes/defense_bar.tscn" id="9_lhr70"]
+[ext_resource type="PackedScene" uid="uid://d3hruys1lpbf3" path="res://scenes/wall.tscn" id="9_qmy6f"]
+[ext_resource type="Script" uid="uid://jcjkaqukp4lb" path="res://scripts/ui.gd" id="9_wp0k4"]
+[ext_resource type="PackedScene" uid="uid://b1n1mnvax3cup" path="res://scenes/hp_bar.tscn" id="10_wp0k4"]
+[ext_resource type="Script" uid="uid://okdqbifhl0ui" path="res://scripts/enemy_stats.gd" id="13_3p2gp"]
+[ext_resource type="Texture2D" uid="uid://bt757tqtw10gr" path="res://sprites/Free - Raven Fantasy Icons/Full Spritesheet/32x32.png" id="13_cvmbd"]
+[ext_resource type="PackedScene" uid="uid://cqa3vxgvdii24" path="res://scenes/heal_point.tscn" id="13_mwfav"]
+[ext_resource type="LabelSettings" uid="uid://di7qwojobxj1y" path="res://sprites/Command.tres" id="15_3p2gp"]
+
+[sub_resource type="InputEventKey" id="InputEventKey_u50so"]
+device = -1
+keycode = 32
+unicode = 32
+
+[sub_resource type="Shortcut" id="Shortcut_gdhsm"]
+events = [SubResource("InputEventKey_u50so")]
+
+[sub_resource type="LabelSettings" id="LabelSettings_q8u5g"]
+font_size = 83
+
+[sub_resource type="LabelSettings" id="LabelSettings_qmy6f"]
+font_size = 121
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ft6cd"]
+atlas = ExtResource("13_cvmbd")
+region = Rect2(32, 4224, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_cvmbd"]
+atlas = ExtResource("13_cvmbd")
+region = Rect2(64, 1312, 32, 32)
+
+[node name="Main" type="Node2D"]
+metadata/_edit_horizontal_guides_ = [-43.0]
+
+[node name="Table" parent="." instance=ExtResource("1_2gx6p")]
+position = Vector2(121, 91)
+script = ExtResource("2_wk856")
+
+[node name="Block" parent="Table" instance=ExtResource("3_jfkan")]
+position = Vector2(218, -25)
+scale = Vector2(0.9, 0.9)
+type = 1
+text = "начало хода"
+
+[node name="Block2" parent="Table" instance=ExtResource("3_jfkan")]
+position = Vector2(224, 389)
+scale = Vector2(0.9, 0.9)
+type = 2
+text = "начало хода"
+
+[node name="Block3" parent="Table" instance=ExtResource("3_jfkan")]
+position = Vector2(17, 389)
+scale = Vector2(0.9, 0.9)
+type = 1
+text = "здоровье < 50%"
+
+[node name="CommandExecutor" type="Node" parent="Table" node_paths=PackedStringArray("ui_node", "room")]
+script = ExtResource("5_a1joa")
+ui_node = NodePath("../../UI")
+room = NodePath("../../Room")
+
+[node name="CommandMenu" parent="Table" instance=ExtResource("5_wp0k4")]
+position = Vector2(-117, -38)
+
+[node name="Room" parent="." instance=ExtResource("4_r2l36")]
+position = Vector2(531, 84)
+scale = Vector2(0.935711, 0.935711)
+enemy_scene = ExtResource("8_uc31q")
+
+[node name="Player" parent="Room" instance=ExtResource("5_k4xvw")]
+position = Vector2(359.085, 504.429)
+scale = Vector2(2.5, 2.5)
+
+[node name="Walls" type="Node2D" parent="Room"]
+
+[node name="Wall" parent="Room/Walls" instance=ExtResource("9_qmy6f")]
+position = Vector2(457.406, 71.6033)
+
+[node name="Wall2" parent="Room/Walls" instance=ExtResource("9_qmy6f")]
+position = Vector2(263.97, 72.672)
+
+[node name="Wall3" parent="Room/Walls" instance=ExtResource("9_qmy6f")]
+position = Vector2(456.337, 457.406)
+
+[node name="Wall9" parent="Room/Walls" instance=ExtResource("9_qmy6f")]
+position = Vector2(551.452, 361.223)
+
+[node name="Wall11" parent="Room/Walls" instance=ExtResource("9_qmy6f")]
+position = Vector2(265.039, 266.108)
+
+[node name="Wall16" parent="Room/Walls" instance=ExtResource("9_qmy6f")]
+position = Vector2(456.337, 263.97)
+
+[node name="Wall18" parent="Room/Walls" instance=ExtResource("9_qmy6f")]
+position = Vector2(358.017, 359.085)
+
+[node name="Wall22" parent="Room/Walls" instance=ExtResource("9_qmy6f")]
+position = Vector2(360.154, 167.787)
+
+[node name="Wall12" parent="Room/Walls" instance=ExtResource("9_qmy6f")]
+position = Vector2(506.567, 458.475)
+
+[node name="Wall13" parent="Room/Walls" instance=ExtResource("9_qmy6f")]
+position = Vector2(550.384, 405.04)
+
+[node name="Wall15" parent="Room/Walls" instance=ExtResource("9_qmy6f")]
+position = Vector2(552.521, 169.924)
+
+[node name="Wall17" parent="Room/Walls" instance=ExtResource("9_qmy6f")]
+position = Vector2(551.452, 119.695)
+
+[node name="Wall19" parent="Room/Walls" instance=ExtResource("9_qmy6f")]
+position = Vector2(215.879, 454.2)
+
+[node name="Wall20" parent="Room/Walls" instance=ExtResource("9_qmy6f")]
+position = Vector2(170.993, 406.108)
+
+[node name="Wall23" parent="Room/Walls" instance=ExtResource("9_qmy6f")]
+position = Vector2(169.924, 118.626)
+
+[node name="Wall4" parent="Room/Walls" instance=ExtResource("9_qmy6f")]
+position = Vector2(169.924, 361.223)
+
+[node name="Wall5" parent="Room/Walls" instance=ExtResource("9_qmy6f")]
+position = Vector2(214.81, 72.672)
+
+[node name="Wall6" parent="Room/Walls" instance=ExtResource("9_qmy6f")]
+position = Vector2(503.361, 69.4659)
+
+[node name="Wall7" parent="Room/Walls" instance=ExtResource("9_qmy6f")]
+position = Vector2(265.039, 455.269)
+
+[node name="Wall8" parent="Room/Walls" instance=ExtResource("9_qmy6f")]
+position = Vector2(168.856, 168.856)
+
+[node name="UI" type="Control" parent="." node_paths=PackedStringArray("player", "max_scores", "player_bars")]
+layout_mode = 3
+anchors_preset = 0
+offset_left = 809.0
+offset_top = 591.0
+offset_right = 1125.0
+offset_bottom = 643.0
+mouse_filter = 2
+script = ExtResource("9_wp0k4")
+player = NodePath("../Room/Player")
+max_scores = NodePath("MaxScores")
+player_bars = NodePath("PlayerBars")
+metadata/_edit_use_anchors_ = true
+
+[node name="Button" type="Button" parent="UI"]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = -2.17675
+anchor_top = 0.346308
+anchor_right = -0.712419
+anchor_bottom = 1.09646
+offset_left = -0.147949
+offset_top = -0.00799561
+offset_right = 0.124008
+offset_bottom = -0.0160007
+shortcut = SubResource("Shortcut_gdhsm")
+text = "Запуск"
+metadata/_edit_use_anchors_ = true
+
+[node name="Labels" type="Control" parent="UI"]
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+mouse_filter = 2
+metadata/_edit_use_anchors_ = true
+
+[node name="DefeatLabel" type="Label" parent="UI/Labels"]
+visible = false
+layout_mode = 0
+offset_left = -214.0
+offset_top = -353.0
+offset_right = 339.0
+offset_bottom = -239.0
+text = "Поражение..."
+label_settings = SubResource("LabelSettings_q8u5g")
+
+[node name="WinLabel" type="Label" parent="UI/Labels"]
+visible = false
+z_index = -2
+layout_mode = 0
+offset_left = -175.0
+offset_top = -393.0
+offset_right = 310.0
+offset_bottom = -227.0
+text = "Победа!"
+label_settings = SubResource("LabelSettings_qmy6f")
+
+[node name="PlayerBars" type="Control" parent="UI"]
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+mouse_filter = 2
+metadata/_edit_use_anchors_ = true
+
+[node name="defense_bar" parent="UI/PlayerBars" instance=ExtResource("9_lhr70")]
+offset_left = -688.0
+offset_top = -591.0
+offset_right = -174.0
+offset_bottom = -565.0
+scale = Vector2(0.9, 1)
+mouse_filter = 2
+
+[node name="hp_bar" parent="UI/PlayerBars" instance=ExtResource("10_wp0k4")]
+offset_left = -688.0
+offset_top = -568.0
+offset_right = -174.0
+offset_bottom = -542.0
+scale = Vector2(0.9, 1)
+mouse_filter = 2
+
+[node name="TextureRect" type="TextureRect" parent="UI/PlayerBars"]
+layout_mode = 0
+offset_left = -713.0
+offset_top = -593.0
+offset_right = -681.0
+offset_bottom = -561.0
+scale = Vector2(0.821996, 0.821996)
+texture = SubResource("AtlasTexture_ft6cd")
+
+[node name="TextureRect2" type="TextureRect" parent="UI/PlayerBars"]
+layout_mode = 0
+offset_left = -714.0
+offset_top = -568.0
+offset_right = -682.0
+offset_bottom = -536.0
+scale = Vector2(0.822, 0.822)
+texture = SubResource("AtlasTexture_cvmbd")
+
+[node name="EnemyStats" type="Control" parent="UI"]
+layout_mode = 1
+anchor_left = -2.07278
+anchor_top = -10.4615
+anchor_right = -2.07278
+anchor_bottom = -10.4615
+offset_left = 516.0
+offset_top = -34.0
+offset_right = 556.0
+offset_bottom = 6.0
+mouse_filter = 2
+script = ExtResource("13_3p2gp")
+hp_scene = ExtResource("13_mwfav")
+metadata/_edit_use_anchors_ = true
+
+[node name="heal_points" type="Control" parent="UI/EnemyStats"]
+anchors_preset = 0
+offset_left = -34.0
+offset_top = 3.0
+offset_right = -34.0
+offset_bottom = 3.0
+mouse_filter = 2
+
+[node name="MaxScores" type="Control" parent="UI"]
+anchors_preset = 0
+offset_left = -711.0
+offset_top = -538.0
+offset_right = -691.0
+offset_bottom = -428.0
+mouse_filter = 2
+
+[node name="MoveLabel" type="Label" parent="UI/MaxScores"]
+layout_mode = 0
+offset_left = -1.0
+offset_top = -4.0
+offset_right = 21.0
+offset_bottom = 22.0
+label_settings = ExtResource("15_3p2gp")
+horizontal_alignment = 1
+
+[node name="HealLabel" type="Label" parent="UI/MaxScores"]
+layout_mode = 0
+offset_left = -1.0
+offset_top = 56.0
+offset_right = 21.0
+offset_bottom = 82.0
+label_settings = ExtResource("15_3p2gp")
+horizontal_alignment = 1
+
+[node name="DefenseLabel" type="Label" parent="UI/MaxScores"]
+layout_mode = 0
+offset_left = -1.0
+offset_top = 86.0
+offset_right = 21.0
+offset_bottom = 112.0
+label_settings = ExtResource("15_3p2gp")
+horizontal_alignment = 1
+
+[node name="AttackLabel" type="Label" parent="UI/MaxScores"]
+layout_mode = 0
+offset_left = -1.0
+offset_top = 26.0
+offset_right = 21.0
+offset_bottom = 52.0
+label_settings = ExtResource("15_3p2gp")
+horizontal_alignment = 1

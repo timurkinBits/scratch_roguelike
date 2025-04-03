@@ -1,0 +1,34 @@
+[gd_scene load_steps=3 format=3 uid="uid://befuuhuf4myhq"]
+
+[ext_resource type="Script" uid="uid://bsgmj065sao8k" path="res://scripts/command_menu.gd" id="1_lxkem"]
+[ext_resource type="PackedScene" uid="uid://bfi0oibojw25c" path="res://scenes/Command.tscn" id="2_xdt26"]
+
+[node name="CommandMenu" type="Node2D"]
+script = ExtResource("1_lxkem")
+
+[node name="Attack" parent="." instance=ExtResource("2_xdt26")]
+position = Vector2(0, 30)
+type = 4
+
+[node name="Heal" parent="." instance=ExtResource("2_xdt26")]
+position = Vector2(0, 60)
+type = 6
+
+[node name="Move" parent="." instance=ExtResource("2_xdt26")]
+type = 5
+
+[node name="Defense" parent="." instance=ExtResource("2_xdt26")]
+position = Vector2(0, 90)
+type = 7
+
+[node name="TurnLeft" parent="." instance=ExtResource("2_xdt26")]
+position = Vector2(0, 120)
+type = 1
+
+[node name="TurnRight" parent="." instance=ExtResource("2_xdt26")]
+position = Vector2(0, 150)
+type = 2
+
+[node name="TurnAround" parent="." instance=ExtResource("2_xdt26")]
+position = Vector2(0, 180)
+type = 3

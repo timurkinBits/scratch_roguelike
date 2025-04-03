@@ -1,0 +1,22 @@
+[gd_scene load_steps=4 format=3 uid="uid://x83t6t456pdf"]
+
+[ext_resource type="PackedScene" uid="uid://pllgtdsxxw2s" path="res://scenes/table/table.tscn" id="1_ptthn"]
+[ext_resource type="Script" path="res://scenes/table/table.gd" id="2_m8s7p"]
+[ext_resource type="PackedScene" uid="uid://bfi0oibojw25c" path="res://scenes/command/Command.tscn" id="2_ucacg"]
+
+[node name="Main" type="Node2D"]
+metadata/_edit_horizontal_guides_ = [-43.0]
+
+[node name="Table" parent="." instance=ExtResource("1_ptthn")]
+script = ExtResource("2_m8s7p")
+
+[node name="Command" parent="Table" instance=ExtResource("2_ucacg")]
+position = Vector2(841, 133)
+
+[node name="Command2" parent="Table" instance=ExtResource("2_ucacg")]
+position = Vector2(841, 152)
+type = null
+
+[node name="Command3" parent="Table" instance=ExtResource("2_ucacg")]
+position = Vector2(841, 171)
+type = null

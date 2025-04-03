@@ -1,0 +1,23 @@
+[gd_scene load_steps=5 format=3 uid="uid://d3hruys1lpbf3"]
+
+[ext_resource type="Script" uid="uid://cv11pnmbktn0q" path="res://scripts/wall.gd" id="1_wykyb"]
+[ext_resource type="Texture2D" uid="uid://cni2isbjoq12d" path="res://sprites/Tileset.png" id="2_2ktk7"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_e00m8"]
+atlas = ExtResource("2_2ktk7")
+region = Rect2(96, 64, 16, 16)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_2ktk7"]
+size = Vector2(43.2073, 43.2256)
+
+[node name="Wall" type="StaticBody2D"]
+script = ExtResource("1_wykyb")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+position = Vector2(-0.0398335, -0.0337663)
+scale = Vector2(2.7, 2.7)
+texture = SubResource("AtlasTexture_e00m8")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(-0.0224013, -0.00954294)
+shape = SubResource("RectangleShape2D_2ktk7")
