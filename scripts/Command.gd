@@ -22,6 +22,7 @@ signal menu_command_clicked(type: int)
 @onready var up_button: Button = $Texture/Up
 @onready var down_button: Button = $Texture/Down
 @onready var ui_node: UI = $'../../../UI'
+@onready var table: Table = get_parent().get_parent()
 
 var command_configs = {
 	TypeCommand.ATTACK: {
@@ -187,7 +188,7 @@ func _exit_tree() -> void:
 
 func _on_num_area_input_event(_viewport: Node, event: InputEvent, _shape_idx: int) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
-		if not is_menu_command:
+		if not is_menu_command and not table.is_turn_in_progress:  # Добавлена проверка состояния хода
 			# Открываем настройки при клике на область числа
 			is_settings = !is_settings
 			change_settings(is_settings)

@@ -11,11 +11,14 @@ var original_slot: CommandSlot = null
 var affected_block: Block = null
 var hover_timer: float = 0.0
 var has_shifted_commands: bool = false
+var is_turn_in_progress: bool = false
 
 @onready var table_texture: ColorRect = $Texture
 var command_scene = preload('res://scenes/Command.tscn')
 
 func _process(delta: float) -> void:
+	if is_turn_in_progress:  # Пропускаем обработку, если ход выполняется
+		return
 	if not dragged_card:
 		return
 		
@@ -45,9 +48,9 @@ func handle_hover_logic(delta: float) -> void:
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
-		if event.pressed:
+		if event.pressed and not is_turn_in_progress:  # Начинаем перетаскивание только если ход не выполняется
 			start_drag()
-		else:
+		elif not event.pressed:
 			finish_drag()
 
 func get_table_rect() -> Rect2:
@@ -115,14 +118,16 @@ func start_drag() -> void:
 func finish_drag() -> void:
 	if not dragged_card:
 		return
-	
 	var table_rect = get_table_rect()
-	
-	if hovered_slot and is_instance_valid(hovered_slot):
-		var invalid_condition_placement = dragged_card is Block and is_condition_block_in_block(dragged_card, hovered_slot)
-		
-		if would_fit_in_boundaries(dragged_card, hovered_slot, table_rect) and not invalid_condition_placement:
-			place_card_in_slot(hovered_slot)
+	if is_turn_in_progress:  # Во время хода просто ограничиваем положение объекта
+		enforce_table_boundaries(dragged_card, dragged_card.global_position, table_rect)
+	else:
+		if hovered_slot and is_instance_valid(hovered_slot):
+			var invalid_condition_placement = dragged_card is Block and is_condition_block_in_block(dragged_card, hovered_slot)
+			if would_fit_in_boundaries(dragged_card, hovered_slot, table_rect) and not invalid_condition_placement:
+				place_card_in_slot(hovered_slot)
+			else:
+				enforce_table_boundaries(dragged_card, dragged_card.global_position, table_rect)
 		else:
 			enforce_table_boundaries(dragged_card, dragged_card.global_position, table_rect)
 	

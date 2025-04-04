@@ -9,11 +9,11 @@ var heal_points: int = randi_range(3, 8)
 
 @onready var ui_stats: EnemyStats = $'../../UI/EnemyStats'
 @onready var command_executor = $"../../Table/CommandExecutor"
+@onready var sprite = $Sprite
 
 var hp_bar_offset: Vector2 = Vector2(0, -40)  # Смещение полосы над врагом
 
 func _ready() -> void:
-	sprites = $Sprite
 	super._ready()
 	add_to_group("enemies")
 	add_to_group("characters")
@@ -21,6 +21,15 @@ func _ready() -> void:
 	player = get_parent().get_node("Player")
 	if not player:
 		push_error("Player not found!")
+	sprite.animation = get_enemy_type() + "_idle"
+
+func get_enemy_type() -> String:
+	if damage <= 3:
+		return "weak_enemy"
+	elif damage == 4:
+		return "medium_enemy"
+	else:
+		return "strong_enemy"
 
 # Логика хода врага
 func take_turn() -> void:
@@ -66,23 +75,22 @@ func take_turn() -> void:
 			await attack_player()
 			
 func update_visual() -> void:
-	# We're using only one sprite for all directions
-	var sprite = $Sprite
-	
-	# Make sure the sprite is visible
+	var animation_prefix = get_enemy_type() + "_"
+
+	# Устанавливаем видимость спрайта
 	sprite.visible = true
-	
-	# Flip horizontally when facing left
+
+	# Воспроизводим анимацию в зависимости от состояния движения
+	if is_moving:
+		sprite.play(animation_prefix + "walk")
+	else:
+		sprite.play(animation_prefix + "idle")
+
+	# Отражаем спрайт горизонтально, если враг смотрит влево
 	if current_direction == "left":
 		sprite.flip_h = true
 	else:
 		sprite.flip_h = false
-	
-	# Play the appropriate animation based on movement state
-	if is_moving:
-		sprite.play("walk")
-	else:
-		sprite.play("idle")
 
 # Поиск пути к ближайшей клетке рядом с игроком
 func find_path_to_player() -> Array:
