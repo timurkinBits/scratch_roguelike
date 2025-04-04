@@ -2,6 +2,7 @@ extends Node
 
 @onready var button: Button = $"../../UI/Button"
 @onready var player: Player = $"../../Room/Player"
+@onready var table: Table = $".."
 @onready var hp_bar: UI = $"../../UI"
 
 @export var ui_node: UI
@@ -20,9 +21,9 @@ func _ready() -> void:
 func _on_button_pressed() -> void:
 	if !is_instance_valid(player):
 		return
-		
-	# Disable interactions during turn
+	# Отключаем взаимодействие во время хода
 	_disable_interactions()
+	table.is_turn_in_progress = true  # Устанавливаем флаг начала хода
 	
 	# Process turn phases
 	if !await _process_turn_phase("начало хода"): return
@@ -70,11 +71,9 @@ func _clear_all() -> bool:
 func _prepare_next_turn() -> void:
 	if !is_instance_valid(player):
 		return
-		
 	await get_tree().create_timer(0.2).timeout
-	
-	Global.reset_remaining_points()
 	ui_node.reset_defense()
+	table.is_turn_in_progress = false  # Сбрасываем флаг окончания хода
 	button.disabled = false
 	
 	# Show doors if no enemies
@@ -278,14 +277,19 @@ func clear_all() -> void:
 	var blocks = get_tree().get_nodes_in_group("blocks")
 	var commands_to_free: Array[Node] = []
 	
+	# First collect commands from blocks
 	for block in blocks:
 		if is_instance_valid(block):
 			collect_commands(block, commands_to_free)
+	
+	# Then collect all remaining commands on the table (not in slots)
+	var all_commands = get_tree().get_nodes_in_group("commands")
+	for command in all_commands:
+		if is_instance_valid(command) and not command.is_menu_command and not commands_to_free.has(command):
+			commands_to_free.append(command)
 	
 	await clear_commands(commands_to_free)
 	
 	for block in blocks:
 		if is_instance_valid(block):
 			block.update_slots()
-	
-	Global.reset_remaining_points()

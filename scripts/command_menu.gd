@@ -14,7 +14,7 @@ func _ready() -> void:
 
 func _on_menu_command_clicked(type: int) -> void:
 	var remaining_points = Global.get_remaining_points(type)
-	if remaining_points > 0:
+	if remaining_points > 0 and !table_node.is_turn_in_progress:
 		table_node.create_card(Command, type)
 	
 	update_command_appearances()

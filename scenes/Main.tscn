@@ -59,7 +59,7 @@ text = "начало хода"
 position = Vector2(17, 403)
 scale = Vector2(0.9, 0.9)
 type = 1
-text = "нет врагов"
+text = "здоровье < 50%"
 
 [node name="Block4" parent="Table" instance=ExtResource("3_jfkan")]
 position = Vector2(17, 288)
@@ -79,8 +79,6 @@ position = Vector2(-117, -38)
 position = Vector2(531, 117)
 scale = Vector2(0.935711, 0.935711)
 enemy_scene = ExtResource("8_uc31q")
-max_enemies = 3
-min_enemies = 1
 
 [node name="Player" parent="Room" instance=ExtResource("5_k4xvw")]
 position = Vector2(360.154, 500.154)
