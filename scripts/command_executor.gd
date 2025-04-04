@@ -84,8 +84,7 @@ func _prepare_next_turn() -> void:
 func check_and_execute_conditions(trigger_time: String) -> bool:
 	# Get condition blocks
 	var condition_blocks = get_tree().get_nodes_in_group("blocks").filter(
-		func(block): return block.type == Block.BlockType.CONDITION
-	)
+		func(block): return block.type == Block.BlockType.CONDITION)
 	
 	for block in condition_blocks:
 		# Match time-based triggers exactly, or check non-time conditions when trigger_time is empty
@@ -104,8 +103,7 @@ func clear_main_commands() -> void:
 	var commands_to_free = get_tree().get_nodes_in_group("commands").filter(
 		func(command): 
 			return is_instance_valid(command) and command.slot and command.slot.block and \
-				   command.slot.block.type != Block.BlockType.CONDITION
-	)
+				   command.slot.block.type != Block.BlockType.CONDITION)
 	
 	# Clear collected commands and nullify their slots
 	for command in commands_to_free:
@@ -132,14 +130,12 @@ func _on_player_dead() -> void:
 	await end_game_player_dead()
 
 func end_game_player_dead() -> void:
-	# Clean up
 	for panel in outline_panels:
 		if is_instance_valid(panel):
 			panel.queue_free()
 	outline_panels.clear()
 	await clear_all()
 	
-	# Show defeat screen
 	if button:
 		button.disabled = true
 	room.visible = false

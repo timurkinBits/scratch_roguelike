@@ -79,6 +79,9 @@ position = Vector2(-117, -38)
 position = Vector2(531, 117)
 scale = Vector2(0.935711, 0.935711)
 enemy_scene = ExtResource("8_uc31q")
+max_enemies = 1
+min_enemies = 1
+wall_scene = ExtResource("9_qmy6f")
 
 [node name="Player" parent="Room" instance=ExtResource("5_k4xvw")]
 position = Vector2(360.154, 500.154)
@@ -89,8 +92,11 @@ scale = Vector2(2.5, 2.5)
 [node name="Wall" parent="Room/Walls" instance=ExtResource("9_qmy6f")]
 position = Vector2(457.406, 71.6033)
 
+[node name="Wall10" parent="Room/Walls" instance=ExtResource("9_qmy6f")]
+position = Vector2(457.406, 172.062)
+
 [node name="Wall2" parent="Room/Walls" instance=ExtResource("9_qmy6f")]
-position = Vector2(263.97, 72.672)
+position = Vector2(455.269, 118.626)
 
 [node name="Wall3" parent="Room/Walls" instance=ExtResource("9_qmy6f")]
 position = Vector2(456.337, 457.406)
@@ -99,16 +105,49 @@ position = Vector2(456.337, 457.406)
 position = Vector2(551.452, 361.223)
 
 [node name="Wall11" parent="Room/Walls" instance=ExtResource("9_qmy6f")]
-position = Vector2(265.039, 266.108)
+position = Vector2(455.269, 362.291)
 
 [node name="Wall16" parent="Room/Walls" instance=ExtResource("9_qmy6f")]
-position = Vector2(456.337, 263.97)
+position = Vector2(168.856, 120.764)
 
 [node name="Wall18" parent="Room/Walls" instance=ExtResource("9_qmy6f")]
-position = Vector2(358.017, 359.085)
+position = Vector2(455.269, 408.246)
 
 [node name="Wall22" parent="Room/Walls" instance=ExtResource("9_qmy6f")]
-position = Vector2(360.154, 167.787)
+position = Vector2(168.856, 455.269)
+
+[node name="Wall24" parent="Room/Walls" instance=ExtResource("9_qmy6f")]
+position = Vector2(263.97, 408.246)
+
+[node name="Wall25" parent="Room/Walls" instance=ExtResource("9_qmy6f")]
+position = Vector2(261.833, 359.085)
+
+[node name="Wall26" parent="Room/Walls" instance=ExtResource("9_qmy6f")]
+position = Vector2(263.97, 167.787)
+
+[node name="Wall27" parent="Room/Walls" instance=ExtResource("9_qmy6f")]
+position = Vector2(263.97, 120.764)
+
+[node name="Wall28" parent="Room/Walls" instance=ExtResource("9_qmy6f")]
+position = Vector2(263.97, 72.672)
+
+[node name="Wall29" parent="Room/Walls" instance=ExtResource("9_qmy6f")]
+position = Vector2(216.947, 71.6033)
+
+[node name="Wall30" parent="Room/Walls" instance=ExtResource("9_qmy6f")]
+position = Vector2(169.924, 70.5346)
+
+[node name="Wall31" parent="Room/Walls" instance=ExtResource("9_qmy6f")]
+position = Vector2(220.153, 265.039)
+
+[node name="Wall32" parent="Room/Walls" instance=ExtResource("9_qmy6f")]
+position = Vector2(312.062, 265.039)
+
+[node name="Wall33" parent="Room/Walls" instance=ExtResource("9_qmy6f")]
+position = Vector2(408.246, 263.97)
+
+[node name="Wall34" parent="Room/Walls" instance=ExtResource("9_qmy6f")]
+position = Vector2(504.429, 265.039)
 
 [node name="Wall12" parent="Room/Walls" instance=ExtResource("9_qmy6f")]
 position = Vector2(506.567, 458.475)
@@ -129,13 +168,13 @@ position = Vector2(215.879, 454.2)
 position = Vector2(170.993, 406.108)
 
 [node name="Wall23" parent="Room/Walls" instance=ExtResource("9_qmy6f")]
-position = Vector2(169.924, 118.626)
+position = Vector2(551.452, 70.5346)
 
 [node name="Wall4" parent="Room/Walls" instance=ExtResource("9_qmy6f")]
-position = Vector2(161.375, 351.604)
+position = Vector2(166.718, 362.291)
 
 [node name="Wall5" parent="Room/Walls" instance=ExtResource("9_qmy6f")]
-position = Vector2(214.81, 72.672)
+position = Vector2(554.658, 457.406)
 
 [node name="Wall6" parent="Room/Walls" instance=ExtResource("9_qmy6f")]
 position = Vector2(503.361, 69.4659)
@@ -296,3 +335,18 @@ offset_right = -10.0
 offset_bottom = -317.0
 text = "Поражение..."
 label_settings = SubResource("LabelSettings_q8u5g")
+
+[node name="edit_label" type="Label" parent="UI"]
+layout_mode = 0
+offset_left = -563.0
+offset_top = -650.0
+offset_right = -523.0
+offset_bottom = -627.0
+text = "Режим редактирования выключен (нажмите E для включения)"
+
+[node name="layout_label" type="Label" parent="UI"]
+layout_mode = 0
+offset_left = -563.0
+offset_top = -601.0
+offset_right = -523.0
+offset_bottom = -578.0
