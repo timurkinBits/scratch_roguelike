@@ -1,11 +1,11 @@
 extends Node2D
 class_name Command
 
-enum TypeCommand { NONE, TURN_LEFT, TURN_RIGHT, TURN_AROUND, ATTACK, MOVE, HEAL, DEFENSE }
+enum TypeCommand { NONE, TURN, ATTACK, MOVE, HEAL, DEFENSE }
 
 @export var type: TypeCommand
 var value: int = 0
-var chances: Array[int] = [0, 2, 2, 2, 6, 7, 1, 1]
+var chances: Array[int] = [0, 6, 6, 7, 1, 1]
 var is_menu_command: bool = false
 var is_settings: bool = false
 var slot: CommandSlot
@@ -35,20 +35,11 @@ var command_configs = {
 		"color": Color.BLUE,
 		"icon": "res://sprites/fb658.png"
 	},
-	TypeCommand.TURN_LEFT: {
-		"prefix": "Налево ",
+	TypeCommand.TURN: {
+		"prefix": "Поворот ",
 		"color": Color.LIGHT_BLUE,
-		"icon": "res://sprites/fb647.png"
-	},
-	TypeCommand.TURN_RIGHT: {
-		"prefix": "Направо ",
-		"color": Color.LIGHT_BLUE,
-		"icon": "res://sprites/fb648.png"
-	},
-	TypeCommand.TURN_AROUND: {
-		"prefix": "Разворот ",
-		"color": Color.LIGHT_BLUE,
-		"icon": "res://sprites/fb649.png"
+		"icon": "res://sprites/fb647.png",
+		"values": [90, -90, 180]  # Значения углов: вправо, влево, разворот
 	},
 	TypeCommand.HEAL: {
 		"prefix": "Лечение ",
@@ -68,8 +59,19 @@ var command_configs = {
 }
 
 func _ready() -> void:
-	config = command_configs[type]
+	# Убедимся, что тип команды существует в конфигурации
+	if type in command_configs:
+		config = command_configs[type]
+	else:
+		# Если тип не найден, используем конфигурацию для NONE
+		config = command_configs[TypeCommand.NONE]
+	
+	# Инициализация значений углов для команды поворота
+	if type == TypeCommand.TURN:
+		if value == 0:  # Если значение не установлено, используем первый угол по умолчанию
+			value = config["values"][0]
 	num_label.visible = false
+		
 	change_settings(false)
 	
 	add_to_group("commands")
@@ -83,14 +85,26 @@ func _ready() -> void:
 	update_appearance()
 	
 func update_appearance() -> void:
-	sprite.color = config["color"]
-	if type not in [TypeCommand.TURN_LEFT, TypeCommand.TURN_RIGHT, TypeCommand.TURN_AROUND] and not is_menu_command:
+	if "color" in config:
+		sprite.color = config["color"]
+	else:
+		sprite.color = Color.WHITE
+	
+	if type == TypeCommand.TURN and !is_menu_command:
+		text_label.text = config["prefix"]
+		num_label.visible = true
+		num_label.text = str(value)
+	elif type in [TypeCommand.ATTACK, TypeCommand.MOVE, TypeCommand.HEAL, TypeCommand.DEFENSE] and !is_menu_command:
 		text_label.text = config["prefix"]
 		num_label.visible = true
 		set_number(value)
 	else:
 		text_label.text = config["prefix"]
-	icon.texture = load(config["icon"]) if config["icon"] else null
+		
+	if "icon" in config and config["icon"]:
+		icon.texture = load(config["icon"])
+	else:
+		icon.texture = null
 	
 	# Обновляем доступность кнопок в зависимости от оставшихся очков
 	if is_settings and !is_menu_command:
@@ -98,6 +112,22 @@ func update_appearance() -> void:
 			command.update_buttons_state()
 
 func set_number(new_value):
+	if type == TypeCommand.TURN:
+		# Для поворота обрабатываем значения углов
+		var values = config["values"]
+		var current_index = values.find(value)
+		var new_index
+		
+		if new_value > value:  # Кнопка вверх
+			new_index = (current_index + 1) % values.size()
+		else:  # Кнопка вниз
+			new_index = (current_index - 1 + values.size()) % values.size()
+			
+		value = values[new_index]
+		num_label.text = str(value)
+		return
+		
+	# Для остальных типов команд - стандартная логика
 	# Освобождаем очки текущего значения
 	if !is_menu_command and value > 0:
 		Global.release_points(type, value)
@@ -130,7 +160,11 @@ func set_number(new_value):
 			command.update_buttons_state()
 
 func update_buttons_state() -> void:
-	if type in [TypeCommand.ATTACK, TypeCommand.MOVE, TypeCommand.HEAL, TypeCommand.DEFENSE]:
+	if type == TypeCommand.TURN:
+		# Для команды поворота всегда активируем обе кнопки (циклический выбор)
+		up_button.disabled = false
+		down_button.disabled = false
+	elif type in [TypeCommand.ATTACK, TypeCommand.MOVE, TypeCommand.HEAL, TypeCommand.DEFENSE]:
 		var remaining = Global.get_remaining_points(type)
 		up_button.disabled = (value >= remaining + value) or (value >= get_max_points())
 		down_button.disabled = (value <= 1)
@@ -155,6 +189,10 @@ func _on_area_2d_input_event(_viewport: Node, event: InputEvent, _shape_idx: int
 			queue_free()
 
 func _on_up_pressed() -> void:
+	if type == TypeCommand.TURN:
+		set_number(value + 1)  # Передаем любое значение, больше текущего
+		return
+		
 	var remaining = Global.get_remaining_points(type) + value
 	var max_points = get_max_points()
 	var new_value = min(value + 1, remaining, max_points)
@@ -164,6 +202,10 @@ func _on_up_pressed() -> void:
 		command.update_buttons_state()
 
 func _on_down_pressed() -> void:
+	if type == TypeCommand.TURN:
+		set_number(value - 1)  # Передаем любое значение, меньше текущего
+		return
+		
 	if value > 1:
 		set_number(value - 1)
 	for command in get_tree().get_nodes_in_group("commands"):
@@ -177,7 +219,7 @@ func _exit_tree() -> void:
 		slot.command = null  # Очищаем ссылку на эту команду в слоте
 	
 	# Возвращаем очки в общий пул и обновляем UI
-	if !is_menu_command and value > 0:
+	if !is_menu_command and value > 0 and type != TypeCommand.TURN:
 		Global.release_points(type, value)
 		if ui_node and is_instance_valid(ui_node):
 			ui_node.change_scores(type)

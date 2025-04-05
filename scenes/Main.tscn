@@ -1,4 +1,4 @@
-[gd_scene load_steps=22 format=3 uid="uid://x83t6t456pdf"]
+[gd_scene load_steps=23 format=3 uid="uid://x83t6t456pdf"]
 
 [ext_resource type="PackedScene" uid="uid://pllgtdsxxw2s" path="res://scenes/table.tscn" id="1_2gx6p"]
 [ext_resource type="Script" uid="uid://bs0f6ystj1uo2" path="res://scripts/table.gd" id="2_wk856"]
@@ -11,6 +11,7 @@
 [ext_resource type="PackedScene" uid="uid://kolp0x0ucfeh" path="res://scenes/defense_bar.tscn" id="9_lhr70"]
 [ext_resource type="PackedScene" uid="uid://d3hruys1lpbf3" path="res://scenes/wall.tscn" id="9_qmy6f"]
 [ext_resource type="Script" uid="uid://jcjkaqukp4lb" path="res://scripts/ui.gd" id="9_wp0k4"]
+[ext_resource type="Script" uid="uid://b46fjemq5kbto" path="res://scripts/edit_mode.gd" id="10_ft6cd"]
 [ext_resource type="PackedScene" uid="uid://b1n1mnvax3cup" path="res://scenes/hp_bar.tscn" id="10_wp0k4"]
 [ext_resource type="Script" uid="uid://okdqbifhl0ui" path="res://scripts/enemy_stats.gd" id="13_3p2gp"]
 [ext_resource type="Texture2D" uid="uid://djwyqrfy3bdly" path="res://sprites/32x32.png" id="13_cvmbd"]
@@ -73,117 +74,20 @@ ui_node = NodePath("../../UI")
 room = NodePath("../../Room")
 
 [node name="CommandMenu" parent="Table" instance=ExtResource("5_wp0k4")]
-position = Vector2(-117, -38)
+position = Vector2(-120, -38)
 
 [node name="Room" parent="." instance=ExtResource("4_r2l36")]
 position = Vector2(531, 117)
 scale = Vector2(0.935711, 0.935711)
 enemy_scene = ExtResource("8_uc31q")
-max_enemies = 1
-min_enemies = 1
 wall_scene = ExtResource("9_qmy6f")
 
 [node name="Player" parent="Room" instance=ExtResource("5_k4xvw")]
 position = Vector2(360.154, 500.154)
 scale = Vector2(2.5, 2.5)
 
-[node name="Walls" type="Node2D" parent="Room"]
-
-[node name="Wall" parent="Room/Walls" instance=ExtResource("9_qmy6f")]
-position = Vector2(457.406, 71.6033)
-
-[node name="Wall10" parent="Room/Walls" instance=ExtResource("9_qmy6f")]
-position = Vector2(457.406, 172.062)
-
-[node name="Wall2" parent="Room/Walls" instance=ExtResource("9_qmy6f")]
-position = Vector2(455.269, 118.626)
-
-[node name="Wall3" parent="Room/Walls" instance=ExtResource("9_qmy6f")]
-position = Vector2(456.337, 457.406)
-
-[node name="Wall9" parent="Room/Walls" instance=ExtResource("9_qmy6f")]
-position = Vector2(551.452, 361.223)
-
-[node name="Wall11" parent="Room/Walls" instance=ExtResource("9_qmy6f")]
-position = Vector2(455.269, 362.291)
-
-[node name="Wall16" parent="Room/Walls" instance=ExtResource("9_qmy6f")]
-position = Vector2(168.856, 120.764)
-
-[node name="Wall18" parent="Room/Walls" instance=ExtResource("9_qmy6f")]
-position = Vector2(455.269, 408.246)
-
-[node name="Wall22" parent="Room/Walls" instance=ExtResource("9_qmy6f")]
-position = Vector2(168.856, 455.269)
-
-[node name="Wall24" parent="Room/Walls" instance=ExtResource("9_qmy6f")]
-position = Vector2(263.97, 408.246)
-
-[node name="Wall25" parent="Room/Walls" instance=ExtResource("9_qmy6f")]
-position = Vector2(261.833, 359.085)
-
-[node name="Wall26" parent="Room/Walls" instance=ExtResource("9_qmy6f")]
-position = Vector2(263.97, 167.787)
-
-[node name="Wall27" parent="Room/Walls" instance=ExtResource("9_qmy6f")]
-position = Vector2(263.97, 120.764)
-
-[node name="Wall28" parent="Room/Walls" instance=ExtResource("9_qmy6f")]
-position = Vector2(263.97, 72.672)
-
-[node name="Wall29" parent="Room/Walls" instance=ExtResource("9_qmy6f")]
-position = Vector2(216.947, 71.6033)
-
-[node name="Wall30" parent="Room/Walls" instance=ExtResource("9_qmy6f")]
-position = Vector2(169.924, 70.5346)
-
-[node name="Wall31" parent="Room/Walls" instance=ExtResource("9_qmy6f")]
-position = Vector2(220.153, 265.039)
-
-[node name="Wall32" parent="Room/Walls" instance=ExtResource("9_qmy6f")]
-position = Vector2(312.062, 265.039)
-
-[node name="Wall33" parent="Room/Walls" instance=ExtResource("9_qmy6f")]
-position = Vector2(408.246, 263.97)
-
-[node name="Wall34" parent="Room/Walls" instance=ExtResource("9_qmy6f")]
-position = Vector2(504.429, 265.039)
-
-[node name="Wall12" parent="Room/Walls" instance=ExtResource("9_qmy6f")]
-position = Vector2(506.567, 458.475)
-
-[node name="Wall13" parent="Room/Walls" instance=ExtResource("9_qmy6f")]
-position = Vector2(550.384, 405.04)
-
-[node name="Wall15" parent="Room/Walls" instance=ExtResource("9_qmy6f")]
-position = Vector2(552.521, 169.924)
-
-[node name="Wall17" parent="Room/Walls" instance=ExtResource("9_qmy6f")]
-position = Vector2(551.452, 119.695)
-
-[node name="Wall19" parent="Room/Walls" instance=ExtResource("9_qmy6f")]
-position = Vector2(215.879, 454.2)
-
-[node name="Wall20" parent="Room/Walls" instance=ExtResource("9_qmy6f")]
-position = Vector2(170.993, 406.108)
-
-[node name="Wall23" parent="Room/Walls" instance=ExtResource("9_qmy6f")]
-position = Vector2(551.452, 70.5346)
-
-[node name="Wall4" parent="Room/Walls" instance=ExtResource("9_qmy6f")]
-position = Vector2(166.718, 362.291)
-
-[node name="Wall5" parent="Room/Walls" instance=ExtResource("9_qmy6f")]
-position = Vector2(554.658, 457.406)
-
-[node name="Wall6" parent="Room/Walls" instance=ExtResource("9_qmy6f")]
-position = Vector2(503.361, 69.4659)
-
-[node name="Wall7" parent="Room/Walls" instance=ExtResource("9_qmy6f")]
-position = Vector2(265.039, 455.269)
-
-[node name="Wall8" parent="Room/Walls" instance=ExtResource("9_qmy6f")]
-position = Vector2(168.856, 168.856)
+[node name="EditModeManager" type="Node2D" parent="Room"]
+script = ExtResource("10_ft6cd")
 
 [node name="UI" type="Control" parent="." node_paths=PackedStringArray("player", "max_scores", "player_bars")]
 layout_mode = 3
@@ -284,9 +188,9 @@ mouse_filter = 2
 
 [node name="MaxScores" type="Control" parent="UI"]
 anchors_preset = 0
-offset_left = -1057.0
+offset_left = -1060.0
 offset_top = -602.0
-offset_right = -1037.0
+offset_right = -1040.0
 offset_bottom = -492.0
 mouse_filter = 2
 

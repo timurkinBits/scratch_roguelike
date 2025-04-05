@@ -8,27 +8,19 @@ script = ExtResource("1_lxkem")
 
 [node name="Attack" parent="." instance=ExtResource("2_xdt26")]
 position = Vector2(0, 30)
-type = 4
+type = 2
 
 [node name="Heal" parent="." instance=ExtResource("2_xdt26")]
 position = Vector2(0, 60)
-type = 6
+type = 4
 
 [node name="Move" parent="." instance=ExtResource("2_xdt26")]
-type = 5
+type = 3
 
 [node name="Defense" parent="." instance=ExtResource("2_xdt26")]
 position = Vector2(0, 90)
-type = 7
+type = 5
 
 [node name="TurnLeft" parent="." instance=ExtResource("2_xdt26")]
 position = Vector2(0, 120)
 type = 1
-
-[node name="TurnRight" parent="." instance=ExtResource("2_xdt26")]
-position = Vector2(0, 150)
-type = 2
-
-[node name="TurnAround" parent="." instance=ExtResource("2_xdt26")]
-position = Vector2(0, 180)
-type = 3
