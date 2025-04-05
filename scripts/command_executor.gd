@@ -78,7 +78,7 @@ func _prepare_next_turn() -> void:
 	
 	# Show doors if no enemies
 	if get_tree().get_nodes_in_group('enemies').is_empty():
-		for door in get_tree().get_nodes_in_group('doors'):
+		for door in get_tree().get_nodes_in_group('level_door'):
 			door.visible = true
 
 func check_and_execute_conditions(trigger_time: String) -> bool:

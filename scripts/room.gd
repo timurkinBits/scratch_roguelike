@@ -3,10 +3,11 @@ extends Node2D
 signal room_changed(direction: String)
 
 @export var enemy_scene: PackedScene
-@export var max_enemies: int = 5
-@export var min_enemies: int = 3
+@export var max_enemies: int = 3
+@export var min_enemies: int = 1
 @export var min_distance_from_player: int = 5
 @export var wall_scene: PackedScene
+@export var door_scene: PackedScene
 @export var allow_layout_editing: bool = false
 
 const DOOR_POSITIONS = {
@@ -29,7 +30,7 @@ const OPPOSITE_DIRECTIONS = {
 
 func _ready() -> void:
 	toggle_doors(false)
-	edit_mode_manager.init(self, player, tile_map, wall_scene, allow_layout_editing)
+	edit_mode_manager.init(self, player, tile_map, wall_scene, door_scene, allow_layout_editing)
 	edit_mode_manager.apply_random_layout()
 	spawn_enemies()
 
@@ -38,12 +39,12 @@ func apply_random_layout() -> void:
 	edit_mode_manager.apply_random_layout()
 
 func clear_walls() -> void:
-	var walls = get_tree().get_nodes_in_group('barrier')
-	for wall in walls:
-		wall.queue_free()
+	for wall in get_tree().get_nodes_in_group('objects'):
+		if !wall.is_in_group("edit_mode_button"):
+			wall.queue_free()
 
 func toggle_doors(is_door_visible: bool) -> void:
-	for door in get_tree().get_nodes_in_group('doors'):
+	for door in get_tree().get_nodes_in_group('level_door'):
 		door.visible = is_door_visible
 
 func clear_room() -> void:
@@ -138,3 +139,9 @@ func spawn_wall_at_position(tile_position: Vector2) -> void:
 		var wall_instance = wall_scene.instantiate()
 		add_child(wall_instance)
 		wall_instance.position = wall_instance.get_world_position_from_tile(tile_position)
+		
+func spawn_door_at_position(tile_position: Vector2) -> void:
+	if door_scene:
+		var door_instance = door_scene.instantiate()
+		add_child(door_instance)
+		door_instance.position = door_instance.get_world_position_from_tile(tile_position)

@@ -1,7 +1,7 @@
 extends Node2D
 class_name Command
 
-enum TypeCommand { NONE, TURN, ATTACK, MOVE, HEAL, DEFENSE }
+enum TypeCommand { NONE, TURN, ATTACK, MOVE, USE, HEAL, DEFENSE }
 
 @export var type: TypeCommand
 var value: int = 0
@@ -40,6 +40,11 @@ var command_configs = {
 		"color": Color.LIGHT_BLUE,
 		"icon": "res://sprites/fb647.png",
 		"values": [90, -90, 180]  # Значения углов: вправо, влево, разворот
+	},
+	TypeCommand.USE: {
+		"prefix": "Использовать ",
+		"color": Color.BLUE_VIOLET,
+		"icon": "res://sprites/fb658.png"
 	},
 	TypeCommand.HEAL: {
 		"prefix": "Лечение ",

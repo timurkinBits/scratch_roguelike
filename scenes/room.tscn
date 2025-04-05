@@ -510,7 +510,7 @@ mouse_filter = 2
 texture = SubResource("AtlasTexture_ybpoa")
 metadata/_edit_use_anchors_ = true
 
-[node name="TextureRect" type="TextureRect" parent="DoorDown" groups=["doors"]]
+[node name="TextureRect" type="TextureRect" parent="DoorDown" groups=["level_door"]]
 layout_mode = 0
 offset_left = 35.0
 offset_top = -0.00012666
@@ -521,7 +521,7 @@ scale = Vector2(0.057546, 0.0475623)
 texture = ExtResource("3_85yof")
 metadata/_edit_use_anchors_ = true
 
-[node name="DownDoor" type="Area2D" parent="DoorDown" groups=["doors"]]
+[node name="DownDoor" type="Area2D" parent="DoorDown" groups=["level_door"]]
 position = Vector2(-286, -239.998)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="DoorDown/DownDoor"]
@@ -538,7 +538,7 @@ mouse_filter = 2
 texture = SubResource("AtlasTexture_ybpoa")
 metadata/_edit_use_anchors_ = true
 
-[node name="TextureRect2" type="TextureRect" parent="DoorRight" groups=["doors"]]
+[node name="TextureRect2" type="TextureRect" parent="DoorRight" groups=["level_door"]]
 layout_mode = 0
 offset_left = 40.0
 offset_right = 840.0
@@ -548,7 +548,7 @@ scale = Vector2(0.0573871, 0.0498282)
 texture = ExtResource("3_85yof")
 metadata/_edit_use_anchors_ = true
 
-[node name="RightDoor" type="Area2D" parent="DoorRight" groups=["doors"]]
+[node name="RightDoor" type="Area2D" parent="DoorRight" groups=["level_door"]]
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="DoorRight/RightDoor"]
 position = Vector2(19.75, 22.5)
@@ -564,7 +564,7 @@ mouse_filter = 2
 texture = SubResource("AtlasTexture_ybpoa")
 metadata/_edit_use_anchors_ = true
 
-[node name="TextureRect3" type="TextureRect" parent="DoorLeft" groups=["doors"]]
+[node name="TextureRect3" type="TextureRect" parent="DoorLeft" groups=["level_door"]]
 layout_mode = 0
 offset_left = 40.0
 offset_top = 1.0001
@@ -575,7 +575,7 @@ scale = Vector2(0.0566592, 0.0541017)
 texture = ExtResource("3_85yof")
 metadata/_edit_use_anchors_ = true
 
-[node name="LeftDoor" type="Area2D" parent="DoorLeft" groups=["doors"]]
+[node name="LeftDoor" type="Area2D" parent="DoorLeft" groups=["level_door"]]
 position = Vector2(-528, 45.0001)
 rotation = 3.14159
 
@@ -592,7 +592,7 @@ mouse_filter = 2
 texture = SubResource("AtlasTexture_ybpoa")
 metadata/_edit_use_anchors_ = true
 
-[node name="TextureRect4" type="TextureRect" parent="DoorUp" groups=["doors"]]
+[node name="TextureRect4" type="TextureRect" parent="DoorUp" groups=["level_door"]]
 layout_mode = 0
 offset_left = 40.0
 offset_right = 840.0
@@ -602,7 +602,7 @@ scale = Vector2(0.0573872, 0.0499692)
 texture = ExtResource("3_85yof")
 metadata/_edit_use_anchors_ = true
 
-[node name="UpDoor" type="Area2D" parent="DoorUp" groups=["doors"]]
+[node name="UpDoor" type="Area2D" parent="DoorUp" groups=["level_door"]]
 position = Vector2(-210.001, 285.999)
 rotation = 1.5708
 
