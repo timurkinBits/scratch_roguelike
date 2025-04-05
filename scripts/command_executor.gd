@@ -217,9 +217,10 @@ func execute_command(command: Command) -> void:
 	# Execute command based on type
 	match command.type:
 		Command.TypeCommand.MOVE: await player.move(command.value)
-		Command.TypeCommand.TURN_LEFT: await player.turn("left")
-		Command.TypeCommand.TURN_RIGHT: await player.turn("right")
-		Command.TypeCommand.TURN_AROUND: await player.turn("around")
+		Command.TypeCommand.TURN: 
+			# Определяем направление поворота по значению угла
+			var direction = "right" if command.value == 90 else "left" if command.value == -90 else "around"
+			await player.turn(direction)
 		Command.TypeCommand.ATTACK: await player.attack(command.value)
 		Command.TypeCommand.HEAL: await player.add_hp(command.value)
 		Command.TypeCommand.DEFENSE: await player.add_defense(command.value)
