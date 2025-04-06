@@ -15,6 +15,7 @@ var is_turn_in_progress: bool = false
 
 @onready var table_texture: ColorRect = $Texture
 var command_scene = preload('res://scenes/Command.tscn')
+var block_scene = preload('res://scenes/Block.tscn')
 
 func _process(delta: float) -> void:
 	if is_turn_in_progress:  # Пропускаем обработку, если ход выполняется
@@ -87,7 +88,7 @@ func raycast_for_card() -> Node2D:
 		var obj = hit["collider"].get_parent()
 		if obj is CommandSlot and is_instance_valid(obj.command):
 			return obj.command
-		if (obj is Command and not obj.is_menu_command) or (obj is Block):
+		if not obj.is_menu_command and (obj is Command or obj is Block):
 			return obj
 	return null
 
@@ -203,18 +204,48 @@ func update_hovered_slot() -> void:
 			hovered_slot = obj
 			break
 
+# New method to create a copy of a command (this will be used instead of moving the menu command)
+func create_command_copy(type: int) -> void:
+	var remaining_points = Global.get_remaining_points(type)
+		
+	if remaining_points <= 0:
+		return
+		
+	var new_command = command_scene.instantiate()
+	new_command.type = type
+	table_texture.add_child(new_command)
+	new_command.update_appearance()
+	
+	new_command.set_number(1)
+	new_command.position = Vector2(8, 8)
+	new_command.add_to_group("commands")
+	
+# Создаем копию блока из меню
+func create_block_copy(type: int) -> void:
+	if is_turn_in_progress:
+		return
+		
+	var new_block = block_scene.instantiate()
+	new_block.type = type
+	
+	# Инициализируем значения по умолчанию в зависимости от типа
+	if type == Block.BlockType.CONDITION:
+		new_block.text = new_block.AVAILABLE_CONDITIONS[0]
+	elif type == Block.BlockType.LOOP:
+		new_block.loop_count = 2
+	elif type == Block.BlockType.ABILITY:
+		new_block.text = ""
+		
+	table_texture.add_child(new_block)
+	new_block.update_appearance()
+	new_block.initialize_slots()
+	
+	# Позиционируем блок в верхний левый угол стола
+	new_block.position = Vector2(8, 64)
+	new_block.add_to_group("blocks")
+
 func create_card(kind, type: int) -> void:
 	if kind == Command:
-		var remaining_points = Global.get_remaining_points(type)
-		
-		if remaining_points <= 0:
-			return
-		
-		var new_command = command_scene.instantiate()
-		new_command.type = type
-		table_texture.add_child(new_command)
-		new_command.update_appearance()
-		
-		new_command.set_number(1)
-		new_command.position = Vector2(8, 8)
-		new_command.add_to_group("commands")
+		create_command_copy(type)
+	else:
+		create_block_copy(type)

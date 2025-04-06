@@ -10,11 +10,18 @@ func _ready() -> void:
 		var area = $Area2D
 		area.collision_layer = 3
 		area.collision_mask = 3
+	update_visibility()
 
 func _process(_delta: float) -> void:
-	visible = table.dragged_card != null and command == null
+	update_visibility()
 	if command and is_instance_valid(command):
 		command.global_position = global_position
+
+func update_visibility() -> void:
+	if block.is_menu_command:
+		visible = false
+	else:
+		visible = table.dragged_card != null or command != null
 
 func add_command(new_command: Node2D) -> void:
 	if command != null or not is_instance_valid(new_command):

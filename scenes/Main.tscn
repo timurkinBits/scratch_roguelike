@@ -1,8 +1,8 @@
-[gd_scene load_steps=26 format=3 uid="uid://x83t6t456pdf"]
+[gd_scene load_steps=29 format=3 uid="uid://x83t6t456pdf"]
 
 [ext_resource type="PackedScene" uid="uid://pllgtdsxxw2s" path="res://scenes/table.tscn" id="1_2gx6p"]
 [ext_resource type="Script" uid="uid://bs0f6ystj1uo2" path="res://scripts/table.gd" id="2_wk856"]
-[ext_resource type="PackedScene" uid="uid://bti8fmdpm8cgl" path="res://scenes/block.tscn" id="3_jfkan"]
+[ext_resource type="PackedScene" uid="uid://bti8fmdpm8cgl" path="res://scenes/Block.tscn" id="3_jfkan"]
 [ext_resource type="PackedScene" uid="uid://ds71pq7djg3au" path="res://scenes/room.tscn" id="4_r2l36"]
 [ext_resource type="Script" uid="uid://df21f7ju361lo" path="res://scripts/command_executor.gd" id="5_a1joa"]
 [ext_resource type="PackedScene" uid="uid://dfndr3lvfsah5" path="res://scenes/player.tscn" id="5_k4xvw"]
@@ -14,13 +14,22 @@
 [ext_resource type="Script" uid="uid://b46fjemq5kbto" path="res://scripts/edit_mode.gd" id="10_ft6cd"]
 [ext_resource type="PackedScene" uid="uid://b1n1mnvax3cup" path="res://scenes/hp_bar.tscn" id="10_wp0k4"]
 [ext_resource type="PackedScene" uid="uid://bfbsx0uvdydab" path="res://scenes/door.tscn" id="11_bb450"]
+[ext_resource type="Texture2D" uid="uid://cni2isbjoq12d" path="res://sprites/Tileset.png" id="12_nfivy"]
 [ext_resource type="Script" uid="uid://okdqbifhl0ui" path="res://scripts/enemy_stats.gd" id="13_3p2gp"]
 [ext_resource type="Texture2D" uid="uid://djwyqrfy3bdly" path="res://sprites/32x32.png" id="13_cvmbd"]
 [ext_resource type="PackedScene" uid="uid://cqa3vxgvdii24" path="res://scenes/heal_point.tscn" id="13_mwfav"]
 [ext_resource type="LabelSettings" uid="uid://di7qwojobxj1y" path="res://sprites/Command.tres" id="15_3p2gp"]
 
+[sub_resource type="AtlasTexture" id="AtlasTexture_1nqs0"]
+atlas = ExtResource("12_nfivy")
+region = Rect2(96, 64, 16, 16)
+
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_bb450"]
 size = Vector2(42.7482, 42.7482)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_1iba3"]
+atlas = ExtResource("12_nfivy")
+region = Rect2(112, 64, 16, 16)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_nfivy"]
 size = Vector2(42.7483, 42.7482)
@@ -56,24 +65,6 @@ position = Vector2(218, -25)
 scale = Vector2(0.9, 0.9)
 type = 1
 text = "начало хода"
-
-[node name="Block2" parent="Table" instance=ExtResource("3_jfkan")]
-position = Vector2(224, 403)
-scale = Vector2(0.9, 0.9)
-type = 2
-text = "начало хода"
-
-[node name="Block3" parent="Table" instance=ExtResource("3_jfkan")]
-position = Vector2(17, 403)
-scale = Vector2(0.9, 0.9)
-type = 1
-text = "здоровье < 50%"
-
-[node name="Block4" parent="Table" instance=ExtResource("3_jfkan")]
-position = Vector2(17, 288)
-scale = Vector2(0.9, 0.9)
-type = 3
-text = "+1 урон"
 
 [node name="CommandExecutor" type="Node" parent="Table" node_paths=PackedStringArray("ui_node", "room")]
 script = ExtResource("5_a1joa")
@@ -111,19 +102,28 @@ offset_right = 105.191
 offset_bottom = -44.3285
 
 [node name="ObjectMenu" type="Node2D" parent="Room/EditModeManager"]
+visible = false
 
-[node name="Wall" parent="Room/EditModeManager/ObjectMenu" groups=["edit_mode_button"] instance=ExtResource("9_qmy6f")]
-position = Vector2(21.3741, -5.34353)
+[node name="Wall" type="Sprite2D" parent="Room/EditModeManager/ObjectMenu"]
+position = Vector2(25.8748, -13.6673)
+scale = Vector2(2.7, 2.7)
+texture = SubResource("AtlasTexture_1nqs0")
 
 [node name="Wall_button" type="Area2D" parent="Room/EditModeManager/ObjectMenu/Wall"]
+position = Vector2(7.93109, -1.96658)
+scale = Vector2(0.37037, 0.37037)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Room/EditModeManager/ObjectMenu/Wall/Wall_button"]
-position = Vector2(-0.000183105, 0)
+position = Vector2(-22.4827, 5.30977)
 shape = SubResource("RectangleShape2D_bb450")
 
-[node name="Door" parent="Room/EditModeManager/ObjectMenu" groups=["edit_mode_button"] instance=ExtResource("11_bb450")]
+[node name="Door" type="Sprite2D" parent="Room/EditModeManager/ObjectMenu"]
+position = Vector2(25.8748, 33.3558)
+scale = Vector2(2.7, 2.7)
+texture = SubResource("AtlasTexture_1iba3")
 
 [node name="Door_button" type="Area2D" parent="Room/EditModeManager/ObjectMenu/Door"]
+scale = Vector2(0.37037, 0.37037)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Room/EditModeManager/ObjectMenu/Door/Door_button"]
 shape = SubResource("RectangleShape2D_nfivy")

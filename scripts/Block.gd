@@ -3,6 +3,8 @@ class_name Block
 
 enum BlockType { NONE, CONDITION, LOOP, ABILITY }
 
+signal menu_command_clicked(type: int)
+
 @export_category("Block Settings")
 @export var type: BlockType
 @export var text: String
@@ -26,6 +28,7 @@ var slots: Array[CommandSlot] = []
 var parent_slot: CommandSlot = null
 var config: Dictionary
 var original_slot_commands: Array = []
+var is_menu_command: bool = false
 
 const AVAILABLE_CONDITIONS = [
 	"начало хода",
@@ -291,3 +294,9 @@ func set_condition(new_condition: String) -> void:
 	if type == BlockType.CONDITION and new_condition in AVAILABLE_CONDITIONS:
 		text = new_condition
 		update_appearance()
+
+
+func _on_area_2d_input_event(viewport: Node, event: InputEvent, shape_idx: int) -> void:
+	if event is InputEventMouseButton:
+		if event.button_index == MOUSE_BUTTON_RIGHT and !is_menu_command and event.pressed:
+			queue_free()

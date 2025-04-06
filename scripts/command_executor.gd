@@ -222,6 +222,7 @@ func execute_command(command: Command) -> void:
 			var direction = "right" if command.value == 90 else "left" if command.value == -90 else "around"
 			await player.turn(direction)
 		Command.TypeCommand.ATTACK: await player.attack(command.value)
+		Command.TypeCommand.USE: await player.use()  # Добавлена обработка команды USE
 		Command.TypeCommand.HEAL: await player.add_hp(command.value)
 		Command.TypeCommand.DEFENSE: await player.add_defense(command.value)
 	
