@@ -21,8 +21,9 @@ const MAX_LOOP_SLOTS := 3
 @onready var texture_up = $Texture/TextureUp
 @onready var texture_down = $Texture/TextureDown
 @onready var texture_left = $Texture/TextureLeft
-@onready var buttons = [$Up, $Down]
+@onready var buttons = [$'Buttons/Up', $'Buttons/Down']
 @onready var table = $'../..'
+@onready var button_color: ColorRect = $'Buttons/ColorRect'
 
 var slots: Array[CommandSlot] = []
 var parent_slot: CommandSlot = null
@@ -71,6 +72,7 @@ func _ready() -> void:
 	initialize_slots()
 	buttons[0].visible = false  # Скрываем кнопку "Up"
 	buttons[1].visible = false  # Скрываем кнопку "Down"
+	button_color.visible = false
 
 func initialize_slots() -> void:
 	if slots.is_empty():
@@ -372,6 +374,10 @@ func _exit_tree() -> void:
 		parent_slot.command = null
 		if parent_slot.block and is_instance_valid(parent_slot.block):
 			parent_slot.block.update_slots()
+	
+	# If it's not a menu command, release the block back to the pool
+	if !is_menu_command:
+		Global.release_block(type)
 
 func _on_up_pressed() -> void:
 	navigate_options(1)  # -1 означает переход к предыдущему элементу

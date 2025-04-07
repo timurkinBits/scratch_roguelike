@@ -13,7 +13,7 @@ var block: Block
 var additional_properties: String
 var config: Dictionary  # Кэшированная конфигурация для типа команды
 
-signal menu_command_clicked(type: int)
+signal menu_card_clicked(type: int)
 
 @onready var sprite: ColorRect = $'Texture/Sprite'
 @onready var icon: TextureRect = $Icon
@@ -206,7 +206,7 @@ func _on_area_2d_input_event(_viewport: Node, event: InputEvent, _shape_idx: int
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 			if is_menu_command:
-				menu_command_clicked.emit(type)
+				menu_card_clicked.emit(type)
 			else:
 				is_settings = false
 				change_settings(is_settings)
@@ -227,10 +227,6 @@ func _on_up_pressed() -> void:
 		command.update_buttons_state()
 
 func _on_down_pressed() -> void:
-	# Пропускаем для USE
-	if type == TypeCommand.USE:
-		return
-		
 	if type == TypeCommand.TURN:
 		set_number(value - 1)  # Передаем любое значение, меньше текущего
 		return

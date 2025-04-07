@@ -45,14 +45,6 @@ offset_bottom = 112.0
 mouse_filter = 2
 metadata/_edit_use_anchors_ = true
 
-[node name="ColorRect" type="ColorRect" parent="Texture"]
-layout_mode = 0
-offset_left = 122.0
-offset_right = 217.0
-offset_bottom = 22.0
-mouse_filter = 2
-color = Color(0.366595, 0.366595, 0.366595, 0.286275)
-
 [node name="Area2D" type="Area2D" parent="."]
 collision_layer = 2
 
@@ -88,9 +80,25 @@ horizontal_alignment = 2
 position = Vector2(10, 12)
 scale = Vector2(0.7, 0.7)
 
-[node name="Up" type="Button" parent="."]
+[node name="Buttons" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+mouse_filter = 2
+
+[node name="ColorRect" type="ColorRect" parent="Buttons"]
+layout_mode = 0
+offset_left = 122.0
+offset_right = 217.0
+offset_bottom = 22.0
+mouse_filter = 2
+color = Color(0.366595, 0.366595, 0.366595, 0.286275)
+
+[node name="Up" type="Button" parent="Buttons"]
 visible = false
 z_index = 20
+layout_mode = 0
 offset_left = 162.0
 offset_top = -15.0
 offset_right = 970.0
@@ -98,9 +106,10 @@ offset_bottom = 793.0
 scale = Vector2(0.01854, 0.01854)
 icon = ExtResource("3_wtxr1")
 
-[node name="Down" type="Button" parent="."]
+[node name="Down" type="Button" parent="Buttons"]
 visible = false
 z_index = 20
+layout_mode = 0
 offset_left = 177.0
 offset_top = 37.0
 offset_right = 985.0
@@ -110,5 +119,5 @@ scale = Vector2(0.01854, 0.01854)
 icon = ExtResource("3_wtxr1")
 
 [connection signal="input_event" from="Area2D" to="." method="_on_area_2d_input_event"]
-[connection signal="pressed" from="Up" to="." method="_on_up_pressed"]
-[connection signal="pressed" from="Down" to="." method="_on_down_pressed"]
+[connection signal="pressed" from="Buttons/Up" to="." method="_on_up_pressed"]
+[connection signal="pressed" from="Buttons/Down" to="." method="_on_down_pressed"]

@@ -143,12 +143,12 @@ func calculate_path_length(from_tile: Vector2, to_tile: Vector2) -> int:
 func spawn_wall_at_position(tile_position: Vector2) -> void:
 	if wall_scene:
 		var wall_instance = wall_scene.instantiate()
-		add_child(wall_instance)
+		add_child(wall_instance)  # Убедитесь, что объект добавляется в сцену
 		wall_instance.position = wall_instance.get_world_position_from_tile(tile_position)
-		
+
 func spawn_door_at_position(tile_position: Vector2, rotation_degree: int) -> void:
 	if door_scene:
 		var door_instance = door_scene.instantiate()
 		add_child(door_instance)
 		door_instance.position = door_instance.get_world_position_from_tile(tile_position)
-		door_instance.set_rotation_degree(rotation_degree)
+		door_instance.set_rotation_degree(rotation_degree)  # Устанавливаем угол поворота

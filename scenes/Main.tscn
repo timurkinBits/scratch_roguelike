@@ -269,6 +269,36 @@ offset_bottom = 52.0
 label_settings = ExtResource("15_3p2gp")
 horizontal_alignment = 1
 
+[node name="ConditionLabel" type="Label" parent="UI/MaxScores"]
+z_index = 1
+layout_mode = 0
+offset_left = -94.0
+offset_top = 197.0
+offset_right = -83.0
+offset_bottom = 223.0
+text = "1"
+label_settings = ExtResource("15_3p2gp")
+
+[node name="LoopLabel" type="Label" parent="UI/MaxScores"]
+z_index = 1
+layout_mode = 0
+offset_left = -94.0
+offset_top = 262.0
+offset_right = -83.0
+offset_bottom = 288.0
+text = "1"
+label_settings = ExtResource("15_3p2gp")
+
+[node name="AbilityLabel" type="Label" parent="UI/MaxScores"]
+z_index = 1
+layout_mode = 0
+offset_left = -94.0
+offset_top = 322.0
+offset_right = -83.0
+offset_bottom = 348.0
+text = "1"
+label_settings = ExtResource("15_3p2gp")
+
 [node name="DefeatLabel" type="Label" parent="UI"]
 visible = false
 layout_mode = 0

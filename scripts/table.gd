@@ -224,31 +224,30 @@ func create_command_copy(type: int) -> void:
 	
 	new_command.set_number(1)
 	new_command.position = Vector2(8, 8)
-	new_command.add_to_group("commands")
 
 func create_block_copy(type: int) -> void:
 	if is_turn_in_progress:
 		return
 		
-	var new_block = block_scene.instantiate()
+	var new_block = block_scene.instantiate() as Block
 	new_block.type = type
 	
 	# Set default values based on type
 	match type:
 		Block.BlockType.CONDITION:
-			new_block.text = " "
+			new_block.text = new_block.AVAILABLE_CONDITIONS[0]
 		Block.BlockType.LOOP:
 			new_block.loop_count = 2
 		Block.BlockType.ABILITY:
-			new_block.text = ""
+			new_block.text = new_block.AVAILABLE_ABILITIES[0]
 			
 	table_texture.add_child(new_block)
 	new_block.update_appearance()
 	new_block.initialize_slots()
 	
+	new_block.button_color.visible = true
 	new_block.position = Vector2(8, 8)
 	new_block.scale = Vector2(0.9, 0.9)
-	new_block.add_to_group("blocks")
 
 func create_card(kind, type: int) -> void:
 	if kind == Command:

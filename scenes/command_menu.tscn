@@ -34,7 +34,6 @@ type = 4
 position = Vector2(0, 184)
 scale = Vector2(0.545718, 0.545718)
 type = 1
-text = "_"
 
 [node name="Block2" parent="." instance=ExtResource("3_83ksq")]
 position = Vector2(0, 310)
