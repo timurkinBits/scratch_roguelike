@@ -500,7 +500,15 @@ mouse_filter = 2
 texture = SubResource("AtlasTexture_7dqbv")
 metadata/_edit_use_anchors_ = true
 
-[node name="DoorDown" type="TextureRect" parent="."]
+[node name="Doors" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+mouse_filter = 2
+
+[node name="DoorDown" type="TextureRect" parent="Doors"]
+layout_mode = 0
 offset_left = 383.0
 offset_top = 528.0
 offset_right = 403.0
@@ -510,7 +518,7 @@ mouse_filter = 2
 texture = SubResource("AtlasTexture_ybpoa")
 metadata/_edit_use_anchors_ = true
 
-[node name="TextureRect" type="TextureRect" parent="DoorDown" groups=["level_door"]]
+[node name="TextureRect" type="TextureRect" parent="Doors/DoorDown"]
 layout_mode = 0
 offset_left = 35.0
 offset_top = -0.00012666
@@ -521,15 +529,16 @@ scale = Vector2(0.057546, 0.0475623)
 texture = ExtResource("3_85yof")
 metadata/_edit_use_anchors_ = true
 
-[node name="DownDoor" type="Area2D" parent="DoorDown" groups=["level_door"]]
+[node name="DownDoor" type="Area2D" parent="Doors/DoorDown"]
 position = Vector2(-286, -239.998)
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="DoorDown/DownDoor"]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Doors/DoorDown/DownDoor"]
 position = Vector2(301.5, 262.998)
 rotation = 1.5708
 shape = SubResource("RectangleShape2D_ffxv4")
 
-[node name="DoorRight" type="TextureRect" parent="."]
+[node name="DoorRight" type="TextureRect" parent="Doors"]
+layout_mode = 0
 offset_left = 624.0
 offset_top = 241.0
 offset_right = 644.0
@@ -538,7 +547,7 @@ mouse_filter = 2
 texture = SubResource("AtlasTexture_ybpoa")
 metadata/_edit_use_anchors_ = true
 
-[node name="TextureRect2" type="TextureRect" parent="DoorRight" groups=["level_door"]]
+[node name="TextureRect2" type="TextureRect" parent="Doors/DoorRight"]
 layout_mode = 0
 offset_left = 40.0
 offset_right = 840.0
@@ -548,13 +557,14 @@ scale = Vector2(0.0573871, 0.0498282)
 texture = ExtResource("3_85yof")
 metadata/_edit_use_anchors_ = true
 
-[node name="RightDoor" type="Area2D" parent="DoorRight" groups=["level_door"]]
+[node name="RightDoor" type="Area2D" parent="Doors/DoorRight"]
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="DoorRight/RightDoor"]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Doors/DoorRight/RightDoor"]
 position = Vector2(19.75, 22.5)
 shape = SubResource("RectangleShape2D_36trf")
 
-[node name="DoorLeft" type="TextureRect" parent="."]
+[node name="DoorLeft" type="TextureRect" parent="Doors"]
+layout_mode = 0
 offset_left = 96.0
 offset_top = 286.0
 offset_right = 116.0
@@ -564,7 +574,7 @@ mouse_filter = 2
 texture = SubResource("AtlasTexture_ybpoa")
 metadata/_edit_use_anchors_ = true
 
-[node name="TextureRect3" type="TextureRect" parent="DoorLeft" groups=["level_door"]]
+[node name="TextureRect3" type="TextureRect" parent="Doors/DoorLeft"]
 layout_mode = 0
 offset_left = 40.0
 offset_top = 1.0001
@@ -575,15 +585,16 @@ scale = Vector2(0.0566592, 0.0541017)
 texture = ExtResource("3_85yof")
 metadata/_edit_use_anchors_ = true
 
-[node name="LeftDoor" type="Area2D" parent="DoorLeft" groups=["level_door"]]
+[node name="LeftDoor" type="Area2D" parent="Doors/DoorLeft"]
 position = Vector2(-528, 45.0001)
 rotation = 3.14159
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="DoorLeft/LeftDoor"]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Doors/DoorLeft/LeftDoor"]
 position = Vector2(-546.375, 21.9987)
 shape = SubResource("RectangleShape2D_85yof")
 
-[node name="DoorUp" type="TextureRect" parent="."]
+[node name="DoorUp" type="TextureRect" parent="Doors"]
+layout_mode = 0
 offset_left = 338.0
 offset_right = 358.0
 offset_bottom = 46.0
@@ -592,7 +603,7 @@ mouse_filter = 2
 texture = SubResource("AtlasTexture_ybpoa")
 metadata/_edit_use_anchors_ = true
 
-[node name="TextureRect4" type="TextureRect" parent="DoorUp" groups=["level_door"]]
+[node name="TextureRect4" type="TextureRect" parent="Doors/DoorUp"]
 layout_mode = 0
 offset_left = 40.0
 offset_right = 840.0
@@ -602,15 +613,15 @@ scale = Vector2(0.0573872, 0.0499692)
 texture = ExtResource("3_85yof")
 metadata/_edit_use_anchors_ = true
 
-[node name="UpDoor" type="Area2D" parent="DoorUp" groups=["level_door"]]
+[node name="UpDoor" type="Area2D" parent="Doors/DoorUp"]
 position = Vector2(-210.001, 285.999)
 rotation = 1.5708
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="DoorUp/UpDoor"]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Doors/DoorUp/UpDoor"]
 position = Vector2(-262.5, -229.999)
 shape = SubResource("RectangleShape2D_14vil")
 
-[connection signal="input_event" from="DoorDown/DownDoor" to="." method="_on_down_door_input_event"]
-[connection signal="input_event" from="DoorRight/RightDoor" to="." method="_on_right_door_input_event"]
-[connection signal="input_event" from="DoorLeft/LeftDoor" to="." method="_on_left_door_input_event"]
-[connection signal="input_event" from="DoorUp/UpDoor" to="." method="_on_up_door_input_event"]
+[connection signal="input_event" from="Doors/DoorDown/DownDoor" to="." method="_on_down_door_input_event"]
+[connection signal="input_event" from="Doors/DoorRight/RightDoor" to="." method="_on_right_door_input_event"]
+[connection signal="input_event" from="Doors/DoorLeft/LeftDoor" to="." method="_on_left_door_input_event"]
+[connection signal="input_event" from="Doors/DoorUp/UpDoor" to="." method="_on_up_door_input_event"]

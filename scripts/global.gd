@@ -4,7 +4,7 @@ signal points_changed
 
 var points: Dictionary = {
 	Command.TypeCommand.MOVE: 10,
-	Command.TypeCommand.ATTACK: 5,
+	Command.TypeCommand.ATTACK: 20,
 	Command.TypeCommand.HEAL: 3,
 	Command.TypeCommand.DEFENSE: 3
 }
@@ -28,12 +28,12 @@ func reset_remaining_points() -> void:
 	remaining_heal_points = points[Command.TypeCommand.HEAL]
 	remaining_defense_points = points[Command.TypeCommand.DEFENSE]
 	
-	# Reset block limits too
-	for block_type in block_limits:
-		remaining_blocks[block_type] = block_limits[block_type]
-	
 	points_changed.emit()
 
+func reset_remaining_blocks():
+	for block_type in block_limits:
+		remaining_blocks[block_type] = block_limits[block_type]
+		
 # Получить оставшиеся очки для конкретного типа команды
 func get_remaining_points(command_type) -> int:
 	match command_type:

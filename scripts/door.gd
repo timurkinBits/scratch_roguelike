@@ -11,9 +11,6 @@ func _ready() -> void:
 	add_to_group('doors')
 	add_to_group('objects')
 	
-	if !is_opened:
-		add_to_group('barrier')
-	
 	toggle_door(is_opened)
 	
 	position = get_world_position_from_tile(get_tile_position())

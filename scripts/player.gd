@@ -122,8 +122,7 @@ func use() -> void:
 	var interact_tile = player_tile + DIRECTION_VECTORS[current_direction]
 	
 	# Проверяем двери
-	var doors = get_tree().get_nodes_in_group("doors")
-	for door in doors:
+	for door in get_tree().get_nodes_in_group("doors"):
 		if is_instance_valid(door) and door.get_tile_position() == interact_tile:
 			# Переключаем состояние двери
 			door.toggle_door(!door.is_opened)

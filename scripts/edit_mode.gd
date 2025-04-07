@@ -134,18 +134,36 @@ func apply_layout_by_index(index: int) -> void:
 		return
 		
 	var selected_layout = saved_layouts[index]
+	if not selected_layout is Array:
+		return
 	
-	if selected_layout is Array:
-		for object_data in selected_layout:
-			if object_data is Dictionary and object_data.has("x") and object_data.has("y"):
-				var position = Vector2(object_data.x, object_data.y)
-				var type = object_data.get("type", PlacementType.WALL)
-				var degree = object_data.get("degree", 0)  # По умолчанию 0, если поле отсутствует
-				
-				if type == PlacementType.WALL:
-					room.spawn_wall_at_position(position)
+	# Словарь для отслеживания занятых позиций и их типов
+	var position_map: Dictionary = {}
+	
+	# Сначала собираем все объекты, чтобы выявить конфликты
+	for object_data in selected_layout:
+		if object_data is Dictionary and object_data.has("x") and object_data.has("y"):
+			var position_obj = Vector2(object_data.x, object_data.y)
+			var type = object_data.get("type", PlacementType.WALL)
+			var degree_obj = object_data.get("degree", 0)
+			
+			# Если позиция уже занята, даём приоритет дверям
+			if position_map.has(position_obj):
+				if position_map[position_obj].type == PlacementType.DOOR:
+					continue  # Дверь уже есть, пропускаем стену
 				elif type == PlacementType.DOOR:
-					room.spawn_door_at_position(position, degree)
+					position_map[position_obj] = {"type": type, "degree": degree_obj}  # Заменяем стену дверью
+			else:
+				position_map[position_obj] = {"type": type, "degree": degree_obj}
+	
+	# Теперь размещаем объекты из отфильтрованного набора
+	for pos in position_map.keys():
+		var data = position_map[pos]
+		if data.type == PlacementType.WALL:
+			room.spawn_wall_at_position(pos)
+		elif data.type == PlacementType.DOOR:
+			room.spawn_door_at_position(pos, data.degree)
+
 
 func place_object_at_mouse(mouse_position: Vector2) -> void:
 	var local_pos = tile_map.to_local(mouse_position)
@@ -196,9 +214,9 @@ func load_saved_layouts() -> void:
 	saved_layouts.clear()
 	
 	if not FileAccess.file_exists(SAVE_FILE_PATH):
-		var file := FileAccess.open(SAVE_FILE_PATH, FileAccess.WRITE)
-		if file:
-			file.store_string(JSON.stringify([]))
+		var file_write := FileAccess.open(SAVE_FILE_PATH, FileAccess.WRITE)
+		if file_write:
+			file_write.store_string(JSON.stringify([]))
 		return
 	
 	var file := FileAccess.open(SAVE_FILE_PATH, FileAccess.READ)
@@ -265,12 +283,12 @@ func check_and_apply_layout() -> void:
 	else:
 		apply_random_layout()
 
-func _on_door_button_input_event(viewport: Node, event: InputEvent, shape_idx: int) -> void:
+func _on_door_button_input_event(_viewport: Node, event: InputEvent, _shape_idx: int) -> void:
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 			set_placement_type(PlacementType.DOOR)
 
-func _on_wall_button_input_event(viewport: Node, event: InputEvent, shape_idx: int) -> void:
+func _on_wall_button_input_event(_viewport: Node, event: InputEvent, _shape_idx: int) -> void:
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 			set_placement_type(PlacementType.WALL)

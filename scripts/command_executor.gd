@@ -17,6 +17,7 @@ func _ready() -> void:
 	if player:
 		player.tree_exited.connect(_on_player_dead)
 	Global.reset_remaining_points()
+	Global.reset_remaining_blocks()
 
 func _on_button_pressed() -> void:
 	if !is_instance_valid(player):
@@ -80,8 +81,7 @@ func _prepare_next_turn() -> void:
 	
 	# Show doors if no enemies
 	if get_tree().get_nodes_in_group('enemies').is_empty():
-		for door in get_tree().get_nodes_in_group('level_door'):
-			door.visible = true
+		room.doors.visible = true
 
 func check_and_execute_conditions(trigger_time: String) -> bool:
 	# Get condition blocks
@@ -237,7 +237,7 @@ func execute_command(command: Command) -> void:
 			var direction = "right" if command.value == 90 else "left" if command.value == -90 else "around"
 			await player.turn(direction)
 		Command.TypeCommand.ATTACK: await player.attack(command.value)
-		Command.TypeCommand.USE: await player.use()  # Добавлена обработка команды USE
+		Command.TypeCommand.USE: await player.use()
 		Command.TypeCommand.HEAL: await player.add_hp(command.value)
 		Command.TypeCommand.DEFENSE: await player.add_defense(command.value)
 	

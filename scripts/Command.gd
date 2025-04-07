@@ -75,12 +75,8 @@ func _ready() -> void:
 	if type == TypeCommand.TURN:
 		if value == 0:  # Если значение не установлено, используем первый угол по умолчанию
 			value = config["values"][0]
-	
-	# Для команды "использовать" не показываем числовые значения
-	if type == TypeCommand.USE:
-		num_label.visible = false
-	else:
-		num_label.visible = false  # По умолчанию скрываем для всех остальных типов тоже
+			
+	num_label.visible = false
 		
 	change_settings(false)
 	
@@ -146,10 +142,12 @@ func set_number(new_value):
 		
 	# Для остальных типов команд - стандартная логика
 	# Освобождаем очки текущего значения
+	
 	if !is_menu_command and value > 0:
 		Global.release_points(type, value)
 	
 	# Получаем максимальное количество доступных очков
+	
 	var max_available = Global.get_remaining_points(type)
 	
 	# Для не-меню команд добавляем обратно текущее значение, так как мы его только что освободили
@@ -211,6 +209,7 @@ func _on_area_2d_input_event(_viewport: Node, event: InputEvent, _shape_idx: int
 				is_settings = false
 				change_settings(is_settings)
 		elif event.button_index == MOUSE_BUTTON_RIGHT and !is_menu_command and event.pressed:
+			Global.release_points(type, value)
 			queue_free()
 
 func _on_up_pressed() -> void:
@@ -245,7 +244,7 @@ func _exit_tree() -> void:
 	
 	# Возвращаем очки в общий пул и обновляем UI
 	if !is_menu_command and value > 0 and type != TypeCommand.TURN and type != TypeCommand.USE:
-		Global.release_points(type, value)
+		
 		if ui_node and is_instance_valid(ui_node):
 			ui_node.change_scores(type)
 		
