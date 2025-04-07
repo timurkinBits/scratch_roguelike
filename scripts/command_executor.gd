@@ -43,6 +43,8 @@ func _disable_interactions() -> void:
 	button.disabled = true
 	for command in get_tree().get_nodes_in_group("commands"):
 		command.change_settings(false)
+	for block in get_tree().get_nodes_in_group("blocks"):
+		block.change_settings(false)
 
 func _process_turn_phase(trigger_time: String) -> bool:
 	await check_and_execute_conditions(trigger_time)
@@ -234,7 +236,7 @@ func execute_command(command: Command) -> void:
 func _apply_command_modifiers(command: Command) -> void:
 	if command.additional_properties == '+1 урон' and command.type == Command.TypeCommand.ATTACK:
 		command.value += 1
-	elif command.additional_properties == '+1 перемещение' and command.type == Command.TypeCommand.MOVE:
+	elif command.additional_properties == '+1 движ.' and command.type == Command.TypeCommand.MOVE:
 		command.value += 1
 
 func collect_commands(block: Block, commands: Array[Node]) -> void:

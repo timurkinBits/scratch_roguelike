@@ -18,9 +18,7 @@ var command_scene = preload('res://scenes/Command.tscn')
 var block_scene = preload('res://scenes/Block.tscn')
 
 func _process(delta: float) -> void:
-	if is_turn_in_progress:  # Пропускаем обработку, если ход выполняется
-		return
-	if not dragged_card:
+	if is_turn_in_progress or not dragged_card:
 		return
 		
 	var mouse_pos = get_global_mouse_position()
@@ -41,18 +39,21 @@ func handle_hover_logic(delta: float) -> void:
 			affected_block = hovered_slot.block
 			affected_block.prepare_for_insertion(hovered_slot)
 			has_shifted_commands = true
+	elif has_shifted_commands and affected_block:
+		affected_block.cancel_insertion()
+		has_shifted_commands = false
+		hover_timer = 0.0
 	else:
-		if has_shifted_commands and affected_block:
-			affected_block.cancel_insertion()
-			has_shifted_commands = false
 		hover_timer = 0.0
 
 func _input(event: InputEvent) -> void:
-	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
-		if event.pressed and not is_turn_in_progress:  # Начинаем перетаскивание только если ход не выполняется
-			start_drag()
-		elif not event.pressed:
-			finish_drag()
+	if not (event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT):
+		return
+		
+	if event.pressed and not is_turn_in_progress:
+		start_drag()
+	elif not event.pressed:
+		finish_drag()
 
 func get_table_rect() -> Rect2:
 	var table_canvas_rect = table_texture.get_global_rect()
@@ -63,19 +64,17 @@ func get_table_rect() -> Rect2:
 
 func enforce_table_boundaries(card: Node2D, target_position: Vector2, table_rect: Rect2) -> void:
 	var size = get_card_size(card)
-	var new_position = target_position.clamp(
+	card.global_position = target_position.clamp(
 		table_rect.position,
 		table_rect.position + table_rect.size - size
 	)
-	
-	card.global_position = new_position
 
 func get_card_size(card: Node2D) -> Vector2:
 	if card is Block:
 		return card.get_full_size() * card.scale
-	else:
-		var texture_node = card.get_node("Texture")
-		return texture_node.size * card.scale if texture_node else Vector2.ZERO
+	
+	var texture_node = card.get_node("Texture")
+	return texture_node.size * card.scale if texture_node else Vector2.ZERO
 
 func raycast_for_card() -> Node2D:
 	var query = PhysicsPointQueryParameters2D.new()
@@ -88,19 +87,25 @@ func raycast_for_card() -> Node2D:
 		var obj = hit["collider"].get_parent()
 		if obj is CommandSlot and is_instance_valid(obj.command):
 			return obj.command
-		if not obj.is_menu_command and (obj is Command or obj is Block):
+		if obj is Command and not obj.is_menu_command:
 			return obj
+		if obj is Block and not obj.is_menu_command:
+			if hit["shape"] != 0:
+				return obj
+			# Пропускаем, если shape_idx == 0
 	return null
 
 func find_card_slot(card: Node2D) -> CommandSlot:
 	if not is_instance_valid(card):
 		return null
-		
+	
 	for block in get_tree().get_nodes_in_group("blocks"):
-		if is_instance_valid(block):
-			for slot in block.slots:
-				if slot.command == card:
-					return slot
+		if not is_instance_valid(block):
+			continue
+			
+		for slot in block.slots:
+			if slot.command == card:
+				return slot
 	return null
 
 func start_drag() -> void:
@@ -119,22 +124,27 @@ func start_drag() -> void:
 func finish_drag() -> void:
 	if not dragged_card:
 		return
+		
 	var table_rect = get_table_rect()
-	if is_turn_in_progress:  # Во время хода просто ограничиваем положение объекта
+	
+	if is_turn_in_progress:
 		enforce_table_boundaries(dragged_card, dragged_card.global_position, table_rect)
-	else:
-		if hovered_slot and is_instance_valid(hovered_slot):
-			var invalid_condition_placement = dragged_card is Block and is_condition_block_in_block(dragged_card, hovered_slot)
-			if would_fit_in_boundaries(dragged_card, hovered_slot, table_rect) and not invalid_condition_placement:
-				place_card_in_slot(hovered_slot)
-			else:
-				enforce_table_boundaries(dragged_card, dragged_card.global_position, table_rect)
+	elif hovered_slot and is_instance_valid(hovered_slot):
+		var invalid_placement = dragged_card is Block and is_condition_block_in_block(dragged_card, hovered_slot)
+		
+		if would_fit_in_boundaries(dragged_card, hovered_slot, table_rect) and not invalid_placement:
+			place_card_in_slot(hovered_slot)
 		else:
 			enforce_table_boundaries(dragged_card, dragged_card.global_position, table_rect)
+	else:
+		enforce_table_boundaries(dragged_card, dragged_card.global_position, table_rect)
 	
 	if dragged_card:
 		dragged_card.z_index = 1
 	
+	reset_drag_state()
+
+func reset_drag_state() -> void:
 	dragged_card = null
 	affected_block = null
 	hover_timer = 0.0
@@ -160,9 +170,7 @@ func check_parent_block_boundaries(block: Block, table_rect: Rect2) -> void:
 		table_rect.position + table_rect.size - full_size
 	)
 	
-	var needs_adjustment = new_position != current_position
-	
-	if needs_adjustment and block.parent_slot == null:
+	if new_position != current_position and block.parent_slot == null:
 		block.global_position = new_position
 		block.update_all_slot_positions()
 		
@@ -204,10 +212,8 @@ func update_hovered_slot() -> void:
 			hovered_slot = obj
 			break
 
-# New method to create a copy of a command (this will be used instead of moving the menu command)
 func create_command_copy(type: int) -> void:
 	var remaining_points = Global.get_remaining_points(type)
-		
 	if remaining_points <= 0:
 		return
 		
@@ -219,8 +225,7 @@ func create_command_copy(type: int) -> void:
 	new_command.set_number(1)
 	new_command.position = Vector2(8, 8)
 	new_command.add_to_group("commands")
-	
-# Создаем копию блока из меню
+
 func create_block_copy(type: int) -> void:
 	if is_turn_in_progress:
 		return
@@ -228,20 +233,21 @@ func create_block_copy(type: int) -> void:
 	var new_block = block_scene.instantiate()
 	new_block.type = type
 	
-	# Инициализируем значения по умолчанию в зависимости от типа
-	if type == Block.BlockType.CONDITION:
-		new_block.text = new_block.AVAILABLE_CONDITIONS[0]
-	elif type == Block.BlockType.LOOP:
-		new_block.loop_count = 2
-	elif type == Block.BlockType.ABILITY:
-		new_block.text = ""
-		
+	# Set default values based on type
+	match type:
+		Block.BlockType.CONDITION:
+			new_block.text = " "
+		Block.BlockType.LOOP:
+			new_block.loop_count = 2
+		Block.BlockType.ABILITY:
+			new_block.text = ""
+			
 	table_texture.add_child(new_block)
 	new_block.update_appearance()
 	new_block.initialize_slots()
 	
-	# Позиционируем блок в верхний левый угол стола
-	new_block.position = Vector2(8, 64)
+	new_block.position = Vector2(8, 8)
+	new_block.scale = Vector2(0.9, 0.9)
 	new_block.add_to_group("blocks")
 
 func create_card(kind, type: int) -> void:

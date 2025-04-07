@@ -1,6 +1,6 @@
 extends Node2D
 
-const SAVE_FILE_PATH = "res://wall_layouts.save"
+const SAVE_FILE_PATH = "res://layouts.save"
 
 enum PlacementType {
 	NONE,

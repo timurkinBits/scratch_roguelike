@@ -21,7 +21,7 @@ func update_visibility() -> void:
 	if block.is_menu_command:
 		visible = false
 	else:
-		visible = table.dragged_card != null or command != null
+		visible = table.dragged_card != null and command == null
 
 func add_command(new_command: Node2D) -> void:
 	if command != null or not is_instance_valid(new_command):

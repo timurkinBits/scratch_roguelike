@@ -37,12 +37,11 @@ type = 1
 text = "_"
 
 [node name="Block2" parent="." instance=ExtResource("3_83ksq")]
-position = Vector2(0, 337)
+position = Vector2(0, 310)
 scale = Vector2(0.545718, 0.545718)
 type = 3
 
 [node name="Block3" parent="." instance=ExtResource("3_83ksq")]
-position = Vector2(0, 261)
+position = Vector2(0, 247)
 scale = Vector2(0.545718, 0.545718)
 type = 2
-loop_count = 0

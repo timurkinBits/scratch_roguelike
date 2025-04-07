@@ -214,10 +214,6 @@ func _on_area_2d_input_event(_viewport: Node, event: InputEvent, _shape_idx: int
 			queue_free()
 
 func _on_up_pressed() -> void:
-	# Пропускаем для USE
-	if type == TypeCommand.USE:
-		return
-		
 	if type == TypeCommand.TURN:
 		set_number(value + 1)  # Передаем любое значение, больше текущего
 		return
@@ -262,10 +258,6 @@ func _exit_tree() -> void:
 		parent_block.update_slots()  # Убираем call_deferred для немедленного обновления
 
 func _on_num_area_input_event(_viewport: Node, event: InputEvent, _shape_idx: int) -> void:
-	# Для USE не показываем настройки
-	if type == TypeCommand.USE:
-		return
-		
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 		if not is_menu_command and not table.is_turn_in_progress:  # Добавлена проверка состояния хода
 			# Открываем настройки при клике на область числа
@@ -275,11 +267,5 @@ func _on_num_area_input_event(_viewport: Node, event: InputEvent, _shape_idx: in
 				command.update_buttons_state()
 			
 func change_settings(settings: bool):
-	# Для USE всегда скрываем кнопки
-	if type == TypeCommand.USE:
-		up_button.visible = false
-		down_button.visible = false
-		return
-		
 	up_button.visible = settings
 	down_button.visible = settings
