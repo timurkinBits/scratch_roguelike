@@ -43,6 +43,8 @@ func _disable_interactions() -> void:
 	button.disabled = true
 	for command in get_tree().get_nodes_in_group("commands"):
 		command.change_settings(false)
+	for block in get_tree().get_nodes_in_group("blocks"):
+		block.change_settings(false)
 
 func _process_turn_phase(trigger_time: String) -> bool:
 	await check_and_execute_conditions(trigger_time)
@@ -78,7 +80,7 @@ func _prepare_next_turn() -> void:
 	
 	# Show doors if no enemies
 	if get_tree().get_nodes_in_group('enemies').is_empty():
-		for door in get_tree().get_nodes_in_group('doors'):
+		for door in get_tree().get_nodes_in_group('level_door'):
 			door.visible = true
 
 func check_and_execute_conditions(trigger_time: String) -> bool:
@@ -100,10 +102,19 @@ func clear_main_commands() -> void:
 	if !is_inside_tree():
 		return
 	
+	# Modified: Only clear commands from non-condition blocks, or from "начало хода" condition blocks
 	var commands_to_free = get_tree().get_nodes_in_group("commands").filter(
 		func(command): 
-			return is_instance_valid(command) and command.slot and command.slot.block and \
-				   command.slot.block.type != Block.BlockType.CONDITION)
+			if !is_instance_valid(command) or !command.slot or !command.slot.block:
+				return false
+			
+			# Keep commands in condition blocks except "начало хода"
+			if command.slot.block.type == Block.BlockType.CONDITION:
+				return command.slot.block.text == "начало хода"
+			
+			# Clear commands in all other block types
+			return true
+	)
 	
 	# Clear collected commands and nullify their slots
 	for command in commands_to_free:
@@ -111,10 +122,14 @@ func clear_main_commands() -> void:
 		
 	await clear_commands(commands_to_free)
 	
-	# Update slots in non-condition blocks
-	for block in get_tree().get_nodes_in_group("blocks").filter(
-		func(block): return is_instance_valid(block) and block.type != Block.BlockType.CONDITION
-	):
+	# Update slots in relevant blocks
+	var blocks_to_update = get_tree().get_nodes_in_group("blocks").filter(
+		func(block): 
+			return is_instance_valid(block) && \
+				   (block.type != Block.BlockType.CONDITION || block.text == "начало хода")
+	)
+	
+	for block in blocks_to_update:
 		block.update_slots()
 
 func check_condition(condition: String) -> bool:
@@ -222,6 +237,7 @@ func execute_command(command: Command) -> void:
 			var direction = "right" if command.value == 90 else "left" if command.value == -90 else "around"
 			await player.turn(direction)
 		Command.TypeCommand.ATTACK: await player.attack(command.value)
+		Command.TypeCommand.USE: await player.use()  # Добавлена обработка команды USE
 		Command.TypeCommand.HEAL: await player.add_hp(command.value)
 		Command.TypeCommand.DEFENSE: await player.add_defense(command.value)
 	
@@ -233,7 +249,9 @@ func execute_command(command: Command) -> void:
 func _apply_command_modifiers(command: Command) -> void:
 	if command.additional_properties == '+1 урон' and command.type == Command.TypeCommand.ATTACK:
 		command.value += 1
-	elif command.additional_properties == '+1 перемещение' and command.type == Command.TypeCommand.MOVE:
+	elif command.additional_properties == '+1 движ.' and command.type == Command.TypeCommand.MOVE:
+		command.value += 1
+	elif command.additional_properties == '+1 защита' and command.type == Command.TypeCommand.DEFENSE:
 		command.value += 1
 
 func collect_commands(block: Block, commands: Array[Node]) -> void:
@@ -248,6 +266,10 @@ func collect_commands(block: Block, commands: Array[Node]) -> void:
 			collect_commands(slot.command, commands)
 			slot.command.update_slots()
 		elif slot.command is Command:
+			# Modified: Skip commands in condition blocks except "начало хода"
+			if block.type == Block.BlockType.CONDITION and block.text != "начало хода":
+				continue
+				
 			commands.append(slot.command)
 			slot.command = null
 
@@ -262,7 +284,6 @@ func clear_commands(commands_to_free: Array[Node]) -> void:
 			tween.tween_property(command.get_node("Texture"), "modulate:a", 0.0, 0.3)
 	await tween.finished
 	
-	# Free commands
 	for command in commands_to_free:
 		if is_instance_valid(command):
 			command.queue_free()
@@ -277,13 +298,24 @@ func clear_all() -> void:
 	# First collect commands from blocks
 	for block in blocks:
 		if is_instance_valid(block):
-			collect_commands(block, commands_to_free)
+			# Modified: Only clear commands from non-condition blocks or "начало хода" blocks
+			if block.type != Block.BlockType.CONDITION or block.text == "начало хода":
+				collect_commands(block, commands_to_free)
+			else:
+				# For other condition blocks, just update slots without clearing commands
+				block.update_slots()
 	
 	# Then collect all remaining commands on the table (not in slots)
 	var all_commands = get_tree().get_nodes_in_group("commands")
 	for command in all_commands:
 		if is_instance_valid(command) and not command.is_menu_command and not commands_to_free.has(command):
-			commands_to_free.append(command)
+			# Check if it's not in a condition block (except "начало хода")
+			var in_preserved_condition = false
+			if command.slot and command.slot.block and command.slot.block.type == Block.BlockType.CONDITION:
+				in_preserved_condition = command.slot.block.text != "начало хода"
+				
+			if !in_preserved_condition:
+				commands_to_free.append(command)
 	
 	await clear_commands(commands_to_free)
 	

@@ -14,11 +14,23 @@ var remaining_attack_points: int
 var remaining_heal_points: int
 var remaining_defense_points: int
 
+var block_limits: Dictionary = {
+	Block.BlockType.CONDITION: 1,
+	Block.BlockType.LOOP: 1,
+	Block.BlockType.ABILITY: 1
+}
+
+var remaining_blocks: Dictionary = {}
+
 func reset_remaining_points() -> void:
 	remaining_move_points = points[Command.TypeCommand.MOVE]
 	remaining_attack_points = points[Command.TypeCommand.ATTACK]
 	remaining_heal_points = points[Command.TypeCommand.HEAL]
 	remaining_defense_points = points[Command.TypeCommand.DEFENSE]
+	
+	# Reset block limits too
+	for block_type in block_limits:
+		remaining_blocks[block_type] = block_limits[block_type]
 	
 	points_changed.emit()
 
@@ -60,3 +72,18 @@ func release_points(command_type, value) -> void:
 			remaining_defense_points = min(points[Command.TypeCommand.DEFENSE], remaining_defense_points + value)
 	
 	points_changed.emit()
+	
+func get_remaining_blocks(block_type) -> int:
+	if block_type in remaining_blocks:
+		return remaining_blocks[block_type]
+	return 0
+
+func use_block(block_type) -> void:
+	if block_type in remaining_blocks:
+		remaining_blocks[block_type] = max(0, remaining_blocks[block_type] - 1)
+		points_changed.emit()
+
+func release_block(block_type) -> void:
+	if block_type in remaining_blocks:
+		remaining_blocks[block_type] = min(block_limits[block_type], remaining_blocks[block_type] + 1)
+		points_changed.emit()

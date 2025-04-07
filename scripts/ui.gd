@@ -17,15 +17,32 @@ var is_dead := false
 @onready var heal_label: Label = max_scores.get_node('HealLabel')
 @onready var defense_label: Label = max_scores.get_node('DefenseLabel')
 
+# New block count labels
+@onready var condition_label: Label = max_scores.get_node('ConditionLabel')
+@onready var loop_label: Label = max_scores.get_node('LoopLabel')
+@onready var ability_label: Label = max_scores.get_node('AbilityLabel')
+
 
 func _ready():
 	if not player:
 		print("Player not found in HPbar!")
 	update_health_bar()
+	
+	# Connect to the Global points_changed signal
+	Global.connect("points_changed", update_all_counters)
+	update_all_counters()
+
+func update_all_counters():
+	# Update command points
 	move_label.text = str(Global.get_remaining_points(Command.TypeCommand.MOVE))
 	attack_label.text = str(Global.get_remaining_points(Command.TypeCommand.ATTACK))
 	defense_label.text = str(Global.get_remaining_points(Command.TypeCommand.DEFENSE))
 	heal_label.text = str(Global.get_remaining_points(Command.TypeCommand.HEAL))
+	
+	# Update block counts
+	condition_label.text = str(Global.get_remaining_blocks(Block.BlockType.CONDITION))
+	loop_label.text = str(Global.get_remaining_blocks(Block.BlockType.LOOP))
+	ability_label.text = str(Global.get_remaining_blocks(Block.BlockType.ABILITY))
 
 func change_scores(type: Command.TypeCommand) -> void:
 	var remaining = Global.get_remaining_points(type)

@@ -1,4 +1,5 @@
 extends Node2D
+class_name Wall
 
 @onready var tilemap: TileMapLayer = get_tree().get_first_node_in_group("TileMap")
 

@@ -1,7 +1,7 @@
 extends Node2D
 class_name Command
 
-enum TypeCommand { NONE, TURN, ATTACK, MOVE, HEAL, DEFENSE }
+enum TypeCommand { NONE, TURN, ATTACK, MOVE, USE, HEAL, DEFENSE }
 
 @export var type: TypeCommand
 var value: int = 0
@@ -13,7 +13,7 @@ var block: Block
 var additional_properties: String
 var config: Dictionary  # Кэшированная конфигурация для типа команды
 
-signal menu_command_clicked(type: int)
+signal menu_card_clicked(type: int)
 
 @onready var sprite: ColorRect = $'Texture/Sprite'
 @onready var icon: TextureRect = $Icon
@@ -40,6 +40,11 @@ var command_configs = {
 		"color": Color.LIGHT_BLUE,
 		"icon": "res://sprites/fb647.png",
 		"values": [90, -90, 180]  # Значения углов: вправо, влево, разворот
+	},
+	TypeCommand.USE: {
+		"prefix": "Использовать ",
+		"color": Color.BLUE_VIOLET,
+		"icon": "res://sprites/fb658.png"
 	},
 	TypeCommand.HEAL: {
 		"prefix": "Лечение ",
@@ -70,7 +75,12 @@ func _ready() -> void:
 	if type == TypeCommand.TURN:
 		if value == 0:  # Если значение не установлено, используем первый угол по умолчанию
 			value = config["values"][0]
-	num_label.visible = false
+	
+	# Для команды "использовать" не показываем числовые значения
+	if type == TypeCommand.USE:
+		num_label.visible = false
+	else:
+		num_label.visible = false  # По умолчанию скрываем для всех остальных типов тоже
 		
 	change_settings(false)
 	
@@ -98,6 +108,9 @@ func update_appearance() -> void:
 		text_label.text = config["prefix"]
 		num_label.visible = true
 		set_number(value)
+	elif type == TypeCommand.USE:
+		text_label.text = config["prefix"]
+		num_label.visible = false  # Для команды USE не нужно числовое значение
 	else:
 		text_label.text = config["prefix"]
 		
@@ -112,6 +125,10 @@ func update_appearance() -> void:
 			command.update_buttons_state()
 
 func set_number(new_value):
+	# Если это команда USE, не применяем логику очков
+	if type == TypeCommand.USE:
+		return
+		
 	if type == TypeCommand.TURN:
 		# Для поворота обрабатываем значения углов
 		var values = config["values"]
@@ -160,6 +177,14 @@ func set_number(new_value):
 			command.update_buttons_state()
 
 func update_buttons_state() -> void:
+	# Для команды USE отключаем кнопки
+	if type == TypeCommand.USE:
+		if up_button:
+			up_button.disabled = true
+		if down_button:
+			down_button.disabled = true
+		return
+
 	if type == TypeCommand.TURN:
 		# Для команды поворота всегда активируем обе кнопки (циклический выбор)
 		up_button.disabled = false
@@ -181,7 +206,7 @@ func _on_area_2d_input_event(_viewport: Node, event: InputEvent, _shape_idx: int
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 			if is_menu_command:
-				menu_command_clicked.emit(type)
+				menu_card_clicked.emit(type)
 			else:
 				is_settings = false
 				change_settings(is_settings)
@@ -219,7 +244,7 @@ func _exit_tree() -> void:
 		slot.command = null  # Очищаем ссылку на эту команду в слоте
 	
 	# Возвращаем очки в общий пул и обновляем UI
-	if !is_menu_command and value > 0 and type != TypeCommand.TURN:
+	if !is_menu_command and value > 0 and type != TypeCommand.TURN and type != TypeCommand.USE:
 		Global.release_points(type, value)
 		if ui_node and is_instance_valid(ui_node):
 			ui_node.change_scores(type)

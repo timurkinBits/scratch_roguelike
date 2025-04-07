@@ -292,6 +292,7 @@ animations = [{
 }]
 
 [node name="Enemy" type="Node2D"]
+z_index = 2
 script = ExtResource("1_pwemg")
 
 [node name="Area2D" type="Area2D" parent="."]

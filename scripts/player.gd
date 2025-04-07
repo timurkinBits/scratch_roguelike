@@ -111,3 +111,28 @@ func attack(damage_value: int) -> void:
 			break
 	
 	await get_tree().create_timer(0.3).timeout
+
+# Использовать предмет или объект
+func use() -> void:
+	if should_skip_action():
+		return
+	
+	# Получаем клетку перед игроком
+	var player_tile = get_tile_position()
+	var interact_tile = player_tile + DIRECTION_VECTORS[current_direction]
+	
+	# Проверяем двери
+	var doors = get_tree().get_nodes_in_group("doors")
+	for door in doors:
+		if is_instance_valid(door) and door.get_tile_position() == interact_tile:
+			# Переключаем состояние двери
+			door.toggle_door(!door.is_opened)
+			break
+	
+	# Анимация использования
+	var animation_tween = create_tween()
+	animation_tween.tween_property(self, "scale", Vector2(2.8, 2.8), 0.1)
+	animation_tween.tween_property(self, "scale", Vector2(2.5, 2.5), 0.1)
+	await animation_tween.finished
+	
+	await get_tree().create_timer(0.2).timeout

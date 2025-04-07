@@ -21,15 +21,25 @@ const MAX_LOOP_SLOTS := 3
 @onready var texture_up = $Texture/TextureUp
 @onready var texture_down = $Texture/TextureDown
 @onready var texture_left = $Texture/TextureLeft
+@onready var buttons = [$'Buttons/Up', $'Buttons/Down']
+@onready var table = $'../..'
+@onready var button_color: ColorRect = $'Buttons/ColorRect'
 
 var slots: Array[CommandSlot] = []
 var parent_slot: CommandSlot = null
 var config: Dictionary
 var original_slot_commands: Array = []
+var is_menu_command: bool = false
+var is_settings: bool = false
 
 const AVAILABLE_CONDITIONS = [
-	"начало хода",
 	"здоровье < 50%",
+]
+
+const AVAILABLE_ABILITIES = [
+	"+1 урон",
+	"+1 движ.",
+	"+1 защита",
 ]
 
 var block_configs = {
@@ -60,10 +70,9 @@ func _ready() -> void:
 	config = block_configs[type]
 	update_appearance()
 	initialize_slots()
-	
-	if type == BlockType.CONDITION and text.is_empty():
-		text = AVAILABLE_CONDITIONS[0]
-		update_appearance()
+	buttons[0].visible = false  # Скрываем кнопку "Up"
+	buttons[1].visible = false  # Скрываем кнопку "Down"
+	button_color.visible = false
 
 func initialize_slots() -> void:
 	if slots.is_empty():
@@ -135,10 +144,11 @@ func update_texture_sizes() -> void:
 
 func recreate_collision_shapes(total_height: float) -> void:
 	for child in area.get_children():
-		child.queue_free()
-		
-	create_collision_rectangle("CollisionUp", texture_up.size, 
-		Vector2(texture_up.size.x / 2, texture_up.size.y / 2))
+		if !child.name == "CollisionUpProperty":
+			child.queue_free()
+	var size_up = texture_up.size.x / 1.78
+	create_collision_rectangle("CollisionUp", Vector2(size_up, texture_up.size.y), 
+		Vector2(size_up / 2, texture_up.size.y / 2))
 	
 	create_collision_rectangle("CollisionDown", texture_down.size,
 		Vector2(texture_down.size.x / 2, total_height + texture_down.size.y / 2))
@@ -291,3 +301,86 @@ func set_condition(new_condition: String) -> void:
 	if type == BlockType.CONDITION and new_condition in AVAILABLE_CONDITIONS:
 		text = new_condition
 		update_appearance()
+
+func set_ability(new_ability: String) -> void:
+	if type == BlockType.ABILITY and new_ability in AVAILABLE_ABILITIES:
+		text = new_ability
+		update_appearance()
+
+func change_loop_count(amount: int) -> void:
+	if type == BlockType.LOOP:
+		loop_count = clamp(loop_count + amount, 2, 2)
+		update_appearance()
+		initialize_slots()
+
+func navigate_options(direction: int) -> void:
+	match type:
+		BlockType.CONDITION:
+			_navigate_conditions(direction)
+		BlockType.LOOP:
+			change_loop_count(direction)
+		BlockType.ABILITY:
+			_navigate_abilities(direction)
+
+func _navigate_conditions(direction: int) -> void:
+	if AVAILABLE_CONDITIONS.is_empty():
+		return
+		
+	var current_index = AVAILABLE_CONDITIONS.find(text)
+	if current_index == -1:
+		current_index = 0
+	else:
+		current_index = (current_index + direction) % AVAILABLE_CONDITIONS.size()
+		if current_index < 0:
+			current_index = AVAILABLE_CONDITIONS.size() - 1
+			
+	set_condition(AVAILABLE_CONDITIONS[current_index])
+
+func _navigate_abilities(direction: int) -> void:
+	if AVAILABLE_ABILITIES.is_empty():
+		return
+		
+	var current_index = AVAILABLE_ABILITIES.find(text)
+	if current_index == -1:
+		current_index = 0
+	else:
+		current_index = (current_index + direction) % AVAILABLE_ABILITIES.size()
+		if current_index < 0:
+			current_index = AVAILABLE_ABILITIES.size() - 1
+			
+	set_ability(AVAILABLE_ABILITIES[current_index])
+
+func _on_area_2d_input_event(_viewport: Node, event: InputEvent, shape_idx: int) -> void:
+	if event is InputEventMouseButton:
+		if shape_idx != 0:
+			if event.button_index == MOUSE_BUTTON_RIGHT and !is_menu_command and event.pressed \
+				and text != 'начало хода' and not table.is_turn_in_progress:
+					queue_free()
+			else:
+				is_settings = false
+				change_settings(is_settings)
+		else:
+			if event.button_index == MOUSE_BUTTON_LEFT and !is_menu_command and event.pressed \
+				and text != 'начало хода' and not table.is_turn_in_progress:
+					is_settings = !is_settings  # Переключаем режим настроек
+					change_settings(is_settings)  # Управляем видимостью кнопок
+					
+func change_settings(settings: bool) -> void:
+	buttons[0].visible = settings  # Показываем/скрываем "Up"
+	buttons[1].visible = settings  # Показываем/скрываем "Down"
+			
+func _exit_tree() -> void:
+	if parent_slot and is_instance_valid(parent_slot):
+		parent_slot.command = null
+		if parent_slot.block and is_instance_valid(parent_slot.block):
+			parent_slot.block.update_slots()
+	
+	# If it's not a menu command, release the block back to the pool
+	if !is_menu_command:
+		Global.release_block(type)
+
+func _on_up_pressed() -> void:
+	navigate_options(1)  # -1 означает переход к предыдущему элементу
+
+func _on_down_pressed() -> void:
+	navigate_options(-1)   # 1 означает переход к следующему элементу

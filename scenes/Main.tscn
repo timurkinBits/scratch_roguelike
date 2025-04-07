@@ -1,8 +1,8 @@
-[gd_scene load_steps=23 format=3 uid="uid://x83t6t456pdf"]
+[gd_scene load_steps=29 format=3 uid="uid://x83t6t456pdf"]
 
 [ext_resource type="PackedScene" uid="uid://pllgtdsxxw2s" path="res://scenes/table.tscn" id="1_2gx6p"]
 [ext_resource type="Script" uid="uid://bs0f6ystj1uo2" path="res://scripts/table.gd" id="2_wk856"]
-[ext_resource type="PackedScene" uid="uid://bti8fmdpm8cgl" path="res://scenes/block.tscn" id="3_jfkan"]
+[ext_resource type="PackedScene" uid="uid://bti8fmdpm8cgl" path="res://scenes/Block.tscn" id="3_jfkan"]
 [ext_resource type="PackedScene" uid="uid://ds71pq7djg3au" path="res://scenes/room.tscn" id="4_r2l36"]
 [ext_resource type="Script" uid="uid://df21f7ju361lo" path="res://scripts/command_executor.gd" id="5_a1joa"]
 [ext_resource type="PackedScene" uid="uid://dfndr3lvfsah5" path="res://scenes/player.tscn" id="5_k4xvw"]
@@ -13,10 +13,26 @@
 [ext_resource type="Script" uid="uid://jcjkaqukp4lb" path="res://scripts/ui.gd" id="9_wp0k4"]
 [ext_resource type="Script" uid="uid://b46fjemq5kbto" path="res://scripts/edit_mode.gd" id="10_ft6cd"]
 [ext_resource type="PackedScene" uid="uid://b1n1mnvax3cup" path="res://scenes/hp_bar.tscn" id="10_wp0k4"]
+[ext_resource type="PackedScene" uid="uid://bfbsx0uvdydab" path="res://scenes/door.tscn" id="11_bb450"]
+[ext_resource type="Texture2D" uid="uid://cni2isbjoq12d" path="res://sprites/Tileset.png" id="12_nfivy"]
 [ext_resource type="Script" uid="uid://okdqbifhl0ui" path="res://scripts/enemy_stats.gd" id="13_3p2gp"]
 [ext_resource type="Texture2D" uid="uid://djwyqrfy3bdly" path="res://sprites/32x32.png" id="13_cvmbd"]
 [ext_resource type="PackedScene" uid="uid://cqa3vxgvdii24" path="res://scenes/heal_point.tscn" id="13_mwfav"]
 [ext_resource type="LabelSettings" uid="uid://di7qwojobxj1y" path="res://sprites/Command.tres" id="15_3p2gp"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_1nqs0"]
+atlas = ExtResource("12_nfivy")
+region = Rect2(96, 64, 16, 16)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_bb450"]
+size = Vector2(42.7482, 42.7482)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_1iba3"]
+atlas = ExtResource("12_nfivy")
+region = Rect2(112, 64, 16, 16)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_nfivy"]
+size = Vector2(42.7483, 42.7482)
 
 [sub_resource type="InputEventKey" id="InputEventKey_u50so"]
 device = -1
@@ -50,24 +66,6 @@ scale = Vector2(0.9, 0.9)
 type = 1
 text = "начало хода"
 
-[node name="Block2" parent="Table" instance=ExtResource("3_jfkan")]
-position = Vector2(224, 403)
-scale = Vector2(0.9, 0.9)
-type = 2
-text = "начало хода"
-
-[node name="Block3" parent="Table" instance=ExtResource("3_jfkan")]
-position = Vector2(17, 403)
-scale = Vector2(0.9, 0.9)
-type = 1
-text = "здоровье < 50%"
-
-[node name="Block4" parent="Table" instance=ExtResource("3_jfkan")]
-position = Vector2(17, 288)
-scale = Vector2(0.9, 0.9)
-type = 3
-text = "+1 урон"
-
 [node name="CommandExecutor" type="Node" parent="Table" node_paths=PackedStringArray("ui_node", "room")]
 script = ExtResource("5_a1joa")
 ui_node = NodePath("../../UI")
@@ -81,13 +79,54 @@ position = Vector2(531, 117)
 scale = Vector2(0.935711, 0.935711)
 enemy_scene = ExtResource("8_uc31q")
 wall_scene = ExtResource("9_qmy6f")
+door_scene = ExtResource("11_bb450")
 
 [node name="Player" parent="Room" instance=ExtResource("5_k4xvw")]
-position = Vector2(360.154, 500.154)
+position = Vector2(360.154, 501.223)
 scale = Vector2(2.5, 2.5)
 
 [node name="EditModeManager" type="Node2D" parent="Room"]
 script = ExtResource("10_ft6cd")
+
+[node name="edit_label" type="Label" parent="Room/EditModeManager"]
+offset_left = 65.191
+offset_top = -119.695
+offset_right = 579.191
+offset_bottom = -96.6951
+text = "Режим редактирования выключен (нажмите E для включения)"
+
+[node name="layout_label" type="Label" parent="Room/EditModeManager"]
+offset_left = 65.191
+offset_top = -67.3285
+offset_right = 105.191
+offset_bottom = -44.3285
+
+[node name="ObjectMenu" type="Node2D" parent="Room/EditModeManager"]
+visible = false
+
+[node name="Wall" type="Sprite2D" parent="Room/EditModeManager/ObjectMenu"]
+position = Vector2(25.8748, -13.6673)
+scale = Vector2(2.7, 2.7)
+texture = SubResource("AtlasTexture_1nqs0")
+
+[node name="Wall_button" type="Area2D" parent="Room/EditModeManager/ObjectMenu/Wall"]
+position = Vector2(7.93109, -1.96658)
+scale = Vector2(0.37037, 0.37037)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Room/EditModeManager/ObjectMenu/Wall/Wall_button"]
+position = Vector2(-22.4827, 5.30977)
+shape = SubResource("RectangleShape2D_bb450")
+
+[node name="Door" type="Sprite2D" parent="Room/EditModeManager/ObjectMenu"]
+position = Vector2(25.8748, 33.3558)
+scale = Vector2(2.7, 2.7)
+texture = SubResource("AtlasTexture_1iba3")
+
+[node name="Door_button" type="Area2D" parent="Room/EditModeManager/ObjectMenu/Door"]
+scale = Vector2(0.37037, 0.37037)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Room/EditModeManager/ObjectMenu/Door/Door_button"]
+shape = SubResource("RectangleShape2D_nfivy")
 
 [node name="UI" type="Control" parent="." node_paths=PackedStringArray("player", "max_scores", "player_bars")]
 layout_mode = 3
@@ -230,6 +269,36 @@ offset_bottom = 52.0
 label_settings = ExtResource("15_3p2gp")
 horizontal_alignment = 1
 
+[node name="ConditionLabel" type="Label" parent="UI/MaxScores"]
+z_index = 1
+layout_mode = 0
+offset_left = -94.0
+offset_top = 197.0
+offset_right = -83.0
+offset_bottom = 223.0
+text = "1"
+label_settings = ExtResource("15_3p2gp")
+
+[node name="LoopLabel" type="Label" parent="UI/MaxScores"]
+z_index = 1
+layout_mode = 0
+offset_left = -94.0
+offset_top = 262.0
+offset_right = -83.0
+offset_bottom = 288.0
+text = "1"
+label_settings = ExtResource("15_3p2gp")
+
+[node name="AbilityLabel" type="Label" parent="UI/MaxScores"]
+z_index = 1
+layout_mode = 0
+offset_left = -94.0
+offset_top = 322.0
+offset_right = -83.0
+offset_bottom = 348.0
+text = "1"
+label_settings = ExtResource("15_3p2gp")
+
 [node name="DefeatLabel" type="Label" parent="UI"]
 visible = false
 layout_mode = 0
@@ -240,17 +309,5 @@ offset_bottom = -317.0
 text = "Поражение..."
 label_settings = SubResource("LabelSettings_q8u5g")
 
-[node name="edit_label" type="Label" parent="UI"]
-layout_mode = 0
-offset_left = -563.0
-offset_top = -650.0
-offset_right = -523.0
-offset_bottom = -627.0
-text = "Режим редактирования выключен (нажмите E для включения)"
-
-[node name="layout_label" type="Label" parent="UI"]
-layout_mode = 0
-offset_left = -563.0
-offset_top = -601.0
-offset_right = -523.0
-offset_bottom = -578.0
+[connection signal="input_event" from="Room/EditModeManager/ObjectMenu/Wall/Wall_button" to="Room/EditModeManager" method="_on_wall_button_input_event"]
+[connection signal="input_event" from="Room/EditModeManager/ObjectMenu/Door/Door_button" to="Room/EditModeManager" method="_on_door_button_input_event"]

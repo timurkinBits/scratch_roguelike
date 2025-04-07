@@ -392,6 +392,7 @@ animations = [{
 }]
 
 [node name="Player" type="Node2D"]
+z_index = 2
 script = ExtResource("1_4plul")
 
 [node name="SpriteRight" type="AnimatedSprite2D" parent="."]
