@@ -27,8 +27,8 @@ func add_command(new_command: Node2D) -> void:
 	if command != null or not is_instance_valid(new_command):
 		return
 	if new_command is Block:
-		if new_command.parent_slot:
-			new_command.parent_slot.clear_command()
+		#if new_command.parent_slot:
+			#new_command.parent_slot.clear_command()
 		new_command.parent_slot = self
 		
 	command = new_command
@@ -41,7 +41,16 @@ func add_command(new_command: Node2D) -> void:
 	block.update_slots()
 
 func clear_command() -> void:
-	if command is Block:
-		command.parent_slot = null
+	# Save a reference to the command being cleared
+	var old_command = command
 	command = null
-	block.update_slots()
+	
+	# Update the block structure
+	if block and is_instance_valid(block):
+		block.update_slots()
+		
+		# If this was a nested block, update the parent hierarchy
+		if old_command is Block and block.parent_slot and is_instance_valid(block.parent_slot):
+			var parent_block = block.parent_slot.block
+			if parent_block and is_instance_valid(parent_block):
+				parent_block.call_deferred("update_slots")

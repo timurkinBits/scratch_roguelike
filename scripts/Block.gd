@@ -126,7 +126,16 @@ func update_all_slot_positions() -> void:
 		var increment = SLOT_OFFSET
 		
 		if slot.command and is_instance_valid(slot.command):
+			# Ensure command is properly positioned
 			slot.command.global_position = to_global(slot.position)
+			
+			# Update command references
+			if slot.command is Command:
+				slot.command.slot = slot
+			elif slot.command is Block:
+				slot.command.parent_slot = slot
+				
+			# Calculate space needed
 			if slot.command is Block:
 				increment = slot.command.get_total_height() + SLOT_HEIGHT_INCREMENT
 				
@@ -140,7 +149,7 @@ func update_texture_sizes() -> void:
 	recreate_collision_shapes(total_height)
 	
 	if parent_slot and is_instance_valid(parent_slot) and parent_slot.block:
-		parent_slot.block.call_deferred("update_slots")
+		parent_slot.block.update_slots()
 
 func recreate_collision_shapes(total_height: float) -> void:
 	for child in area.get_children():
@@ -173,32 +182,35 @@ func update_slots() -> void:
 	update_texture_sizes()
 
 func shift_commands_up() -> void:
-	# Явно типизируем valid_slots как Array[CommandSlot]
+	# Create a new array to hold valid slots
 	var valid_slots: Array[CommandSlot] = []
+	
+	# First pass: collect valid slots with valid commands
 	for slot in slots:
-		if slot.command != null and is_instance_valid(slot.command):
-			valid_slots.append(slot)
-		else:
-			# Удаляем невалидный слот из сцены
-			if is_instance_valid(slot):
-				slot.queue_free()
-
-	# Теперь присвоение корректно
-	slots = valid_slots
-
-	# Убеждаемся, что есть хотя бы один пустой слот в конце
-	if slots.size() == 0 or (slots.back().command != null and (type != BlockType.LOOP or slots.size() < MAX_LOOP_SLOTS)):
-		var new_slot = create_slot()
-
-	# Обновляем позиции всех слотов и команд
-	for i in range(slots.size()):
-		if slots[i].command and is_instance_valid(slots[i].command):
-			slots[i].command.global_position = to_global(slots[i].position)
+		if is_instance_valid(slot):
+			if slot.command and is_instance_valid(slot.command):
+				valid_slots.append(slot)
+			else:
+				# Explicitly clear command reference
+				slot.command = null
+	
+	# Second pass: shift commands up to fill gaps
+	for i in range(valid_slots.size()):
+		if i < slots.size():
+			slots[i].command = valid_slots[i].command
+			# Make sure the command references the correct slot
 			if slots[i].command is Command:
 				slots[i].command.slot = slots[i]
-
+			elif slots[i].command is Block:
+				slots[i].command.parent_slot = slots[i]
+		
+	# Clear remaining slots
+	for i in range(valid_slots.size(), slots.size()):
+		if i < slots.size():
+			slots[i].command = null
+	
+	# Make sure all commands have correct positions
 	update_all_slot_positions()
-	update_texture_sizes()
 
 func adjust_slot_count() -> void:
 	if slots.is_empty():
@@ -366,6 +378,7 @@ func _on_area_2d_input_event(_viewport: Node, event: InputEvent, shape_idx: int)
 		if shape_idx != 0:
 			if event.button_index == MOUSE_BUTTON_RIGHT and !is_menu_command and event.pressed \
 				and text != 'начало хода' and not table.is_turn_in_progress:
+					# Let _exit_tree handle the cleanup and parent updates
 					queue_free()
 			else:
 				is_settings = false
@@ -373,23 +386,26 @@ func _on_area_2d_input_event(_viewport: Node, event: InputEvent, shape_idx: int)
 		else:
 			if event.button_index == MOUSE_BUTTON_LEFT and !is_menu_command and event.pressed \
 				and text != 'начало хода' and not table.is_turn_in_progress:
-					is_settings = !is_settings  # Переключаем режим настроек
-					change_settings(is_settings)  # Управляем видимостью кнопок
+					is_settings = !is_settings
+					change_settings(is_settings)
 					
 func change_settings(settings: bool) -> void:
 	buttons[0].visible = settings  # Показываем/скрываем "Up"
 	buttons[1].visible = settings  # Показываем/скрываем "Down"
 			
 func _exit_tree() -> void:
+	# Store parent reference
+	var parent = null
 	if parent_slot and is_instance_valid(parent_slot):
+		parent = parent_slot.block
 		parent_slot.command = null
-		if parent_slot.block and is_instance_valid(parent_slot.block):
-			update_slots()
-			parent_slot.block.update_slots()
 	
-	# If it's not a menu command, release the block back to the pool
-	if !is_menu_command:
-		Global.release_block(type)
+	# Update parent after this node is removed
+	if parent and is_instance_valid(parent):
+		# Use call_deferred to ensure this happens after current operations complete
+		parent.call_deferred("update_slots")
+	
+	Global.release_block(type)
 
 func _on_up_pressed() -> void:
 	navigate_options(1)  # -1 означает переход к предыдущему элементу

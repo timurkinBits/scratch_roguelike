@@ -34,11 +34,15 @@ func handle_hover_logic(delta: float) -> void:
 	update_hovered_slot()
 	
 	if hovered_slot:
-		hover_timer += delta
-		if hover_timer >= HOVER_THRESHOLD and not has_shifted_commands:
-			affected_block = hovered_slot.block
-			affected_block.prepare_for_insertion(hovered_slot)
-			has_shifted_commands = true
+		# Add this check to prevent insertion for condition blocks
+		var is_condition_block = dragged_card is Block and dragged_card.type == Block.BlockType.CONDITION
+		
+		if not is_condition_block:
+			hover_timer += delta
+			if hover_timer >= HOVER_THRESHOLD and not has_shifted_commands:
+				affected_block = hovered_slot.block
+				affected_block.prepare_for_insertion(hovered_slot)
+				has_shifted_commands = true
 	elif has_shifted_commands and affected_block:
 		affected_block.cancel_insertion()
 		has_shifted_commands = false
@@ -49,7 +53,7 @@ func handle_hover_logic(delta: float) -> void:
 func _input(event: InputEvent) -> void:
 	if not (event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT):
 		return
-		
+	
 	if event.pressed and not is_turn_in_progress:
 		start_drag()
 	elif not event.pressed:
@@ -112,7 +116,7 @@ func start_drag() -> void:
 	var card = raycast_for_card()
 	if not card:
 		return
-		
+	
 	card.z_index = Z_INDEX_DRAGGING
 	drag_offset = card.global_position - get_global_mouse_position()
 	dragged_card = card
