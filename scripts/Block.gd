@@ -173,21 +173,32 @@ func update_slots() -> void:
 	update_texture_sizes()
 
 func shift_commands_up() -> void:
-	var active_commands = slots.filter(func(s): 
-		return s.command != null and is_instance_valid(s.command)
-	).map(func(s): 
-		return s.command
-	)
-	
-	for i in slots.size():
-		if i < active_commands.size():
-			slots[i].command = active_commands[i]
-			if is_instance_valid(slots[i].command):
-				if slots[i].command is Command:
-					slots[i].command.slot = slots[i]
-				slots[i].command.global_position = slots[i].global_position
+	# Явно типизируем valid_slots как Array[CommandSlot]
+	var valid_slots: Array[CommandSlot] = []
+	for slot in slots:
+		if slot.command != null and is_instance_valid(slot.command):
+			valid_slots.append(slot)
 		else:
-			slots[i].command = null
+			# Удаляем невалидный слот из сцены
+			if is_instance_valid(slot):
+				slot.queue_free()
+
+	# Теперь присвоение корректно
+	slots = valid_slots
+
+	# Убеждаемся, что есть хотя бы один пустой слот в конце
+	if slots.size() == 0 or (slots.back().command != null and (type != BlockType.LOOP or slots.size() < MAX_LOOP_SLOTS)):
+		var new_slot = create_slot()
+
+	# Обновляем позиции всех слотов и команд
+	for i in range(slots.size()):
+		if slots[i].command and is_instance_valid(slots[i].command):
+			slots[i].command.global_position = to_global(slots[i].position)
+			if slots[i].command is Command:
+				slots[i].command.slot = slots[i]
+
+	update_all_slot_positions()
+	update_texture_sizes()
 
 func adjust_slot_count() -> void:
 	if slots.is_empty():
@@ -373,6 +384,7 @@ func _exit_tree() -> void:
 	if parent_slot and is_instance_valid(parent_slot):
 		parent_slot.command = null
 		if parent_slot.block and is_instance_valid(parent_slot.block):
+			update_slots()
 			parent_slot.block.update_slots()
 	
 	# If it's not a menu command, release the block back to the pool

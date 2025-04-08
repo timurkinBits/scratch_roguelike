@@ -102,27 +102,35 @@ func clear_main_commands() -> void:
 	if !is_inside_tree():
 		return
 	
-	var commands_to_free: Array[Node] = []
-	var blocks = get_tree().get_nodes_in_group("blocks")
-	
-	# Рекурсивно собираем команды, которые нужно удалить
-	for block in blocks:
-		if is_instance_valid(block):
-			# Проверяем, является ли блок условным блоком "начало хода" или не является условным блоком
-			if block.type != Block.BlockType.CONDITION or block.text == "начало хода":
-				collect_commands(block, commands_to_free)
+	# Modified: Only clear commands from non-condition blocks, or from "начало хода" condition blocks
+	var commands_to_free = get_tree().get_nodes_in_group("commands").filter(
+		func(command): 
+			if !is_instance_valid(command) or !command.slot or !command.slot.block:
+				return false
+			
+			# Keep commands in condition blocks except "начало хода"
+			if command.slot.block.type == Block.BlockType.CONDITION:
+				return command.slot.block.text == "начало хода"
+			
+			# Clear commands in all other block types
+			return true
+	)
 	
 	# Clear collected commands and nullify their slots
 	for command in commands_to_free:
-		if is_instance_valid(command) and command.slot:
-			command.slot.command = null
+		command.slot.command = null
 		
 	await clear_commands(commands_to_free)
 	
 	# Update slots in relevant blocks
-	for block in blocks:
-		if is_instance_valid(block):
-			block.update_slots()
+	var blocks_to_update = get_tree().get_nodes_in_group("blocks").filter(
+		func(block): 
+			return is_instance_valid(block) && \
+				   (block.type != Block.BlockType.CONDITION || block.text == "начало хода")
+	)
+	
+	for block in blocks_to_update:
+		block.update_slots()
 
 func check_condition(condition: String) -> bool:
 	match condition:
@@ -246,26 +254,8 @@ func _apply_command_modifiers(command: Command) -> void:
 	elif command.additional_properties == '+1 защита' and command.type == Command.TypeCommand.DEFENSE:
 		command.value += 1
 
-# Проверяет блок и его родительские блоки на наличие условных блоков (кроме "начало хода")
-func is_inside_condition_block(block: Block) -> bool:
-	if !is_instance_valid(block):
-		return false
-		
-	if block.type == Block.BlockType.CONDITION and block.text != "начало хода":
-		return true
-		
-	if block.parent_slot and block.parent_slot.block:
-		return is_inside_condition_block(block.parent_slot.block)
-		
-	return false
-
-# Новая рекурсивная функция для сбора команд с проверкой родительских блоков
 func collect_commands(block: Block, commands: Array[Node]) -> void:
 	if !is_instance_valid(block):
-		return
-		
-	# Проверяем, находится ли блок внутри условного блока (кроме "начало хода")
-	if is_inside_condition_block(block):
 		return
 		
 	for slot in block.slots:
@@ -273,10 +263,13 @@ func collect_commands(block: Block, commands: Array[Node]) -> void:
 			continue
 			
 		if slot.command is Block:
-			# Рекурсивно проверяем вложенные блоки
 			collect_commands(slot.command, commands)
 			slot.command.update_slots()
 		elif slot.command is Command:
+			# Modified: Skip commands in condition blocks except "начало хода"
+			if block.type == Block.BlockType.CONDITION and block.text != "начало хода":
+				continue
+				
 			commands.append(slot.command)
 			slot.command = null
 
@@ -302,21 +295,26 @@ func clear_all() -> void:
 	var blocks = get_tree().get_nodes_in_group("blocks")
 	var commands_to_free: Array[Node] = []
 	
-	# Собираем команды, которые нужно удалить
+	# First collect commands from blocks
 	for block in blocks:
 		if is_instance_valid(block):
-			collect_commands(block, commands_to_free)
+			# Modified: Only clear commands from non-condition blocks or "начало хода" blocks
+			if block.type != Block.BlockType.CONDITION or block.text == "начало хода":
+				collect_commands(block, commands_to_free)
+			else:
+				# For other condition blocks, just update slots without clearing commands
+				block.update_slots()
 	
-	# Затем собираем все оставшиеся команды на столе (не в слотах)
+	# Then collect all remaining commands on the table (not in slots)
 	var all_commands = get_tree().get_nodes_in_group("commands")
 	for command in all_commands:
 		if is_instance_valid(command) and not command.is_menu_command and not commands_to_free.has(command):
-			# Проверяем, не находится ли команда внутри условного блока (кроме "начало хода")
-			var in_condition_block = false
-			if command.slot and command.slot.block:
-				in_condition_block = is_inside_condition_block(command.slot.block)
+			# Check if it's not in a condition block (except "начало хода")
+			var in_preserved_condition = false
+			if command.slot and command.slot.block and command.slot.block.type == Block.BlockType.CONDITION:
+				in_preserved_condition = command.slot.block.text != "начало хода"
 				
-			if !in_condition_block:
+			if !in_preserved_condition:
 				commands_to_free.append(command)
 	
 	await clear_commands(commands_to_free)
