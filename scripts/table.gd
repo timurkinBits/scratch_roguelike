@@ -157,7 +157,7 @@ func finish_drag() -> void:
 		enforce_table_boundaries(dragged_card, dragged_card.global_position, table_rect)
 	
 	if dragged_card:
-		dragged_card.z_index = 1
+		dragged_card.z_index = 3
 	
 	reset_drag_state()
 

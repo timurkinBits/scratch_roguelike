@@ -352,13 +352,19 @@ func execute_command(command: Command) -> void:
 
 ## Применение модификаторов к команде
 func _apply_command_modifiers(command: Command) -> void:
-	match [command.additional_properties, command.type]:
-		['+1 урон', Command.TypeCommand.ATTACK]:
-			command.value += 1
-		['+1 движ.', Command.TypeCommand.MOVE]:
-			command.value += 1
-		['+1 защита', Command.TypeCommand.DEFENSE]:
-			command.value += 1
+	match command.additional_properties:
+		'+1 движ.':
+			if Command.TypeCommand.MOVE:
+				command.value += 1
+		'+1 атака':
+			if Command.TypeCommand.ATTACK:
+				command.value += 1
+		'+1 защита':
+			if Command.TypeCommand.DEFENSE:
+				command.value += 1
+		'+1 леч.':
+			if Command.TypeCommand.HEAL:
+				command.value += 1
 
 func collect_commands(block: Block, commands: Array[Node]) -> void:
 	if !is_instance_valid(block):

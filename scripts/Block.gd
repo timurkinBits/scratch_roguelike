@@ -33,9 +33,10 @@ const AVAILABLE_CONDITIONS = [
 ]
 
 const AVAILABLE_ABILITIES = [
-	"+1 урон",
-	"+1 движ.",
-	"+1 защита",
+	'+1 движ.',
+	'+1 атака',
+	'+1 защита',
+	'+1 леч.',
 ]
 
 var block_configs = {

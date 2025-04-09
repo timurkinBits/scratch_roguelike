@@ -1,4 +1,4 @@
-[gd_scene load_steps=29 format=3 uid="uid://x83t6t456pdf"]
+[gd_scene load_steps=30 format=3 uid="uid://x83t6t456pdf"]
 
 [ext_resource type="PackedScene" uid="uid://pllgtdsxxw2s" path="res://scenes/table.tscn" id="1_2gx6p"]
 [ext_resource type="Script" uid="uid://bs0f6ystj1uo2" path="res://scripts/table.gd" id="2_wk856"]
@@ -15,6 +15,7 @@
 [ext_resource type="PackedScene" uid="uid://b1n1mnvax3cup" path="res://scenes/hp_bar.tscn" id="10_wp0k4"]
 [ext_resource type="PackedScene" uid="uid://bfbsx0uvdydab" path="res://scenes/door.tscn" id="11_bb450"]
 [ext_resource type="Texture2D" uid="uid://cni2isbjoq12d" path="res://sprites/Tileset.png" id="12_nfivy"]
+[ext_resource type="PackedScene" uid="uid://cuf70xq4o3nw5" path="res://scenes/item.tscn" id="13_1nqs0"]
 [ext_resource type="Script" uid="uid://okdqbifhl0ui" path="res://scripts/enemy_stats.gd" id="13_3p2gp"]
 [ext_resource type="Texture2D" uid="uid://djwyqrfy3bdly" path="res://sprites/32x32.png" id="13_cvmbd"]
 [ext_resource type="PackedScene" uid="uid://cqa3vxgvdii24" path="res://scenes/heal_point.tscn" id="13_mwfav"]
@@ -127,6 +128,9 @@ scale = Vector2(0.37037, 0.37037)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Room/EditModeManager/ObjectMenu/Door/Door_button"]
 shape = SubResource("RectangleShape2D_nfivy")
+
+[node name="Item" parent="Room" instance=ExtResource("13_1nqs0")]
+position = Vector2(358.017, 450.994)
 
 [node name="UI" type="Control" parent="." node_paths=PackedStringArray("player", "max_scores", "player_bars")]
 layout_mode = 3
