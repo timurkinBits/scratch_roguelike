@@ -4,7 +4,7 @@ class_name Player
 var defense: int = 0
 
 @onready var hp_bar = $"../../UI"
-@onready var command_executor = $"../../Table/CommandExecutor"
+@onready var command_executor = $"../../Table/TurnExecutor"
 
 func _ready() -> void:
 	# Инициализация спрайтов направлений

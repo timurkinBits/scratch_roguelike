@@ -8,7 +8,7 @@ var damage: int = randi_range(2, 5)
 var heal_points: int = randi_range(3, 8)
 
 @onready var ui_stats: EnemyStats = $'../../UI/EnemyStats'
-@onready var command_executor = $"../../Table/CommandExecutor"
+@onready var command_executor = $"../../Table/TurnExecutor"
 @onready var sprite = $Sprite
 
 var hp_bar_offset: Vector2 = Vector2(0, -40)  # Смещение полосы над врагом

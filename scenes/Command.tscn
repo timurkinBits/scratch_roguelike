@@ -80,7 +80,7 @@ offset_top = 2.0
 offset_right = 27.0
 offset_bottom = 22.0
 mouse_filter = 2
-color = Color(0, 0, 0, 0.239216)
+color = Color(0, 0, 0, 0.360784)
 
 [node name="Up" type="Button" parent="Texture"]
 visible = false
