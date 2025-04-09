@@ -27,9 +27,10 @@ const OPPOSITE_DIRECTIONS = {
 @onready var tile_map: TileMapLayer = $TileMapLayer
 @onready var player: Player = $Player
 @onready var edit_mode_manager = $EditModeManager
+@onready var doors: Control = $Doors
 
 func _ready() -> void:
-	toggle_doors(false)
+	doors.visible = false
 	init_edit_mode()
 	spawn_enemies()
 
@@ -44,10 +45,6 @@ func apply_random_layout() -> void:
 func clear_walls() -> void:
 	for wall in get_tree().get_nodes_in_group('objects'):
 		wall.queue_free()
-
-func toggle_doors(is_visible: bool) -> void:
-	for door in get_tree().get_nodes_in_group('level_door'):
-		door.visible = is_visible
 
 func clear_room() -> void:
 	clear_enemies()
@@ -64,8 +61,8 @@ func teleport_player_to_door(door_direction: String) -> void:
 func transition_to_new_room(direction: String) -> void:
 	clear_room()
 	teleport_player_to_door(OPPOSITE_DIRECTIONS[direction])
-	toggle_doors(false)
-	
+	doors.visible = false
+	Global.reset_remaining_points()
 	edit_mode_manager.check_and_apply_layout()
 	spawn_enemies()
 	room_changed.emit(direction)
@@ -152,3 +149,4 @@ func spawn_door_at_position(tile_position: Vector2, rotation_degree: int) -> voi
 		add_child(door_instance)
 		door_instance.position = door_instance.get_world_position_from_tile(tile_position)
 		door_instance.set_rotation_degree(rotation_degree)  # Устанавливаем угол поворота
+		#door_instance.visible = false

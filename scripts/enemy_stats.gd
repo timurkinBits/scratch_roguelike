@@ -9,6 +9,7 @@ var tracked_enemy: Enemy = null  # Переменная для отслежив�
 var total_width: float = 0.0    # Общая ширина полосы здоровья
 
 func _ready() -> void:
+	z_index = 3
 	heal_points.visible = false
 
 func reset_hp(count: int):
