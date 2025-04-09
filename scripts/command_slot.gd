@@ -27,8 +27,6 @@ func add_command(new_command: Node2D) -> void:
 	if command != null or not is_instance_valid(new_command):
 		return
 	if new_command is Block:
-		#if new_command.parent_slot:
-			#new_command.parent_slot.clear_command()
 		new_command.parent_slot = self
 		
 	command = new_command
