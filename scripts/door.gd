@@ -10,15 +10,14 @@ var degree: int = 0
 func _ready() -> void:
 	add_to_group('doors')
 	add_to_group('objects')
-	
-	toggle_door(is_opened)
+	add_to_group('barrier')
 	
 	position = get_world_position_from_tile(get_tile_position())
 	
-func toggle_door(is_door_opened: bool) -> void:
-	is_opened = is_door_opened
-	opened_sprite.visible = is_door_opened
-	closed_sprite.visible = !is_door_opened
+func use() -> void:
+	is_opened = !is_opened
+	opened_sprite.visible = is_opened
+	closed_sprite.visible = !is_opened
 	
 	if is_opened:
 		remove_from_group('barrier')

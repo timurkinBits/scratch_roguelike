@@ -110,7 +110,7 @@ func attack(damage_value: int) -> void:
 			enemy.take_damage(damage_value)
 			break
 	
-	await get_tree().create_timer(0.3).timeout
+	await get_tree().create_timer(0.55).timeout
 
 # Использовать предмет или объект
 func use() -> void:
@@ -121,19 +121,11 @@ func use() -> void:
 	var player_tile = get_tile_position()
 	var interact_tile = player_tile + DIRECTION_VECTORS[current_direction]
 	
-	# Проверяем монеты
-	var coins = get_tree().get_nodes_in_group("coins")
-	for coin in coins:
-		if is_instance_valid(coin) and coin.get_tile_position() == interact_tile:
-			coin.pickup()
-			break
-	
-	# Проверяем двери
-	for door in get_tree().get_nodes_in_group("doors"):
-		if is_instance_valid(door) and door.get_tile_position() == interact_tile:
-			# Переключаем состояние двери
-			door.toggle_door(!door.is_opened)
-			break
+	for object in get_tree().get_nodes_in_group("objects"):
+		if is_instance_valid(object) and object.get_tile_position() == interact_tile:
+			if object.has_method('use'):
+				object.use()
+				break
 	
 	# Анимация использования
 	var animation_tween = create_tween()

@@ -1,3 +1,4 @@
+# Изменения в room.gd
 extends Node2D
 
 signal room_changed(direction: String)
@@ -9,14 +10,18 @@ enum RoomType {
 	CHALLENGE
 }
 
-# Добавляем настройку весов для типов комнат
-@export var room_type_weights: Array[float] = [0.5, 0.3, 0.15, 0.05] # Сумма должна быть <= 1.0
-# [NORMAL_ENEMIES, ELITE_ENEMIES, SHOP, CHALLENGE]
-
 @export var enemy_scene: PackedScene
 @export var wall_scene: PackedScene
 @export var door_scene: PackedScene
+@export var info_scene: PackedScene
 @export var allow_layout_editing: bool = false
+
+# Добавляем настройки шансов для каждого типа комнаты
+@export_group("Room Spawn Chances")
+@export_range(0, 100) var normal_room_chance: int = 60
+@export_range(0, 100) var shop_room_chance: int = 20
+@export_range(0, 100) var elite_room_chance: int = 10
+@export_range(0, 100) var challenge_room_chance: int = 10
 
 const DOOR_POSITIONS = {
 	"up": Vector2(7, 0),
@@ -50,40 +55,21 @@ var type: RoomType = RoomType.NORMAL_ENEMIES
 var max_enemies: int = 3
 var min_enemies: int = 1
 var min_distance_from_player: int = 5
+var door_types_generated: bool = false  # Флаг для отслеживания, были ли сгенерированы типы комнат
 
 func _ready() -> void:
-	validate_room_weights()
 	for exit_door in doors:
 		exit_door.get_node('button').visible = false
 	init_edit_mode()
 	spawn_enemies()
 
-# Проверка и нормализация весов
-func validate_room_weights() -> void:
-	if room_type_weights.size() != RoomType.size():
-		printerr("Room type weights array size doesn't match RoomType enum size!")
-		room_type_weights.resize(RoomType.size())
-		room_type_weights.fill(1.0 / RoomType.size())
-	
-	var sum = 0.0
-	for weight in room_type_weights:
-		sum += weight
-	
-	if sum == 0:
-		room_type_weights.fill(1.0 / RoomType.size())
-	else:
-		# Нормализуем веса, если их сумма не равна 1
-		if abs(sum - 1.0) > 0.001:
-			for i in range(room_type_weights.size()):
-				room_type_weights[i] /= sum
-
 func init_edit_mode() -> void:
 	edit_mode_manager.init(self, player, tile_map, wall_scene, door_scene, allow_layout_editing)
-	edit_mode_manager.apply_random_layout()
+	apply_layout_for_current_type()
 
-func apply_random_layout() -> void:
+func apply_layout_for_current_type() -> void:
 	clear_walls()
-	edit_mode_manager.apply_random_layout()
+	edit_mode_manager.check_and_apply_layout()
 
 func clear_walls() -> void:
 	for wall in get_tree().get_nodes_in_group('objects'):
@@ -93,18 +79,54 @@ func clear_room() -> void:
 	clear_enemies()
 	clear_walls()
 
-# Модифицированная функция с учетом весов
-func random_types_rooms():
+# Измененная функция для рандомной генерации типов комнат с учетом весов
+func random_types_rooms() -> void:
+	# Проверяем, были ли уже сгенерированы типы комнат
+	if door_types_generated:
+		return
+	
+	# Устанавливаем флаг, что типы комнат сгенерированы
+	door_types_generated = true
+	
+	# Генерируем тип для каждой двери с учетом шансов
 	for door in doors:
-		var random_value = randf()
-		var cumulative_weight = 0.0
-		
-		for i in range(room_type_weights.size()):
-			cumulative_weight += room_type_weights[i]
-			if random_value <= cumulative_weight:
-				door.type = i
-				door.get_node('button').texture = load(DOOR_ICONS[i])
-				break
+		# Используем настраиваемые шансы для определения типа комнаты
+		var room_type = get_weighted_room_type()
+		door.type = RoomType.keys()[room_type]
+		door.get_node('button').texture = load(DOOR_ICONS[room_type])
+
+# Функция для определения типа комнаты с учетом весов
+func get_weighted_room_type() -> int:
+	# Создаем общий пул шансов
+	var total_chance = normal_room_chance + elite_room_chance + shop_room_chance + challenge_room_chance
+	
+	# Если общий шанс равен 0, устанавливаем равномерное распределение
+	if total_chance == 0:
+		return randi() % RoomType.size()
+	
+	# Выберем случайное число в диапазоне общего шанса
+	var roll = randi() % total_chance
+	
+	# Определяем, какому типу комнаты соответствует выпавшее число
+	var current_sum = 0
+	
+	# Обычная комната
+	current_sum += normal_room_chance
+	if roll < current_sum:
+		return RoomType.NORMAL_ENEMIES
+	
+	# Элитная комната
+	current_sum += elite_room_chance
+	if roll < current_sum:
+		return RoomType.ELITE_ENEMIES
+	
+	# Магазин
+	current_sum += shop_room_chance
+	if roll < current_sum:
+		return RoomType.SHOP
+	
+	# Комната испытаний
+	return RoomType.CHALLENGE
 
 func teleport_player_to_door(door_direction: String) -> void:
 	var target_tile = DOOR_POSITIONS[door_direction]
@@ -128,7 +150,13 @@ func transition_to_new_room(direction: String, door_type = null) -> void:
 		exit_door.get_node('button').visible = false
 	
 	Global.reset_remaining_points()
-	edit_mode_manager.check_and_apply_layout()
+	
+	# Сбрасываем флаг генерации типов комнат при переходе в новую комнату
+	door_types_generated = false
+	
+	# Применяем макет, соответствующий текущему типу комнаты
+	apply_layout_for_current_type()
+	
 	apply_room_type_settings()
 	spawn_enemies()
 	room_changed.emit(direction)
@@ -219,15 +247,19 @@ func get_available_spawn_positions() -> Array:
 func calculate_path_length(from_tile: Vector2, to_tile: Vector2) -> int:
 	return int(abs(from_tile.x - to_tile.x) + abs(from_tile.y - to_tile.y))
 
-func spawn_wall_at_position(tile_position: Vector2) -> void:
-	if wall_scene:
-		var wall_instance = wall_scene.instantiate()
-		add_child(wall_instance)
-		wall_instance.position = wall_instance.get_world_position_from_tile(tile_position)
+func spawn_object_at_position(type_obj: EditMode.PlacementType, tile_position: Vector2, rotation_degree: int = 0):
+	match type_obj:
+		EditMode.PlacementType.WALL:
+			spawn_object(wall_scene, tile_position, rotation_degree)
+		EditMode.PlacementType.DOOR:
+			spawn_object(door_scene, tile_position, rotation_degree)
+		EditMode.PlacementType.INFO:
+			spawn_object(info_scene, tile_position, rotation_degree)
 
-func spawn_door_at_position(tile_position: Vector2, rotation_degree: int) -> void:
-	if door_scene:
-		var door_instance = door_scene.instantiate()
-		add_child(door_instance)
-		door_instance.position = door_instance.get_world_position_from_tile(tile_position)
-		door_instance.set_rotation_degree(rotation_degree)
+func spawn_object(scene: PackedScene, tile_position: Vector2, rotation_degree: int = 0):
+	if scene:
+		var instance = scene.instantiate()
+		add_child(instance)
+		instance.position = instance.get_world_position_from_tile(tile_position)
+		if instance.has_method('set_rotation_degree'):
+			instance.set_rotation_degree(rotation_degree)

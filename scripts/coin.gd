@@ -5,11 +5,12 @@ class_name Coin
 
 func _ready() -> void:
 	add_to_group('coins')  # Add to coins group for easy finding
+	add_to_group('objects')
 	
 	var tile_pos = get_tile_position()
 	position = get_world_position_from_tile(tile_pos)
 	
-func pickup():
+func use():
 	Global.add_coins(1)  # Add one coin to global counter
 	queue_free()  # Remove the coin from the scene
 	

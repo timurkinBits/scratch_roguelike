@@ -1,0 +1,11 @@
+[gd_scene load_steps=3 format=3 uid="uid://bik2ueyp5uy6i"]
+
+[ext_resource type="Script" uid="uid://c3rveeia2cdov" path="res://scripts/info.gd" id="1_cbfvs"]
+[ext_resource type="Texture2D" uid="uid://dnml5jw2a8wx" path="res://sprites/fb950.png" id="1_pkda2"]
+
+[node name="Object" type="Node2D"]
+scale = Vector2(1.06871, 1.06871)
+script = ExtResource("1_cbfvs")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture = ExtResource("1_pkda2")

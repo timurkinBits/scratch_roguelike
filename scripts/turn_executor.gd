@@ -1,3 +1,4 @@
+# Изменения в turn_executor.gd
 extends Node
 class_name TurnExecutor
 
@@ -13,8 +14,6 @@ class_name TurnExecutor
 ## Исполнители команд и блоков
 @onready var block_executor: BlockExecutor = $BlockExecutor
 @onready var command_executor: CommandExecutor = $CommandExecutor
-
-var is_type_random: bool = false
 
 ## Инициализация
 func _ready() -> void:
@@ -119,9 +118,8 @@ func _prepare_next_turn() -> void:
 	if get_tree().get_nodes_in_group('enemies').is_empty():
 		for exit_door in room.doors:
 			exit_door.get_node('button').visible = true
-		if !is_type_random:
-			room.random_types_rooms()
-			is_type_random = !is_type_random
+		# Генерируем типы комнат только если комната очищена от врагов
+		room.random_types_rooms()
 
 ## Обработка смерти игрока
 func _on_player_dead() -> void:

@@ -214,12 +214,9 @@ func spawn_coin() -> void:
 	var coin_instance = coin_scene.instantiate()
 	get_parent().add_child(coin_instance)
 	coin_instance.position = position
-	await get_tree().create_timer(0.3).timeout
 	
 func dead():
-	# Сохраняем позицию врага перед его удалением
-	await spawn_coin()  # Создаем монету на месте смерти врага
-	
+	spawn_coin()  # Создаем монету на месте смерти врага
 	ui_stats.change_stats(self, false)
 	super.dead()
 
