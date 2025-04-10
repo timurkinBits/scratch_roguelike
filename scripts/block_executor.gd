@@ -7,6 +7,34 @@ var outline_panels: Array[Node] = []
 @onready var player: Player = $"../../../Room/Player"
 @onready var command_executor: CommandExecutor = $"../CommandExecutor"
 
+func clear_start_turn_commands_preserve_blocks(start_turn_block: Block) -> void:
+	if not is_instance_valid(start_turn_block) or \
+	   start_turn_block.type != Block.BlockType.CONDITION or \
+	   start_turn_block.text != "начало хода":
+		return
+	
+	# Шаг 1: Собираем команды для удаления
+	var commands_to_remove = []
+	for slot in start_turn_block.slot_manager.slots:
+		if is_instance_valid(slot) and is_instance_valid(slot.command) and slot.command is Command:
+			commands_to_remove.append(slot.command)
+	
+	# Шаг 2: Удаляем команды с анимацией
+	if not commands_to_remove.is_empty():
+		var tween = create_tween().set_parallel(true)
+		for command in commands_to_remove:
+			if is_instance_valid(command) and command.has_node("Texture"):
+				tween.tween_property(command.get_node("Texture"), "modulate:a", 0.0, 0.3)
+		await tween.finished
+		
+		for command in commands_to_remove:
+			if is_instance_valid(command):
+				command.slot.command = null
+				command.queue_free()
+	
+	# Шаг 3: Обновляем слоты с сохранением блоков
+	start_turn_block.slot_manager.update_slots()
+	
 ## Check and execute condition blocks
 func check_and_execute_conditions(trigger_time: String) -> bool:
 	# Get all condition blocks
@@ -114,36 +142,17 @@ func clear_outlines() -> void:
 			panel.queue_free()
 	outline_panels.clear()
 
-## Clear main commands (excluding conditional blocks except "начало хода")
 func clear_main_commands() -> void:
-	if !is_inside_tree():
+	if not is_inside_tree():
 		return
 	
-	# Collect commands to remove and affected blocks
-	var commands_to_free = []
-	var affected_blocks = {}
+	var start_turn_blocks = get_tree().get_nodes_in_group("blocks").filter(
+		func(block): return is_instance_valid(block) and \
+					  block.type == Block.BlockType.CONDITION and \
+					  block.text == "начало хода")
 	
-	# Get commands to free
-	for command in get_tree().get_nodes_in_group("commands"):
-		if !is_instance_valid(command) or !command.slot or !command.slot.block:
-			continue
-			
-		var block = command.slot.block
-		if block.type != Block.BlockType.CONDITION || block.text == "начало хода":
-			commands_to_free.append(command)
-			affected_blocks[block] = true
-	
-	# Remove commands
-	await clear_commands(commands_to_free)
-	
-	# Update affected blocks
-	for block in affected_blocks.keys():
-		if is_instance_valid(block):
-			block.slot_manager.shift_commands_up()
-			block.update_slots()
-	
-	# Update all root blocks for consistency
-	update_root_blocks()
+	for block in start_turn_blocks:
+		await clear_start_turn_commands_preserve_blocks(block)
 
 ## Update all root blocks
 func update_root_blocks() -> void:
@@ -189,25 +198,34 @@ func clear_commands(commands_to_free: Array) -> void:
 				command.slot.command = null
 			command.queue_free()
 
-## Clear all commands (except in condition blocks other than "начало хода")
 func clear_all() -> void:
 	if !is_inside_tree():
 		return
 	
-	var commands_to_free = []
-	var affected_blocks = []
+	# Найдем все блоки условия "начало хода"
+	var start_turn_blocks = get_tree().get_nodes_in_group("blocks").filter(
+		func(block): return is_instance_valid(block) and \
+					  block.type == Block.BlockType.CONDITION and \
+					  block.text == "начало хода")
 	
-	# Process all blocks
+	# Для каждого блока условия "начало хода" используем специальную функцию
+	for block in start_turn_blocks:
+		await clear_start_turn_commands_preserve_blocks(block)
+	
+	# Process all other blocks
+	var commands_to_free = []
+	var blocks_to_update = []
+	
 	var all_blocks = get_tree().get_nodes_in_group("blocks")
 	for block in all_blocks:
 		if !is_instance_valid(block):
 			continue
 			
-		# Skip condition blocks except "начало хода"
-		if block.type == Block.BlockType.CONDITION and block.text != "начало хода":
+		# Skip condition blocks including "начало хода" (we already processed them)
+		if block.type == Block.BlockType.CONDITION:
 			continue
-			
-		# Process this block
+		
+		# Collect commands for removal
 		for slot in block.slot_manager.slots:
 			if !is_instance_valid(slot) or !is_instance_valid(slot.command):
 				continue
@@ -215,26 +233,32 @@ func clear_all() -> void:
 			if slot.command is Command:
 				commands_to_free.append(slot.command)
 				slot.command = null
-				if !affected_blocks.has(block):
-					affected_blocks.append(block)
+				
+				if !blocks_to_update.has(block):
+					blocks_to_update.append(block)
 					
-			elif slot.command is Block and (block.type != Block.BlockType.CONDITION or block.text == "начало хода"):
-				# Recursively handle nested blocks
-				_collect_commands_from_block(slot.command, commands_to_free, affected_blocks)
+			elif slot.command is Block:
+				_collect_commands_from_block(slot.command, commands_to_free, blocks_to_update)
 	
+	# Remove commands
 	await clear_commands(commands_to_free)
+	
+	# Update affected blocks
+	for block in blocks_to_update:
+		if is_instance_valid(block):
+			block.slot_manager.shift_commands_up()
+			block.slot_manager.adjust_slot_count()
+			block.slot_manager.update_all_slot_positions()
 	
 	# Update block hierarchy
 	update_root_blocks()
 
-## Recursively collect commands from a block
-func _collect_commands_from_block(block: Block, commands: Array, affected_blocks: Array) -> void:
-	if !is_instance_valid(block):
+func _collect_commands_from_block(block: Block, commands: Array, blocks_to_update: Array) -> void:
+	if !is_instance_valid(block) or block.type == Block.BlockType.CONDITION:
 		return
-		
-	if !affected_blocks.has(block):
-		affected_blocks.append(block)
-		
+	
+	var had_commands = false
+	
 	for slot in block.slot_manager.slots:
 		if !is_instance_valid(slot) or !is_instance_valid(slot.command):
 			continue
@@ -242,5 +266,9 @@ func _collect_commands_from_block(block: Block, commands: Array, affected_blocks
 		if slot.command is Command:
 			commands.append(slot.command)
 			slot.command = null
+			had_commands = true
 		elif slot.command is Block:
-			_collect_commands_from_block(slot.command, commands, affected_blocks)
+			_collect_commands_from_block(slot.command, commands, blocks_to_update)
+	
+	if had_commands and !blocks_to_update.has(block):
+		blocks_to_update.append(block)

@@ -1,17 +1,15 @@
-extends Node2D
+extends ObjectRoom
 
-@onready var tilemap: TileMapLayer = get_tree().get_first_node_in_group("TileMap")
+@onready var info: Label = $Label
+
+var key: int
 
 func _ready() -> void:
+	super._ready()
 	add_to_group('info')
-	add_to_group('objects')
 
-	position = get_world_position_from_tile(get_tile_position())
-	
-func get_tile_position() -> Vector2:
-	var local_pos = position / tilemap.scale
-	return tilemap.local_to_map(local_pos)
+func _on_area_2d_mouse_entered() -> void:
+	info.text = '12345678'
 
-func get_world_position_from_tile(tile_pos: Vector2) -> Vector2:
-	var local_center = tilemap.map_to_local(tile_pos)
-	return local_center * tilemap.scale
+func _on_area_2d_mouse_exited() -> void:
+	info.text = ''

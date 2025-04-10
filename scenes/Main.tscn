@@ -98,6 +98,7 @@ enemy_scene = ExtResource("8_uc31q")
 wall_scene = ExtResource("9_qmy6f")
 door_scene = ExtResource("11_bb450")
 info_scene = ExtResource("15_ebg2g")
+allow_layout_editing = true
 
 [node name="Player" parent="Room" instance=ExtResource("5_k4xvw")]
 position = Vector2(360.154, 501.223)
@@ -120,6 +121,7 @@ offset_right = 453.589
 offset_bottom = -44.3285
 
 [node name="ObjectMenu" type="Node2D" parent="Room/EditModeManager"]
+visible = false
 
 [node name="Wall" type="Sprite2D" parent="Room/EditModeManager/ObjectMenu"]
 position = Vector2(25.8748, -13.6673)

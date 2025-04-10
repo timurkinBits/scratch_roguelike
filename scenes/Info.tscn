@@ -1,11 +1,36 @@
-[gd_scene load_steps=3 format=3 uid="uid://bik2ueyp5uy6i"]
+[gd_scene load_steps=5 format=3 uid="uid://bik2ueyp5uy6i"]
 
 [ext_resource type="Script" uid="uid://c3rveeia2cdov" path="res://scripts/info.gd" id="1_cbfvs"]
 [ext_resource type="Texture2D" uid="uid://dnml5jw2a8wx" path="res://sprites/fb950.png" id="1_pkda2"]
 
-[node name="Object" type="Node2D"]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_jfmby"]
+size = Vector2(29.9426, 28.0712)
+
+[sub_resource type="LabelSettings" id="LabelSettings_jfmby"]
+font_size = 20
+font_color = Color(0, 0, 0, 1)
+
+[node name="Info" type="Node2D"]
 scale = Vector2(1.06871, 1.06871)
 script = ExtResource("1_cbfvs")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
 texture = ExtResource("1_pkda2")
+
+[node name="Area2D" type="Area2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D"]
+position = Vector2(0.935707, 1.87142)
+shape = SubResource("RectangleShape2D_jfmby")
+
+[node name="Label" type="Label" parent="."]
+offset_left = -96.3779
+offset_top = -103.864
+offset_right = 96.6221
+offset_bottom = 56.1365
+label_settings = SubResource("LabelSettings_jfmby")
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[connection signal="mouse_entered" from="Area2D" to="." method="_on_area_2d_mouse_entered"]
+[connection signal="mouse_exited" from="Area2D" to="." method="_on_area_2d_mouse_exited"]

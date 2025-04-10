@@ -17,12 +17,10 @@ var coin_scene = preload("res://scenes/Coin.tscn")  # Предзагрузка �
 func _ready() -> void:
 	super._ready()
 	add_to_group("enemies")
-	add_to_group("characters")
 	hp = heal_points
 	player = get_parent().get_node("Player")
-	if not player:
-		push_error("Player not found!")
 	sprite.animation = get_enemy_type() + "_idle"
+	update_visual()
 
 func get_enemy_type() -> String:
 	if damage <= 3:
@@ -34,7 +32,7 @@ func get_enemy_type() -> String:
 
 # Логика хода врага
 func take_turn() -> void:
-	if should_skip_action():
+	if is_dead:
 		return
 	
 	if not is_instance_valid(player):
@@ -92,6 +90,21 @@ func update_visual() -> void:
 		sprite.flip_h = true
 	else:
 		sprite.flip_h = false
+		
+func animate_movement(target_pos: Vector2) -> void:
+	is_moving = true
+	update_visual()
+	
+	create_tween().tween_property(
+		self, 
+		"position", 
+		target_pos, 
+		0.3
+	).set_ease(Tween.EASE_IN_OUT)
+	await get_tree().create_timer(0.3).timeout
+	
+	is_moving = false
+	update_visual()
 
 # Поиск пути к ближайшей клетке рядом с игроком
 func find_path_to_player() -> Array:
@@ -225,3 +238,7 @@ func _on_area_2d_mouse_entered() -> void:
 
 func _on_area_2d_mouse_exited() -> void:
 	ui_stats.change_stats(self, false)
+	
+# Расчет расстояния Манхэттена между тайлами
+func calculate_path_length(from_tile: Vector2, to_tile: Vector2) -> int:
+	return int(abs(from_tile.x - to_tile.x) + abs(from_tile.y - to_tile.y))
