@@ -5,13 +5,14 @@ var player: Node2D
 
 var speed: int = randi_range(2, 5)
 var damage: int = randi_range(2, 5)
-var heal_points: int = randi_range(3, 8)
+var heal_points: int = randi_range(3, 6)
 
 @onready var ui_stats: EnemyStats = $'../../UI/EnemyStats'
 @onready var command_executor = $"../../Table/TurnExecutor"
 @onready var sprite = $Sprite
 
 var hp_bar_offset: Vector2 = Vector2(0, -40)  # Смещение полосы над врагом
+var coin_scene = preload("res://scenes/Coin.tscn")  # Предзагрузка сцены монеты
 
 func _ready() -> void:
 	super._ready()
@@ -208,14 +209,22 @@ func take_damage(damage_amount: int):
 	hp -= damage_amount
 	super.take_damage(damage_amount)
 	
+# Функция для создания монеты на месте врага
+func spawn_coin() -> void:
+	var coin_instance = coin_scene.instantiate()
+	get_parent().add_child(coin_instance)
+	coin_instance.position = position
+	await get_tree().create_timer(0.3).timeout
+	
 func dead():
+	# Сохраняем позицию врага перед его удалением
+	await spawn_coin()  # Создаем монету на месте смерти врага
+	
 	ui_stats.change_stats(self, false)
 	super.dead()
 
-
 func _on_area_2d_mouse_entered() -> void:
 	ui_stats.change_stats(self, true)
-
 
 func _on_area_2d_mouse_exited() -> void:
 	ui_stats.change_stats(self, false)

@@ -2,7 +2,7 @@
 
 [ext_resource type="Texture2D" uid="uid://cni2isbjoq12d" path="res://sprites/Tileset.png" id="1_68nli"]
 [ext_resource type="Script" uid="uid://biuglrq61o7b8" path="res://scripts/room.gd" id="1_ffxv4"]
-[ext_resource type="Texture2D" uid="uid://dwcjksqiy8sbm" path="res://sprites/arrow_up.svg" id="3_85yof"]
+[ext_resource type="Script" uid="uid://tjkpct3ux3nu" path="res://scripts/exit_door.gd" id="3_14vil"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_q4pf7"]
 texture = ExtResource("1_68nli")
@@ -414,16 +414,16 @@ atlas = ExtResource("1_68nli")
 region = Rect2(76, 32, 4, 16)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_ffxv4"]
-size = Vector2(35, 39)
+size = Vector2(38, 46.0001)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_14vil"]
+size = Vector2(40.5, 45)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_85yof"]
+size = Vector2(43.0001, 43)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_36trf"]
 size = Vector2(39.5, 35)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_85yof"]
-size = Vector2(42.75, 34)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_14vil"]
-size = Vector2(35, 39.999)
 
 [node name="Room" type="Node2D"]
 script = ExtResource("1_ffxv4")
@@ -500,15 +500,12 @@ mouse_filter = 2
 texture = SubResource("AtlasTexture_7dqbv")
 metadata/_edit_use_anchors_ = true
 
-[node name="Doors" type="Control" parent="."]
-layout_mode = 3
-anchors_preset = 0
-offset_right = 40.0
-offset_bottom = 40.0
-mouse_filter = 2
+[node name="ExitDoors" type="Node2D" parent="."]
 
-[node name="DoorDown" type="TextureRect" parent="Doors"]
-layout_mode = 0
+[node name="DownDoor" type="Node2D" parent="ExitDoors"]
+script = ExtResource("3_14vil")
+
+[node name="Texture" type="TextureRect" parent="ExitDoors/DownDoor"]
 offset_left = 383.0
 offset_top = 528.0
 offset_right = 403.0
@@ -518,53 +515,58 @@ mouse_filter = 2
 texture = SubResource("AtlasTexture_ybpoa")
 metadata/_edit_use_anchors_ = true
 
-[node name="TextureRect" type="TextureRect" parent="Doors/DoorDown"]
-layout_mode = 0
-offset_left = 35.0
-offset_top = -0.00012666
-offset_right = 835.0
-offset_bottom = 800.0
-rotation = 1.5708
+[node name="button" type="TextureRect" parent="ExitDoors/DownDoor"]
+offset_left = 337.0
+offset_top = 525.0
+offset_right = 1137.0
+offset_bottom = 1325.0
 scale = Vector2(0.057546, 0.0475623)
-texture = ExtResource("3_85yof")
+expand_mode = 3
 metadata/_edit_use_anchors_ = true
 
-[node name="DownDoor" type="Area2D" parent="Doors/DoorDown"]
-position = Vector2(-286, -239.998)
+[node name="DownDoor" type="Area2D" parent="ExitDoors/DownDoor/button"]
+position = Vector2(-5578.15, -5045.97)
+scale = Vector2(17.3774, 21.0251)
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Doors/DoorDown/DownDoor"]
-position = Vector2(301.5, 262.998)
+[node name="CollisionShape2D" type="CollisionShape2D" parent="ExitDoors/DownDoor/button/DownDoor"]
+position = Vector2(344, 258.998)
 rotation = 1.5708
 shape = SubResource("RectangleShape2D_ffxv4")
 
-[node name="DoorRight" type="TextureRect" parent="Doors"]
-layout_mode = 0
-offset_left = 624.0
-offset_top = 241.0
-offset_right = 644.0
-offset_bottom = 287.0
+[node name="UpDoor" type="Node2D" parent="ExitDoors"]
+script = ExtResource("3_14vil")
+
+[node name="Texture" type="TextureRect" parent="ExitDoors/UpDoor"]
+offset_left = 338.0
+offset_right = 358.0
+offset_bottom = 46.0
+rotation = -1.5708
 mouse_filter = 2
 texture = SubResource("AtlasTexture_ybpoa")
 metadata/_edit_use_anchors_ = true
 
-[node name="TextureRect2" type="TextureRect" parent="Doors/DoorRight"]
-layout_mode = 0
-offset_left = 40.0
-offset_right = 840.0
-offset_bottom = 800.0
-rotation = 1.5708
-scale = Vector2(0.0573871, 0.0498282)
-texture = ExtResource("3_85yof")
+[node name="button" type="TextureRect" parent="ExitDoors/UpDoor"]
+offset_left = 338.0
+offset_top = -40.0
+offset_right = 1138.0
+offset_bottom = 760.0
+scale = Vector2(0.0573872, 0.0499692)
+expand_mode = 3
 metadata/_edit_use_anchors_ = true
 
-[node name="RightDoor" type="Area2D" parent="Doors/DoorRight"]
+[node name="UpDoor" type="Area2D" parent="ExitDoors/UpDoor/button"]
+position = Vector2(4356.35, -5723.54)
+rotation = -1.5708
+scale = Vector2(20.0123, 17.4255)
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Doors/DoorRight/RightDoor"]
-position = Vector2(19.75, 22.5)
-shape = SubResource("RectangleShape2D_36trf")
+[node name="CollisionShape2D" type="CollisionShape2D" parent="ExitDoors/UpDoor/button/UpDoor"]
+position = Vector2(-306.25, -226.5)
+shape = SubResource("RectangleShape2D_14vil")
 
-[node name="DoorLeft" type="TextureRect" parent="Doors"]
-layout_mode = 0
+[node name="LeftDoor" type="Node2D" parent="ExitDoors"]
+script = ExtResource("3_14vil")
+
+[node name="Texture" type="TextureRect" parent="ExitDoors/LeftDoor"]
 offset_left = 96.0
 offset_top = 286.0
 offset_right = 116.0
@@ -574,54 +576,55 @@ mouse_filter = 2
 texture = SubResource("AtlasTexture_ybpoa")
 metadata/_edit_use_anchors_ = true
 
-[node name="TextureRect3" type="TextureRect" parent="Doors/DoorLeft"]
-layout_mode = 0
-offset_left = 40.0
-offset_top = 1.0001
-offset_right = 840.0
-offset_bottom = 801.0
-rotation = 1.5708
+[node name="button" type="TextureRect" parent="ExitDoors/LeftDoor"]
+offset_left = 56.0
+offset_top = 241.0
+offset_right = 856.0
+offset_bottom = 1041.0
 scale = Vector2(0.0566592, 0.0541017)
-texture = ExtResource("3_85yof")
+expand_mode = 3
 metadata/_edit_use_anchors_ = true
 
-[node name="LeftDoor" type="Area2D" parent="Doors/DoorLeft"]
-position = Vector2(-528, 45.0001)
-rotation = 3.14159
+[node name="LeftDoor" type="Area2D" parent="ExitDoors/LeftDoor/button"]
+position = Vector2(-776.635, -10498.7)
+rotation = -1.5708
+scale = Vector2(18.4837, 17.6494)
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Doors/DoorLeft/LeftDoor"]
-position = Vector2(-546.375, 21.9987)
+[node name="CollisionShape2D" type="CollisionShape2D" parent="ExitDoors/LeftDoor/button/LeftDoor"]
+position = Vector2(-589, 65.4984)
 shape = SubResource("RectangleShape2D_85yof")
 
-[node name="DoorUp" type="TextureRect" parent="Doors"]
-layout_mode = 0
-offset_left = 338.0
-offset_right = 358.0
-offset_bottom = 46.0
-rotation = -1.5708
+[node name="RightDoor" type="Node2D" parent="ExitDoors"]
+script = ExtResource("3_14vil")
+
+[node name="Texture" type="TextureRect" parent="ExitDoors/RightDoor"]
+offset_left = 624.0
+offset_top = 241.0
+offset_right = 644.0
+offset_bottom = 287.0
 mouse_filter = 2
 texture = SubResource("AtlasTexture_ybpoa")
 metadata/_edit_use_anchors_ = true
 
-[node name="TextureRect4" type="TextureRect" parent="Doors/DoorUp"]
-layout_mode = 0
-offset_left = 40.0
-offset_right = 840.0
-offset_bottom = 800.0
-rotation = 1.5708
-scale = Vector2(0.0573872, 0.0499692)
-texture = ExtResource("3_85yof")
+[node name="button" type="TextureRect" parent="ExitDoors/RightDoor"]
+offset_left = 619.0
+offset_top = 244.0
+offset_right = 1419.0
+offset_bottom = 1044.0
+scale = Vector2(0.0573871, 0.0498282)
+expand_mode = 3
 metadata/_edit_use_anchors_ = true
 
-[node name="UpDoor" type="Area2D" parent="Doors/DoorUp"]
-position = Vector2(-210.001, 285.999)
-rotation = 1.5708
+[node name="RightDoor" type="Area2D" parent="ExitDoors/RightDoor/button"]
+position = Vector2(0.00244141, 802.758)
+rotation = -1.5708
+scale = Vector2(20.069, 17.4255)
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Doors/DoorUp/UpDoor"]
-position = Vector2(-262.5, -229.999)
-shape = SubResource("RectangleShape2D_14vil")
+[node name="CollisionShape2D" type="CollisionShape2D" parent="ExitDoors/RightDoor/button/RightDoor"]
+position = Vector2(19.75, 22.5)
+shape = SubResource("RectangleShape2D_36trf")
 
-[connection signal="input_event" from="Doors/DoorDown/DownDoor" to="." method="_on_down_door_input_event"]
-[connection signal="input_event" from="Doors/DoorRight/RightDoor" to="." method="_on_right_door_input_event"]
-[connection signal="input_event" from="Doors/DoorLeft/LeftDoor" to="." method="_on_left_door_input_event"]
-[connection signal="input_event" from="Doors/DoorUp/UpDoor" to="." method="_on_up_door_input_event"]
+[connection signal="input_event" from="ExitDoors/DownDoor/button/DownDoor" to="." method="_on_down_door_input_event"]
+[connection signal="input_event" from="ExitDoors/UpDoor/button/UpDoor" to="." method="_on_up_door_input_event"]
+[connection signal="input_event" from="ExitDoors/LeftDoor/button/LeftDoor" to="." method="_on_left_door_input_event"]
+[connection signal="input_event" from="ExitDoors/RightDoor/button/RightDoor" to="." method="_on_right_door_input_event"]

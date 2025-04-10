@@ -33,7 +33,7 @@ const AVAILABLE_ABILITIES = ['+1 движ.', '+1 атака', '+1 защита',
 
 # Slot count for different block types
 const CONDITION_SLOTS = {
-	"начало хода": 999,
+	"начало хода": 13,
 	"здоровье < 50%": 3,
 }
 

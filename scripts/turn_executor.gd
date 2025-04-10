@@ -14,6 +14,8 @@ class_name TurnExecutor
 @onready var block_executor: BlockExecutor = $BlockExecutor
 @onready var command_executor: CommandExecutor = $CommandExecutor
 
+var is_type_random: bool = false
+
 ## Инициализация
 func _ready() -> void:
 	# Подключение сигналов
@@ -115,7 +117,11 @@ func _prepare_next_turn() -> void:
 	
 	# Показываем двери, если врагов не осталось
 	if get_tree().get_nodes_in_group('enemies').is_empty():
-		room.doors.visible = true
+		for exit_door in room.doors:
+			exit_door.get_node('button').visible = true
+		if !is_type_random:
+			room.random_types_rooms()
+			is_type_random = !is_type_random
 
 ## Обработка смерти игрока
 func _on_player_dead() -> void:
@@ -137,3 +143,4 @@ func end_game_player_dead() -> void:
 	if is_inside_tree():
 		await get_tree().create_timer(2).timeout
 		get_tree().change_scene_to_file("res://scenes/main_menu.tscn")
+		Global.coins = 0

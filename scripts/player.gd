@@ -121,6 +121,13 @@ func use() -> void:
 	var player_tile = get_tile_position()
 	var interact_tile = player_tile + DIRECTION_VECTORS[current_direction]
 	
+	# Проверяем монеты
+	var coins = get_tree().get_nodes_in_group("coins")
+	for coin in coins:
+		if is_instance_valid(coin) and coin.get_tile_position() == interact_tile:
+			coin.pickup()
+			break
+	
 	# Проверяем двери
 	for door in get_tree().get_nodes_in_group("doors"):
 		if is_instance_valid(door) and door.get_tile_position() == interact_tile:

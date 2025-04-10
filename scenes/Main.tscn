@@ -1,4 +1,4 @@
-[gd_scene load_steps=32 format=3 uid="uid://x83t6t456pdf"]
+[gd_scene load_steps=33 format=3 uid="uid://x83t6t456pdf"]
 
 [ext_resource type="PackedScene" uid="uid://pllgtdsxxw2s" path="res://scenes/table.tscn" id="1_2gx6p"]
 [ext_resource type="Script" uid="uid://bs0f6ystj1uo2" path="res://scripts/table.gd" id="2_wk856"]
@@ -17,11 +17,11 @@
 [ext_resource type="PackedScene" uid="uid://b1n1mnvax3cup" path="res://scenes/hp_bar.tscn" id="10_wp0k4"]
 [ext_resource type="PackedScene" uid="uid://bfbsx0uvdydab" path="res://scenes/door.tscn" id="11_bb450"]
 [ext_resource type="Texture2D" uid="uid://cni2isbjoq12d" path="res://sprites/Tileset.png" id="12_nfivy"]
-[ext_resource type="PackedScene" uid="uid://cuf70xq4o3nw5" path="res://scenes/item.tscn" id="13_1nqs0"]
 [ext_resource type="Script" uid="uid://okdqbifhl0ui" path="res://scripts/enemy_stats.gd" id="13_3p2gp"]
 [ext_resource type="Texture2D" uid="uid://djwyqrfy3bdly" path="res://sprites/32x32.png" id="13_cvmbd"]
 [ext_resource type="PackedScene" uid="uid://cqa3vxgvdii24" path="res://scenes/heal_point.tscn" id="13_mwfav"]
 [ext_resource type="LabelSettings" uid="uid://di7qwojobxj1y" path="res://sprites/Command.tres" id="15_3p2gp"]
+[ext_resource type="Texture2D" uid="uid://dclo6ofblwxmy" path="res://sprites/fb2116.png" id="21_ebg2g"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_1nqs0"]
 atlas = ExtResource("12_nfivy")
@@ -52,6 +52,9 @@ region = Rect2(224, 1312, 32, 32)
 [sub_resource type="AtlasTexture" id="AtlasTexture_bb450"]
 atlas = ExtResource("13_cvmbd")
 region = Rect2(64, 1312, 32, 32)
+
+[sub_resource type="LabelSettings" id="LabelSettings_ebg2g"]
+font_size = 22
 
 [sub_resource type="LabelSettings" id="LabelSettings_q8u5g"]
 font_size = 83
@@ -137,10 +140,6 @@ scale = Vector2(0.37037, 0.37037)
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Room/EditModeManager/ObjectMenu/Door/Door_button"]
 shape = SubResource("RectangleShape2D_nfivy")
 
-[node name="Item" parent="Room" instance=ExtResource("13_1nqs0")]
-visible = false
-position = Vector2(358.017, 450.994)
-
 [node name="UI" type="Control" parent="." node_paths=PackedStringArray("player", "max_scores", "player_bars")]
 layout_mode = 3
 anchors_preset = 0
@@ -214,6 +213,24 @@ offset_right = -772.0
 offset_bottom = -15.0001
 scale = Vector2(0.822, 0.822)
 texture = SubResource("AtlasTexture_bb450")
+
+[node name="CoinLabel" type="Label" parent="UI/PlayerBars"]
+layout_mode = 0
+offset_left = -859.0
+offset_top = -62.0
+offset_right = -819.0
+offset_bottom = -31.0
+text = "1"
+label_settings = SubResource("LabelSettings_ebg2g")
+
+[node name="TextureRect3" type="TextureRect" parent="UI/PlayerBars"]
+layout_mode = 0
+offset_left = -893.0
+offset_top = -62.0
+offset_right = -853.0
+offset_bottom = -22.0
+scale = Vector2(0.8, 0.8)
+texture = ExtResource("21_ebg2g")
 
 [node name="EnemyStats" type="Control" parent="UI"]
 layout_mode = 1

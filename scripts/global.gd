@@ -1,6 +1,7 @@
 extends Node
 
 signal points_changed
+signal coins_changed
 
 var points: Dictionary = {
 	Command.TypeCommand.MOVE: 10,
@@ -8,6 +9,8 @@ var points: Dictionary = {
 	Command.TypeCommand.HEAL: 3,
 	Command.TypeCommand.DEFENSE: 3
 }
+
+var coins: int = 0  # Added coin counter
 
 var remaining_move_points: int
 var remaining_attack_points: int
@@ -87,3 +90,18 @@ func release_block(block_type) -> void:
 	if block_type in remaining_blocks:
 		remaining_blocks[block_type] = min(block_limits[block_type], remaining_blocks[block_type] + 1)
 		points_changed.emit()
+
+# Functions for coin system
+func add_coins(amount: int) -> void:
+	coins += amount
+	coins_changed.emit()
+	
+func get_coins() -> int:
+	return coins
+	
+func spend_coins(amount: int) -> bool:
+	if coins >= amount:
+		coins -= amount
+		coins_changed.emit()
+		return true
+	return false
