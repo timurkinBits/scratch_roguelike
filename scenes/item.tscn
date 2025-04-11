@@ -1,0 +1,19 @@
+[gd_scene load_steps=3 format=3 uid="uid://cbd5bhmk60s5o"]
+
+[ext_resource type="Script" uid="uid://46v3ggrp5osy" path="res://scripts/item.gd" id="1_4gq7n"]
+[ext_resource type="Texture2D" uid="uid://tnindadpwhan" path="res://sprites/fb12.png" id="2_s8enn"]
+
+[node name="Item" type="Node2D"]
+script = ExtResource("1_4gq7n")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+scale = Vector2(1.34375, 1.34375)
+texture = ExtResource("2_s8enn")
+
+[node name="LineEdit" type="LineEdit" parent="."]
+offset_right = 68.5625
+offset_bottom = 31.0
+max_length = 1
+context_menu_enabled = false
+
+[connection signal="text_submitted" from="LineEdit" to="." method="_on_line_edit_text_submitted"]

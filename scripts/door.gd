@@ -25,3 +25,4 @@ func use() -> void:
 func set_rotation_degree(rot_degree: int) -> void:
 	degree = rot_degree
 	rotation_degrees = rot_degree
+	

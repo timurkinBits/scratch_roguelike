@@ -14,6 +14,7 @@ enum RoomType {
 @export var wall_scene: PackedScene
 @export var door_scene: PackedScene
 @export var info_scene: PackedScene
+@export var item_scene: PackedScene
 @export var allow_layout_editing: bool = false
 
 # Добавляем настройки шансов для каждого типа комнаты
@@ -68,16 +69,16 @@ func init_edit_mode() -> void:
 	apply_layout_for_current_type()
 
 func apply_layout_for_current_type() -> void:
-	clear_walls()
+	clear_objects()
 	edit_mode_manager.check_and_apply_layout()
 
-func clear_walls() -> void:
+func clear_objects() -> void:
 	for wall in get_tree().get_nodes_in_group('objects'):
 		wall.queue_free()
 
 func clear_room() -> void:
 	clear_enemies()
-	clear_walls()
+	clear_objects()
 
 # Измененная функция для рандомной генерации типов комнат с учетом весов
 func random_types_rooms() -> void:
@@ -247,19 +248,33 @@ func get_available_spawn_positions() -> Array:
 func calculate_path_length(from_tile: Vector2, to_tile: Vector2) -> int:
 	return int(abs(from_tile.x - to_tile.x) + abs(from_tile.y - to_tile.y))
 
-func spawn_object_at_position(type_obj: EditMode.PlacementType, tile_position: Vector2, rotation_degree: int = 0):
+func spawn_object_at_position(type_obj: EditMode.PlacementType, tile_position: Vector2i, rotation_degree: int = 0, key: int = 0) -> Node:
+	var instance
 	match type_obj:
 		EditMode.PlacementType.WALL:
-			spawn_object(wall_scene, tile_position, rotation_degree)
+			instance = spawn_object(wall_scene, tile_position, rotation_degree)
 		EditMode.PlacementType.DOOR:
-			spawn_object(door_scene, tile_position, rotation_degree)
+			instance = spawn_object(door_scene, tile_position, rotation_degree)
 		EditMode.PlacementType.INFO:
-			spawn_object(info_scene, tile_position, rotation_degree)
+			instance = spawn_object(info_scene, tile_position, rotation_degree)
+			if instance and key > 0:
+				instance.key = key
+		EditMode.PlacementType.ITEM:
+			instance = spawn_object(item_scene, tile_position, rotation_degree)
+			if instance and key > 0:
+				instance.key = key
+	return instance
 
-func spawn_object(scene: PackedScene, tile_position: Vector2, rotation_degree: int = 0):
+# В room.gd
+func spawn_object(scene: PackedScene, tile_position: Vector2i, rotation_degree: int = 0) -> Node:
 	if scene:
 		var instance = scene.instantiate()
 		add_child(instance)
-		instance.position = instance.get_world_position_from_tile(tile_position)
+		# Важно: преобразуем tile_position в целые числа
+		var pos = Vector2i(int(tile_position.x), int(tile_position.y))
+		instance.position = instance.get_world_position_from_tile(pos)
 		if instance.has_method('set_rotation_degree'):
 			instance.set_rotation_degree(rotation_degree)
+		
+		return instance
+	return null

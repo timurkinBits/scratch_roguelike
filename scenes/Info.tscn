@@ -32,5 +32,12 @@ label_settings = SubResource("LabelSettings_jfmby")
 horizontal_alignment = 1
 vertical_alignment = 1
 
+[node name="LineEdit" type="LineEdit" parent="."]
+offset_right = 68.5625
+offset_bottom = 31.0
+max_length = 1
+context_menu_enabled = false
+
 [connection signal="mouse_entered" from="Area2D" to="." method="_on_area_2d_mouse_entered"]
 [connection signal="mouse_exited" from="Area2D" to="." method="_on_area_2d_mouse_exited"]
+[connection signal="text_submitted" from="LineEdit" to="." method="_on_line_edit_text_submitted"]

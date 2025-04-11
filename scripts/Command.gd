@@ -179,8 +179,8 @@ func _on_area_2d_input_event(_viewport: Node, event: InputEvent, _shape_idx: int
 			if is_menu_command:
 				menu_card_clicked.emit(type)
 			else:
-				is_settings = !is_settings
-				change_settings()
+				is_settings = false
+				change_settings(is_settings)
 		elif event.button_index == MOUSE_BUTTON_RIGHT and !is_menu_command and event.pressed:
 			Global.release_points(type, value)
 			queue_free()
@@ -224,10 +224,10 @@ func _exit_tree() -> void:
 func _on_num_area_input_event(_viewport: Node, event: InputEvent, _shape_idx: int) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 		if not is_menu_command and not table.is_turn_in_progress:
-			change_settings()
+			is_settings = !is_settings
+			change_settings(is_settings)
 			update_all_buttons()
 			
-func change_settings():
-	is_settings = !is_settings
-	up_button.visible = is_settings
-	down_button.visible = is_settings
+func change_settings(settings):
+	up_button.visible = settings
+	down_button.visible = settings

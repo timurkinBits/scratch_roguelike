@@ -9,7 +9,8 @@ enum PlacementType {
 	NONE,
 	WALL,
 	DOOR,
-	INFO
+	INFO,
+	ITEM
 }
 
 var room: Node2D
@@ -32,6 +33,7 @@ var current_room_type: int = 0
 var edit_mode: bool = false
 var selected_layout_index: int = -1
 var degree: int = 0
+var is_editing_key: bool = false
 
 # Создаем имена для файлов и отображаемые имена типов комнат
 var room_type_file_names = {
@@ -67,9 +69,14 @@ func init(parent_room: Node2D, player_node: Node, tilemap: TileMapLayer, wall_pa
 	edit_label.visible = allow_layout_editing
 	layout_label.visible = false
 	object_menu.visible = edit_mode
+	add_to_group("edit_mode")
 
 func _input(event: InputEvent) -> void:
 	if not allow_layout_editing:
+		return
+	
+	# Если мы редактируем ключ, игнорируем все другие ввода
+	if is_editing_key:
 		return
 		
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT and edit_mode:
@@ -89,7 +96,7 @@ func _input(event: InputEvent) -> void:
 					save_current_layout(current_room_type)
 			KEY_C:
 				if edit_mode:
-					room.clear_walls()
+					room.clear_objects()
 			KEY_D:
 				if edit_mode:
 					delete_current_layout()
@@ -171,15 +178,16 @@ func delete_current_layout() -> void:
 	
 	if layouts.is_empty():
 		selected_layout_index = -1
-		room.clear_walls()
+		room.clear_objects()
 	else:
 		selected_layout_index = min(selected_layout_index, layouts.size() - 1)
 		apply_layout_by_index(selected_layout_index, current_room_type)
 	
 	update_layout_label()
 
+# В edit_mode.gd
 func apply_layout_by_index(index: int, room_type: int) -> void:
-	room.clear_walls()
+	room.clear_objects()
 	
 	var layouts = room_layouts.get(room_type, [])
 	if index < 0 or index >= layouts.size():
@@ -189,30 +197,18 @@ func apply_layout_by_index(index: int, room_type: int) -> void:
 	if not selected_layout is Array:
 		return
 	
-	# Словарь для отслеживания занятых позиций и их типов
-	var position_map: Dictionary = {}
-	
-	# Сначала собираем все объекты, чтобы выявить конфликты
 	for object_data in selected_layout:
-		if object_data is Dictionary and object_data.has("x") and object_data.has("y"):
-			var position_obj = Vector2(object_data.x, object_data.y)
-			var type = object_data.get("t", PlacementType.WALL)
-			var degree_obj = object_data.get("d", 0)
-			
-			# Если позиция уже занята, даём приоритет дверям
-			if position_map.has(position_obj):
-				if position_map[position_obj].t == PlacementType.DOOR:
-					continue  # Дверь уже есть, пропускаем стену
-				elif type == PlacementType.DOOR:
-					position_map[position_obj] = {"t": type, "d": degree_obj}  # Заменяем стену дверью
-			else:
-				position_map[position_obj] = {"t": type, "d": degree_obj}
-	
-	# Теперь размещаем объекты из отфильтрованного набора
-	for pos in position_map.keys():
-		var data = position_map[pos]
-		room.spawn_object_at_position(data.t, pos, data.d)
+		if object_data is Dictionary and object_data.has("x") and object_data.has("y") and object_data.has("t"):
+			var pos = Vector2(object_data.x, object_data.y)
+			var type = object_data.t
+			var degree = object_data.get("d", 0)
+			var key = object_data.get("k", 0)
+			var object = room.spawn_object_at_position(type, pos, degree)
+			if object and (type == PlacementType.INFO or type == PlacementType.ITEM):
+				if "key" in object:
+					object.key = key
 
+# In edit_mode.gd, add after the place_object_at_mouse function
 func place_object_at_mouse(mouse_position: Vector2) -> void:
 	var local_pos = tile_map.to_local(mouse_position)
 	var tile_pos = tile_map.local_to_map(local_pos)
@@ -220,16 +216,23 @@ func place_object_at_mouse(mouse_position: Vector2) -> void:
 	if not is_valid_object_position(tile_pos, current_placement_type):
 		return
 	# Проверка наличия объекта и удаление если есть
-	var objects = get_tree().get_nodes_in_group('objects')
-	for obj in objects:
+	for obj in get_tree().get_nodes_in_group('objects'):
 		if obj.get_tile_position() == Vector2(tile_pos):
 			obj.queue_free()
 			return
 	
 	# Размещаем новый объект в зависимости от выбранного типа
-	room.spawn_object_at_position(current_placement_type, tile_pos, degree)
+	var object = room.spawn_object_at_position(current_placement_type, tile_pos, degree)
+	
+	# Если это информация или предмет, показываем поле для ввода ключа
+	if current_placement_type == PlacementType.INFO or current_placement_type == PlacementType.ITEM:
+		if object and object.has_node("LineEdit"):
+			object.key_edit.visible = true
+			object.key_edit.grab_focus()
+			is_editing_key = true  # Устанавливаем флаг редактирования ключа
+	
 
-func is_valid_object_position(tile_pos: Vector2, object_type: int) -> bool:
+func is_valid_object_position(tile_pos: Vector2i, object_type: int) -> bool:
 	match object_type:
 		PlacementType.WALL:
 			# Проверка близости к дверям
@@ -285,38 +288,98 @@ func save_layouts_to_file(room_type: int) -> void:
 
 func save_current_layout(room_type: int) -> void:
 	var objects_data: Array = []
+	# Используем строковый ключ для большей точности
+	var position_map: Dictionary = {}
+
+	# Получаем все объекты комнаты
+	var all_objects = get_tree().get_nodes_in_group('objects')
 	
-	# Сохраняем стены
-	for wall in room.get_tree().get_nodes_in_group('barrier'):
-		var pos: Vector2 = wall.get_tile_position()
-		objects_data.append({"x": pos.x, "y": pos.y, "t": PlacementType.WALL})
-	
-	# Сохраняем двери с углом поворота
-	for door in room.get_tree().get_nodes_in_group('doors'):
-		var pos: Vector2 = door.get_tile_position()
-		var door_data = {"x": pos.x, "y": pos.y, "t": PlacementType.DOOR, "d": door.degree}
-		objects_data.append(door_data)
+	# Обрабатываем каждый объект
+	for obj in all_objects:
+		var pos = obj.get_tile_position()
+		var pos_key = str(int(pos.x)) + "_" + str(int(pos.y))
+		var object_type = PlacementType.NONE
+		var degree = 0
+		var key = 0
 		
-	for info in room.get_tree().get_nodes_in_group('info'):
-		var pos: Vector2 = info.get_tile_position()
-		objects_data.append({"x": pos.x, "y": pos.y, "t": PlacementType.INFO})
+		# Определяем тип объекта по его группе
+		if obj.is_in_group("barrier"):
+			object_type = PlacementType.WALL
+		elif obj.is_in_group("doors"):
+			print(PlacementType.DOOR)
+			object_type = PlacementType.DOOR
+			degree = obj.degree if has_property(obj, "degree") else 0
+		elif obj.is_in_group("info"):
+			object_type = PlacementType.INFO
+			key = obj.key if has_property(obj, "key") else 0
+		elif obj.is_in_group("items"):
+			object_type = PlacementType.ITEM
+			key = obj.key if has_property(obj, "key") else 0
+		
+		# Проверяем приоритет объекта
+		var priority = 0
+		match object_type:
+			PlacementType.DOOR: priority = 3
+			PlacementType.INFO: priority = 2
+			PlacementType.ITEM: priority = 2
+			PlacementType.WALL: priority = 1
+			PlacementType.NONE: priority = 0
+		
+		# Если тип не определен или это не объект, пропускаем
+		if object_type == PlacementType.NONE:
+			continue
+			
+		# Если позиция уже занята, сравниваем приоритеты
+		if position_map.has(pos_key):
+			var existing_priority = 0
+			match position_map[pos_key].t:
+				PlacementType.DOOR: existing_priority = 3
+				PlacementType.INFO: existing_priority = 2
+				PlacementType.ITEM: existing_priority = 2
+				PlacementType.WALL: existing_priority = 1
+			
+			# Заменяем только если новый приоритет выше
+			if priority > existing_priority:
+				position_map[pos_key] = {
+					"x": int(pos.x), 
+					"y": int(pos.y), 
+					"t": object_type, 
+					"d": degree,
+					"k": key
+				}
+		else:
+			position_map[pos_key] = {
+				"x": int(pos.x), 
+				"y": int(pos.y), 
+				"t": object_type, 
+				"d": degree,
+				"k": key
+			}
 	
-	if objects_data.is_empty():
-		return
+	# Преобразуем словарь в массив
+	for data in position_map.values():
+		objects_data.append(data)
 	
-	# Получаем список макетов для текущего типа комнат
+	if objects_data.is_empty(): return
+	
+	# Проверяем, существует ли такой макет
 	var layouts = room_layouts.get(room_type, [])
+	if layout_exists_in_saved(objects_data, layouts): return
 	
-	if layout_exists_in_saved(objects_data, layouts):
-		return
-		
+	# Сохраняем новый макет
 	layouts.append(objects_data)
 	room_layouts[room_type] = layouts
 	selected_layout_index = layouts.size() - 1
 	
 	save_layouts_to_file(room_type)
 	update_layout_label()
+	
+# В edit_mode.gd
+func has_property(obj: Object, property_name: String) -> bool:
+	# Проверяет, есть ли у объекта указанное свойство
+	return property_name in obj
 
+# В edit_mode.gd
 func layout_exists_in_saved(layout: Array, layouts: Array) -> bool:
 	var layout_str := JSON.stringify(layout)
 	
@@ -361,3 +424,8 @@ func _on_info_button_input_event(_viewport: Node, event: InputEvent, _shape_idx:
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 			set_placement_type(PlacementType.INFO)
+			
+func _on_item_button_input_event(_viewport: Node, event: InputEvent, _shape_idx: int) -> void:
+	if event is InputEventMouseButton:
+		if event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+			set_placement_type(PlacementType.ITEM)
