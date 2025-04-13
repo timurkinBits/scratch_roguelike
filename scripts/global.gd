@@ -11,7 +11,7 @@ var points: Dictionary = {
 	Command.TypeCommand.DEFENSE: 3
 }
 
-var coins: int = 100
+var coins: int = 0
 
 var remaining_move_points: int
 var remaining_attack_points: int
