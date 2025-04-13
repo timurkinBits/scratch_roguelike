@@ -4,8 +4,8 @@ extends Node2D
 signal room_changed(direction: String)
 
 enum RoomType {
-	NORMAL_ENEMIES,
-	ELITE_ENEMIES,
+	NORMAL,
+	ELITE,
 	SHOP,
 	CHALLENGE
 }
@@ -32,8 +32,8 @@ const DOOR_POSITIONS = {
 }
 
 const DOOR_ICONS = {
-	RoomType.NORMAL_ENEMIES: "res://sprites/fb727.png",
-	RoomType.ELITE_ENEMIES: "res://sprites/fb729.png",
+	RoomType.NORMAL: "res://sprites/fb727.png",
+	RoomType.ELITE: "res://sprites/fb729.png",
 	RoomType.SHOP: "res://sprites/fb136.png",
 	RoomType.CHALLENGE: "res://sprites/fb71.png"
 }
@@ -52,7 +52,7 @@ const OPPOSITE_DIRECTIONS = {
 
 @onready var doors = exit_doors.get_children()
 
-var type: RoomType = RoomType.NORMAL_ENEMIES
+var type: RoomType = RoomType.NORMAL
 var max_enemies: int = 3
 var min_enemies: int = 1
 var min_distance_from_player: int = 5
@@ -96,14 +96,30 @@ func random_types_rooms() -> void:
 		door.type = RoomType.keys()[room_type]
 		door.get_node('button').texture = load(DOOR_ICONS[room_type])
 
-# Функция для определения типа комнаты с учетом весов
+# Функция для определения типа комнаты с учетом весов и предотвращения повторений определенных типов
 func get_weighted_room_type() -> int:
-	# Создаем общий пул шансов
-	var total_chance = normal_room_chance + elite_room_chance + shop_room_chance + challenge_room_chance
+	# Создаем копии оригинальных шансов, которые будем модифицировать
+	var current_normal_chance = normal_room_chance
+	var current_elite_chance = elite_room_chance
+	var current_shop_chance = shop_room_chance
+	var current_challenge_chance = challenge_room_chance
 	
-	# Если общий шанс равен 0, устанавливаем равномерное распределение
+	# Предотвращаем повторение текущего типа комнаты (кроме обычной комнаты)
+	match type:
+		RoomType.ELITE:
+			current_elite_chance = 0  # Исключаем элитную комнату из следующего выбора
+		RoomType.SHOP:
+			current_shop_chance = 0   # Исключаем магазин из следующего выбора
+		RoomType.CHALLENGE:
+			current_challenge_chance = 0  # Исключаем испытание из следующего выбора
+		# Обычные комнаты могут повторяться, поэтому для RoomType.NORMAL ничего не меняем
+	
+	# Создаем общий пул шансов с учетом модификаций
+	var total_chance = current_normal_chance + current_elite_chance + current_shop_chance + current_challenge_chance
+	
+	# Если общий шанс равен 0, устанавливаем обычную комнату по умолчанию
 	if total_chance == 0:
-		return randi() % RoomType.size()
+		return RoomType.NORMAL
 	
 	# Выберем случайное число в диапазоне общего шанса
 	var roll = randi() % total_chance
@@ -112,17 +128,17 @@ func get_weighted_room_type() -> int:
 	var current_sum = 0
 	
 	# Обычная комната
-	current_sum += normal_room_chance
+	current_sum += current_normal_chance
 	if roll < current_sum:
-		return RoomType.NORMAL_ENEMIES
+		return RoomType.NORMAL
 	
 	# Элитная комната
-	current_sum += elite_room_chance
+	current_sum += current_elite_chance
 	if roll < current_sum:
-		return RoomType.ELITE_ENEMIES
+		return RoomType.ELITE
 	
 	# Магазин
-	current_sum += shop_room_chance
+	current_sum += current_shop_chance
 	if roll < current_sum:
 		return RoomType.SHOP
 	
@@ -164,10 +180,10 @@ func transition_to_new_room(direction: String, door_type = null) -> void:
 
 func apply_room_type_settings() -> void:
 	match type:
-		RoomType.NORMAL_ENEMIES:
+		RoomType.NORMAL:
 			min_enemies = 1
 			max_enemies = 3
-		RoomType.ELITE_ENEMIES:
+		RoomType.ELITE:
 			min_enemies = 2
 			max_enemies = 4
 		RoomType.SHOP:
@@ -213,7 +229,7 @@ func spawn_enemies() -> void:
 		enemy_instance.position = world_position
 		enemy_instance.scale = Vector2(1.604, 1.604)
 	
-	if type == RoomType.ELITE_ENEMIES:
+	if type == RoomType.ELITE:
 		for enemy in get_tree().get_nodes_in_group('enemies'):
 			enemy.hp += 2
 			enemy.damage += 2

@@ -107,7 +107,7 @@ func _prepare_next_turn() -> void:
 		return
 	
 	# Небольшая задержка для плавности
-	await get_tree().create_timer(0.2).timeout
+	await get_tree().process_frame
 	
 	# Сброс защиты и флага хода
 	ui_node.reset_defense()

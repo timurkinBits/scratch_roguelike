@@ -6,7 +6,6 @@ enum BlockType { NONE, CONDITION, LOOP, ABILITY }
 @export_category("Block Settings")
 @export var type: BlockType
 @export var text: String
-@export var loop_count: int = 2
 @export var slot_offset_start := Vector2(28, 32)
 
 const MAX_TEXT_LENGTH := 14
@@ -27,21 +26,28 @@ var parent_slot: CommandSlot = null
 var config: Dictionary
 var is_menu_command: bool = false
 var is_settings: bool = false
+var loop_count: int
 
-const AVAILABLE_CONDITIONS = ["здоровье < 50%"]
-const AVAILABLE_ABILITIES = ['+1 движ.', '+1 атака', '+1 защита', '+1 леч.']
+static var available_conditions = []  # Will be populated with purchased conditions
+static var available_loops = []       # Will be populated with purchased loops
+static var available_abilities = []   # Will be populated with purchased abilities
 
 # Slot count for different block types
-const CONDITION_SLOTS = {
+static var condition_slots = {
 	"начало хода": 13,
 	"здоровье < 50%": 3,
 }
 
-const ABILITY_SLOTS = {
+static var ability_slots = {
 	"+1 движ.": 1,
 	"+1 атака": 1,
 	"+1 защита": 1,
 	"+1 леч.": 1,
+}
+
+static var loop_slots = {
+	"Повторить 2 раз": 2,
+	"Повторить 3 раз": 3,
 }
 
 # Block configurations
@@ -75,6 +81,11 @@ func _ready() -> void:
 	add_child(slot_manager)
 	slot_manager.connect("slots_updated", _on_slots_updated)
 	
+	# If this is an ability block and no ability is set but available ones exist,
+	# set the first available ability automatically
+	if type == BlockType.ABILITY and (text.is_empty() or text == "") and !available_abilities.is_empty():
+		text = available_abilities[0]
+	
 	update_appearance()
 	initialize_slots_for_current_type()
 	
@@ -91,11 +102,11 @@ func initialize_slots_for_current_type() -> void:
 func get_slot_count_for_current_type() -> int:
 	match type:
 		BlockType.CONDITION:
-			return CONDITION_SLOTS.get(text, 3)
+			return condition_slots.get(text, 3)
 		BlockType.LOOP:
-			return loop_count
+			return loop_slots.get(text, 2)
 		BlockType.ABILITY:
-			return ABILITY_SLOTS.get(text, 1)
+			return ability_slots.get(text, 1)
 		_:
 			return 1
 
@@ -196,7 +207,7 @@ func update_command_positions(base_z_index: int) -> void:
 
 # Set block condition with command preservation
 func set_condition(new_condition: String) -> void:
-	if type != BlockType.CONDITION or not new_condition in AVAILABLE_CONDITIONS:
+	if type != BlockType.CONDITION or not new_condition in available_conditions:
 		return
 		
 	# Calculate slot changes
@@ -219,7 +230,7 @@ func set_condition(new_condition: String) -> void:
 
 # Set block ability with command preservation
 func set_ability(new_ability: String) -> void:
-	if type != BlockType.ABILITY or not new_ability in AVAILABLE_ABILITIES:
+	if type != BlockType.ABILITY or not new_ability in available_abilities:
 		return
 		
 	# Calculate slot changes
@@ -282,61 +293,85 @@ func update_slots_count_and_release_commands(commands_to_release: Array, new_slo
 		if is_instance_valid(command):
 			command.global_position = global_position + Vector2(100, 50 + i * 30)
 
-# Change loop count with command preservation
-func change_loop_count(amount: int) -> void:
-	if type != BlockType.LOOP:
-		return
-		
-	var old_count = loop_count
-	var new_count = clamp(loop_count + amount, 2, 2)  # Limit from 2 to 5
-	
-	if old_count != new_count:
-		var commands_to_release = gather_commands_in_excess_slots(old_count, new_count)
-		
-		loop_count = new_count
-		update_appearance()
-		
-		update_slots_count_and_release_commands(commands_to_release, new_count)
-
-# Navigate through available options based on block type
 func navigate_options(direction: int) -> void:
 	match type:
 		BlockType.CONDITION:
-			_navigate_conditions(direction)
+			_navigate_conditions(direction)  
 		BlockType.LOOP:
-			change_loop_count(direction)
+			_navigate_loops(direction)  # Changed to use the new function
 		BlockType.ABILITY:
 			_navigate_abilities(direction)
+			
+func _navigate_loops(direction: int) -> void:
+	if available_loops.is_empty():
+		return
+		
+	var current_index = available_loops.find(text)
+	if current_index == -1:
+		current_index = 0
+	else:
+		current_index = (current_index + direction) % available_loops.size()
+		if current_index < 0:
+			current_index = available_loops.size() - 1
+			
+	set_loop(available_loops[current_index])
+
+func set_loop(new_loop: String) -> void:
+	if type != BlockType.LOOP or not new_loop in available_loops:
+		return
+		
+	# Calculate slot changes
+	var old_slot_count = get_slot_count_for_current_type()
+	var old_text = text
+	
+	text = new_loop
+	var new_slot_count = get_slot_count_for_current_type()
+	text = old_text  # Restore temporarily
+	
+	# Gather commands that might be displaced
+	var commands_to_release = gather_commands_in_excess_slots(old_slot_count, new_slot_count)
+	
+	# Apply new loop
+	text = new_loop
+	
+	# Extract loop count from text (e.g., "Повторить 3 раз" -> 3)
+	var count_str = text.split(" ")[1]
+	loop_count = int(count_str)
+	
+	update_appearance()
+	
+	# Update slots and release excess commands
+	update_slots_count_and_release_commands(commands_to_release, new_slot_count)
 
 # Navigate through available conditions
 func _navigate_conditions(direction: int) -> void:
-	if AVAILABLE_CONDITIONS.is_empty():
+	if available_conditions.is_empty():
 		return
 		
-	var current_index = AVAILABLE_CONDITIONS.find(text)
+	var current_index = available_conditions.find(text)
 	if current_index == -1:
 		current_index = 0
 	else:
-		current_index = (current_index + direction) % AVAILABLE_CONDITIONS.size()
+		current_index = (current_index + direction) % available_conditions.size()
 		if current_index < 0:
-			current_index = AVAILABLE_CONDITIONS.size() - 1
+			current_index = available_conditions.size() - 1
 			
-	set_condition(AVAILABLE_CONDITIONS[current_index])
+	set_condition(available_conditions[current_index])
 
 # Navigate through available abilities
 func _navigate_abilities(direction: int) -> void:
-	if AVAILABLE_ABILITIES.is_empty():
+	if available_abilities.is_empty():
 		return
 		
-	var current_index = AVAILABLE_ABILITIES.find(text)
+	var current_index = available_abilities.find(text)
 	if current_index == -1:
 		current_index = 0
 	else:
-		current_index = (current_index + direction) % AVAILABLE_ABILITIES.size()
+		current_index = (current_index + direction) % available_abilities.size()
 		if current_index < 0:
-			current_index = AVAILABLE_ABILITIES.size() - 1
+			current_index = available_abilities.size() - 1
 			
-	set_ability(AVAILABLE_ABILITIES[current_index])
+	set_ability(available_abilities[current_index])
 
 # Handle block interaction
 func _on_area_2d_input_event(_viewport: Node, event: InputEvent, shape_idx: int) -> void:

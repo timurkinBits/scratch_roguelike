@@ -185,7 +185,7 @@ func delete_current_layout() -> void:
 	
 	update_layout_label()
 
-# В edit_mode.gd
+# Обновленная функция применения макета
 func apply_layout_by_index(index: int, room_type: int) -> void:
 	room.clear_objects()
 	
@@ -197,18 +197,40 @@ func apply_layout_by_index(index: int, room_type: int) -> void:
 	if not selected_layout is Array:
 		return
 	
+	# Словарь для хранения созданных объектов для последующего связывания
+	var created_objects = {}
+	
+	# Первый проход: создаем все объекты
 	for object_data in selected_layout:
 		if object_data is Dictionary and object_data.has("x") and object_data.has("y") and object_data.has("t"):
-			var pos = Vector2(object_data.x, object_data.y)
 			var type = object_data.t
-			var degree = object_data.get("d", 0)
 			var key = object_data.get("k", 0)
-			var object = room.spawn_object_at_position(type, pos, degree)
+			var object = room.spawn_object_at_position(type, Vector2(object_data.x, object_data.y), object_data.get("d", 0))
 			if object and (type == PlacementType.INFO or type == PlacementType.ITEM):
 				if "key" in object:
 					object.key = key
+					if key > 0:
+						# Сохраняем созданный объект в словаре по его ключу и типу
+						var object_key = str(key) + "_" + str(type)
+						created_objects[object_key] = object
+	
+	# Вызываем отложенное связывание объектов
+	call_deferred("link_objects_after_loading")
 
-# In edit_mode.gd, add after the place_object_at_mouse function
+# Новая функция для связывания объектов после загрузки
+func link_objects_after_loading() -> void:
+	# Даем всем объектам время на инициализацию
+	await get_tree().create_timer(0.01).timeout
+	
+	# Теперь вызываем find_and_link для всех info и item объектов
+	for info_node in get_tree().get_nodes_in_group('info'):
+		if info_node.key > 0:
+			info_node.find_and_link_item()
+	
+	for item_node in get_tree().get_nodes_in_group('items'):
+		if item_node.key > 0:
+			item_node.find_and_link_info()
+
 func place_object_at_mouse(mouse_position: Vector2) -> void:
 	var local_pos = tile_map.to_local(mouse_position)
 	var tile_pos = tile_map.local_to_map(local_pos)
@@ -374,12 +396,10 @@ func save_current_layout(room_type: int) -> void:
 	save_layouts_to_file(room_type)
 	update_layout_label()
 	
-# В edit_mode.gd
 func has_property(obj: Object, property_name: String) -> bool:
 	# Проверяет, есть ли у объекта указанное свойство
 	return property_name in obj
 
-# В edit_mode.gd
 func layout_exists_in_saved(layout: Array, layouts: Array) -> bool:
 	var layout_str := JSON.stringify(layout)
 	

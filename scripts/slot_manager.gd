@@ -64,6 +64,12 @@ func update_slots() -> void:
 	shift_commands_up()
 	adjust_slot_count()
 	update_all_slot_positions()
+	if is_inside_tree():
+		if get_tree().get_first_node_in_group('table').is_turn_in_progress:
+			for block in get_tree().get_nodes_in_group("blocks"):
+				if is_instance_valid(block) and block.parent_slot:
+					block.parent_slot.command = block  # Восстанавливаем связь
+					block.update_command_positions(block.z_index)  # Обновляем позиции
 	emit_signal("slots_updated")
 
 func shift_commands_up() -> void:
@@ -97,9 +103,9 @@ func adjust_slot_count() -> void:
 	# Determine max slots based on block type
 	var max_slots
 	if parent_block.type == Block.BlockType.CONDITION:
-		max_slots = parent_block.CONDITION_SLOTS.get(parent_block.text, 3)
+		max_slots = parent_block.condition_slots.get(parent_block.text, 3)
 	elif parent_block.type == Block.BlockType.ABILITY:
-		max_slots = parent_block.ABILITY_SLOTS.get(parent_block.text, 3)
+		max_slots = parent_block.ability_slots.get(parent_block.text, 3)
 	elif parent_block.type == Block.BlockType.LOOP:
 		max_slots = 3
 	else:
@@ -136,9 +142,9 @@ func prepare_for_insertion(target_slot: CommandSlot) -> void:
 	# Determine max slots based on block type
 	var max_slots
 	if parent_block.type == Block.BlockType.CONDITION:
-		max_slots = parent_block.CONDITION_SLOTS.get(parent_block.text, 3)
+		max_slots = parent_block.condition_slots.get(parent_block.text, 3)
 	elif parent_block.type == Block.BlockType.ABILITY:
-		max_slots = parent_block.ABILITY_SLOTS.get(parent_block.text, 3)
+		max_slots = parent_block.ability_slots.get(parent_block.text, 3)
 	elif parent_block.type == Block.BlockType.LOOP:
 		max_slots = 3
 	else:

@@ -24,13 +24,25 @@ position = Vector2(0.935707, 1.87142)
 shape = SubResource("RectangleShape2D_jfmby")
 
 [node name="Label" type="Label" parent="."]
-offset_left = -96.3779
-offset_top = -103.864
-offset_right = 96.6221
-offset_bottom = 56.1365
+z_index = 2
+offset_left = -157.199
+offset_top = -129.128
+offset_right = 158.801
+offset_bottom = -12.1276
 label_settings = SubResource("LabelSettings_jfmby")
 horizontal_alignment = 1
-vertical_alignment = 1
+vertical_alignment = 2
+
+[node name="ColorRect" type="ColorRect" parent="Label"]
+visible = false
+z_index = -1
+layout_mode = 0
+offset_left = 29.0
+offset_top = 63.0
+offset_right = 284.0
+offset_bottom = 117.0
+mouse_filter = 2
+color = Color(1, 1, 1, 0.690196)
 
 [node name="LineEdit" type="LineEdit" parent="."]
 offset_right = 68.5625
