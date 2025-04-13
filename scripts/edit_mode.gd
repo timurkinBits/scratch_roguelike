@@ -100,6 +100,9 @@ func _input(event: InputEvent) -> void:
 			KEY_D:
 				if edit_mode:
 					delete_current_layout()
+			KEY_K:
+				if edit_mode:
+					room.clear_enemies()
 			KEY_RIGHT:
 				if edit_mode:
 					cycle_layout(1)
@@ -153,7 +156,7 @@ func toggle_edit_mode() -> void:
 	if edit_label:
 		edit_label.text = "Режим редактирования " + ("включен" if edit_mode else "выключен") + " (нажмите E для переключения)"
 		if edit_mode:
-			edit_label.text += "\nS-сохранить, C-очистить, D-удалить, Стрелки-листать\n1-4: типы комнат"
+			edit_label.text += "\nS-сохранить, C-очистить, D-удалить, Стрелки-листать, K-убить врагов\n1-4: типы комнат"
 
 func set_placement_type(type: int) -> void:
 	current_placement_type = type

@@ -40,7 +40,7 @@ func handle_hover_logic(delta: float) -> void:
 	
 	if hovered_slot:
 		# Проверка для предотвращения вставки для блоков условий
-		var is_condition_block = dragged_card is Block and dragged_card.type == Block.BlockType.CONDITION
+		var is_condition_block = dragged_card is Block and dragged_card.type == ItemData.BlockType.CONDITION
 		
 		if not is_condition_block:
 			hover_timer += delta
@@ -218,7 +218,7 @@ func would_fit_in_boundaries(card: Node2D, slot: CommandSlot, table_rect: Rect2)
 
 # Проверка, является ли перетаскиваемая карта блоком условия внутри другого блока
 func is_condition_block_in_block(dragged_block: Block, target_slot: CommandSlot) -> bool:
-	return dragged_block.type == Block.BlockType.CONDITION and target_slot and target_slot.block != null
+	return dragged_block.type == ItemData.BlockType.CONDITION and target_slot and target_slot.block != null
 
 # Обновление текущего наведенного слота
 func update_hovered_slot() -> void:
@@ -259,11 +259,11 @@ func create_block_copy(type: int) -> void:
 	
 	# Установка значений по умолчанию в зависимости от типа
 	match type:
-		Block.BlockType.CONDITION:
+		ItemData.BlockType.CONDITION:
 			new_block.text = Block.available_conditions[0]
-		Block.BlockType.LOOP:
+		ItemData.BlockType.LOOP:
 			new_block.loop_count = Block.available_loops[0]
-		Block.BlockType.ABILITY:
+		ItemData.BlockType.ABILITY:
 			new_block.text = Block.available_abilities[0]
 			
 	table_texture.add_child(new_block)

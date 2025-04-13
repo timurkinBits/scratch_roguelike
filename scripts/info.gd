@@ -31,8 +31,11 @@ func link_with_item(item: Item) -> void:
 func _on_area_2d_mouse_entered() -> void:
 	info.get_node("ColorRect").visible = true
 	if linked_item:
-		info.text = linked_item.ITEM_INFO[linked_item.type] + \
-		"\nЦена: " + str(linked_item.ITEM_COST[linked_item.type])
+		info.text = ItemData.get_item_description(linked_item.type) + \
+		"\nЦена: " + str(ItemData.get_item_cost(linked_item.type))
+		if linked_item.type not in [ItemData.ItemType.LOOP_BLOCK, ItemData.ItemType.CONDITION_BLOCK, ItemData.ItemType.ABILITY_BLOCK]:
+			info.text += "\nСлотов: " + str(ItemData.get_slot_count(ItemData.get_block_type(linked_item.type), 
+		ItemData.get_ability_name_for_item_type(linked_item.type)))
 	elif key > 0:
 		for item in get_tree().get_nodes_in_group('items'):
 			if item.key == key:
