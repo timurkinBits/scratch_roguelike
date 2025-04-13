@@ -77,8 +77,6 @@ func _ready() -> void:
 			value = config["values"][0]
 			
 	num_label.visible = false
-		
-	change_settings(false)
 	
 	add_to_group("commands")
 	
@@ -91,40 +89,28 @@ func _ready() -> void:
 	update_appearance()
 	
 func update_appearance() -> void:
-	if "color" in config:
-		sprite.color = config["color"]
-	else:
-		sprite.color = Color.WHITE
+	sprite.color = config["color"]
 	
-	if type == TypeCommand.TURN and !is_menu_command:
-		text_label.text = config["prefix"]
-		num_label.visible = true
-		num_label.text = str(value)
-	elif type in [TypeCommand.ATTACK, TypeCommand.MOVE, TypeCommand.HEAL, TypeCommand.DEFENSE] and !is_menu_command:
-		text_label.text = config["prefix"]
-		num_label.visible = true
-		set_number(value)
-	elif type == TypeCommand.USE:
-		text_label.text = config["prefix"]
-		num_label.visible = false  # Для команды USE не нужно числовое значение
-	else:
-		text_label.text = config["prefix"]
-		
-	if "icon" in config and config["icon"]:
-		icon.texture = load(config["icon"])
-	else:
-		icon.texture = null
+	if !is_menu_command:
+		if type == TypeCommand.TURN:
+			num_label.text = str(value)
+			num_label.visible = true
+		elif type in [TypeCommand.ATTACK, TypeCommand.MOVE, TypeCommand.HEAL, TypeCommand.DEFENSE]:
+			set_number(value)
+			num_label.visible = true
+
+	text_label.text = config["prefix"]
+	icon.texture = load(config["icon"])
 	
 	# Обновляем доступность кнопок в зависимости от оставшихся очков
-	if is_settings and !is_menu_command:
-		for command in get_tree().get_nodes_in_group("commands"):
-			command.update_buttons_state()
+	if is_settings:
+		update_all_buttons()
 
+func update_all_buttons():
+	for command in get_tree().get_nodes_in_group("commands"):
+		command.update_buttons_state()
+			
 func set_number(new_value):
-	# Если это команда USE, не применяем логику очков
-	if type == TypeCommand.USE:
-		return
-		
 	if type == TypeCommand.TURN:
 		# Для поворота обрабатываем значения углов
 		var values = config["values"]
@@ -171,23 +157,10 @@ func set_number(new_value):
 	
 	# Обновляем состояние кнопок
 	if is_settings:
-		for command in get_tree().get_nodes_in_group("commands"):
-			command.update_buttons_state()
+		update_all_buttons()
 
 func update_buttons_state() -> void:
-	# Для команды USE отключаем кнопки
-	if type == TypeCommand.USE:
-		if up_button:
-			up_button.disabled = true
-		if down_button:
-			down_button.disabled = true
-		return
-
-	if type == TypeCommand.TURN:
-		# Для команды поворота всегда активируем обе кнопки (циклический выбор)
-		up_button.disabled = false
-		down_button.disabled = false
-	elif type in [TypeCommand.ATTACK, TypeCommand.MOVE, TypeCommand.HEAL, TypeCommand.DEFENSE]:
+	if type in [TypeCommand.ATTACK, TypeCommand.MOVE, TypeCommand.HEAL, TypeCommand.DEFENSE]:
 		var remaining = Global.get_remaining_points(type)
 		up_button.disabled = (value >= remaining + value) or (value >= get_max_points())
 		down_button.disabled = (value <= 1)
@@ -217,13 +190,10 @@ func _on_up_pressed() -> void:
 		set_number(value + 1)  # Передаем любое значение, больше текущего
 		return
 		
-	var remaining = Global.get_remaining_points(type) + value
-	var max_points = get_max_points()
-	var new_value = min(value + 1, remaining, max_points)
+	var new_value = min(value + 1, Global.get_remaining_points(type) + value, get_max_points())
 	if new_value > value:
 		set_number(new_value)
-	for command in get_tree().get_nodes_in_group("commands"):
-		command.update_buttons_state()
+	update_all_buttons()
 
 func _on_down_pressed() -> void:
 	if type == TypeCommand.TURN:
@@ -232,8 +202,7 @@ func _on_down_pressed() -> void:
 		
 	if value > 1:
 		set_number(value - 1)
-	for command in get_tree().get_nodes_in_group("commands"):
-		command.update_buttons_state()
+	update_all_buttons()
 
 func _exit_tree() -> void:
 	# Сохраняем ссылку на слот и блок перед удалением
@@ -250,17 +219,15 @@ func _exit_tree() -> void:
 		
 	# Обновляем блок после всех изменений
 	if parent_block and is_instance_valid(parent_block):
-		parent_block.update_slots()  # Убираем call_deferred для немедленного обновления
+		parent_block.update_slots()
 
 func _on_num_area_input_event(_viewport: Node, event: InputEvent, _shape_idx: int) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
-		if not is_menu_command and not table.is_turn_in_progress:  # Добавлена проверка состояния хода
-			# Открываем настройки при клике на область числа
+		if not is_menu_command and not table.is_turn_in_progress:
 			is_settings = !is_settings
 			change_settings(is_settings)
-			for command in get_tree().get_nodes_in_group("commands"):
-				command.update_buttons_state()
+			update_all_buttons()
 			
-func change_settings(settings: bool):
+func change_settings(settings):
 	up_button.visible = settings
 	down_button.visible = settings

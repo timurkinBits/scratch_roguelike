@@ -12,6 +12,7 @@ var is_dead := false
 @export var player_bars: Control
 @onready var health_bar: ColorRect = player_bars.get_node('hp_bar/HealthRect')
 @onready var defense_bar: ColorRect = player_bars.get_node('defense_bar/DefenseRect')
+@onready var coin_label: Label = player_bars.get_node('CoinLabel')
 @onready var move_label: Label = max_scores.get_node('MoveLabel')
 @onready var attack_label: Label = max_scores.get_node('AttackLabel')
 @onready var heal_label: Label = max_scores.get_node('HealLabel')
@@ -30,7 +31,12 @@ func _ready():
 	
 	# Connect to the Global points_changed signal
 	Global.connect("points_changed", update_all_counters)
+	
+	# Connect to the coins_changed signal
+	Global.connect("coins_changed", update_coin_display)
+	
 	update_all_counters()
+	update_coin_display()
 
 func update_all_counters():
 	# Update command points
@@ -43,6 +49,10 @@ func update_all_counters():
 	condition_label.text = str(Global.get_remaining_blocks(Block.BlockType.CONDITION))
 	loop_label.text = str(Global.get_remaining_blocks(Block.BlockType.LOOP))
 	ability_label.text = str(Global.get_remaining_blocks(Block.BlockType.ABILITY))
+
+func update_coin_display():
+	# Update coin counter in UI
+	coin_label.text = str(Global.get_coins())
 
 func change_scores(type: Command.TypeCommand) -> void:
 	var remaining = Global.get_remaining_points(type)

@@ -25,5 +25,6 @@ scale = Vector2(2.7, 2.7)
 texture = SubResource("AtlasTexture_uvdjg")
 
 [node name="OpenedSprite" type="Sprite2D" parent="."]
+visible = false
 scale = Vector2(2.7, 2.7)
 texture = SubResource("AtlasTexture_83dcw")

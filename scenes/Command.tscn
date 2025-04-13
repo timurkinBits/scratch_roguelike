@@ -36,7 +36,7 @@ scale = Vector2(0.626336, 0.626336)
 [node name="Texture" type="Control" parent="."]
 layout_mode = 3
 anchors_preset = 0
-offset_right = 120.0
+offset_right = 119.0
 offset_bottom = 20.0
 mouse_filter = 2
 
@@ -80,7 +80,7 @@ offset_top = 2.0
 offset_right = 27.0
 offset_bottom = 22.0
 mouse_filter = 2
-color = Color(0, 0, 0, 0.341176)
+color = Color(0, 0, 0, 0.360784)
 
 [node name="Up" type="Button" parent="Texture"]
 visible = false

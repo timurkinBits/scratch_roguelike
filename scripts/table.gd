@@ -157,7 +157,7 @@ func finish_drag() -> void:
 		enforce_table_boundaries(dragged_card, dragged_card.global_position, table_rect)
 	
 	if dragged_card:
-		dragged_card.z_index = 1
+		dragged_card.z_index = 3
 	
 	reset_drag_state()
 
@@ -260,11 +260,11 @@ func create_block_copy(type: int) -> void:
 	# Установка значений по умолчанию в зависимости от типа
 	match type:
 		Block.BlockType.CONDITION:
-			new_block.text = new_block.AVAILABLE_CONDITIONS[0]
+			new_block.text = Block.available_conditions[0]
 		Block.BlockType.LOOP:
-			new_block.loop_count = 2
+			new_block.loop_count = Block.available_loops[0]
 		Block.BlockType.ABILITY:
-			new_block.text = new_block.AVAILABLE_ABILITIES[0]
+			new_block.text = Block.available_abilities[0]
 			
 	table_texture.add_child(new_block)
 	new_block.update_appearance()

@@ -4,26 +4,22 @@ class_name Player
 var defense: int = 0
 
 @onready var hp_bar = $"../../UI"
-@onready var command_executor = $"../../Table/CommandExecutor"
-
-func _ready() -> void:
-	# Инициализация спрайтов направлений
-	sprites = {
+@onready var command_executor = $"../../Table/TurnExecutor"
+@onready var sprites = {
 		"right": $SpriteRight,
 		"left": $SpriteLeft,
 		"up": $SpriteUp,
 		"down": $SpriteDown
 	}
-	
+
+func _ready() -> void:
 	hp = 10
-	add_to_group("characters")  # Добавление в группу персонажей
+	
 	super._ready()
+	update_visual()
 
 func move(value: int) -> void:
-	if should_skip_action():
-		return
-	
-	if should_skip_action():
+	if is_dead:
 		return
 	
 	var current_tile = get_tile_position()
@@ -38,6 +34,22 @@ func move(value: int) -> void:
 		var target_pos = get_world_position_from_tile(next_tile)
 		await animate_movement(target_pos)
 		current_tile = next_tile
+		
+# Анимация движения
+func animate_movement(target_pos: Vector2) -> void:
+	is_moving = true
+	update_visual()
+	
+	create_tween().tween_property(
+		self, 
+		"position", 
+		target_pos, 
+		0.3
+	).set_ease(Tween.EASE_IN_OUT)
+	await get_tree().create_timer(0.3).timeout
+	
+	is_moving = false
+	update_visual()
 
 # Изменяет значения здоровья у игрока
 func take_damage(damage_amount: int) -> void:
@@ -56,12 +68,29 @@ func add_hp(heal_amount: int):
 	
 # Переопределение анимации смерти
 func play_death_animation() -> void:
-	# Установка флага смерти игрока
+	if sprites is Array:
+		for sprite_key in sprites:
+			if sprites[sprite_key]:
+				sprites[sprite_key].stop()
 	super.play_death_animation()
 
+# Обновление видимости и анимации спрайтов
+func update_visual() -> void:
+	for sprite in sprites.keys():
+		if sprites[sprite]:
+			sprites[sprite].visible = false
+	
+	if current_direction in sprites and sprites[current_direction]:
+		sprites[current_direction].visible = true
+		
+		if is_moving:
+			sprites[current_direction].play("walk")
+		else:
+			sprites[current_direction].play("idle")
+			
 # Поворот игрока
 func turn(turn_type: String) -> void:
-	if should_skip_action():
+	if is_dead:
 		return
 	
 	var new_direction = current_direction
@@ -93,7 +122,7 @@ func turn(turn_type: String) -> void:
 
 # Атака игрока
 func attack(damage_value: int) -> void:
-	if should_skip_action():
+	if is_dead:
 		return
 	
 	await animate_attack()
@@ -110,23 +139,22 @@ func attack(damage_value: int) -> void:
 			enemy.take_damage(damage_value)
 			break
 	
-	await get_tree().create_timer(0.3).timeout
+	await get_tree().create_timer(0.55).timeout
 
 # Использовать предмет или объект
 func use() -> void:
-	if should_skip_action():
+	if is_dead:
 		return
 	
 	# Получаем клетку перед игроком
 	var player_tile = get_tile_position()
 	var interact_tile = player_tile + DIRECTION_VECTORS[current_direction]
 	
-	# Проверяем двери
-	for door in get_tree().get_nodes_in_group("doors"):
-		if is_instance_valid(door) and door.get_tile_position() == interact_tile:
-			# Переключаем состояние двери
-			door.toggle_door(!door.is_opened)
-			break
+	for object in get_tree().get_nodes_in_group("objects"):
+		if is_instance_valid(object) and object.get_tile_position() == interact_tile:
+			if object.has_method('use'):
+				object.use()
+				break
 	
 	# Анимация использования
 	var animation_tween = create_tween()

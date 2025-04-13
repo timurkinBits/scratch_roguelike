@@ -5,23 +5,22 @@ var player: Node2D
 
 var speed: int = randi_range(2, 5)
 var damage: int = randi_range(2, 5)
-var heal_points: int = randi_range(3, 8)
+var heal_points: int = randi_range(3, 6)
 
 @onready var ui_stats: EnemyStats = $'../../UI/EnemyStats'
-@onready var command_executor = $"../../Table/CommandExecutor"
+@onready var command_executor = $"../../Table/TurnExecutor"
 @onready var sprite = $Sprite
 
 var hp_bar_offset: Vector2 = Vector2(0, -40)  # Смещение полосы над врагом
+var coin_scene = preload("res://scenes/Coin.tscn")  # Предзагрузка сцены монеты
 
 func _ready() -> void:
 	super._ready()
 	add_to_group("enemies")
-	add_to_group("characters")
 	hp = heal_points
 	player = get_parent().get_node("Player")
-	if not player:
-		push_error("Player not found!")
 	sprite.animation = get_enemy_type() + "_idle"
+	update_visual()
 
 func get_enemy_type() -> String:
 	if damage <= 3:
@@ -33,7 +32,7 @@ func get_enemy_type() -> String:
 
 # Логика хода врага
 func take_turn() -> void:
-	if should_skip_action():
+	if is_dead:
 		return
 	
 	if not is_instance_valid(player):
@@ -91,6 +90,21 @@ func update_visual() -> void:
 		sprite.flip_h = true
 	else:
 		sprite.flip_h = false
+		
+func animate_movement(target_pos: Vector2) -> void:
+	is_moving = true
+	update_visual()
+	
+	create_tween().tween_property(
+		self, 
+		"position", 
+		target_pos, 
+		0.3
+	).set_ease(Tween.EASE_IN_OUT)
+	await get_tree().create_timer(0.3).timeout
+	
+	is_moving = false
+	update_visual()
 
 # Поиск пути к ближайшей клетке рядом с игроком
 func find_path_to_player() -> Array:
@@ -208,14 +222,23 @@ func take_damage(damage_amount: int):
 	hp -= damage_amount
 	super.take_damage(damage_amount)
 	
+# Функция для создания монеты на месте врага
+func spawn_coin() -> void:
+	var coin_instance = coin_scene.instantiate()
+	get_parent().add_child(coin_instance)
+	coin_instance.position = position
+	
 func dead():
+	spawn_coin()  # Создаем монету на месте смерти врага
 	ui_stats.change_stats(self, false)
 	super.dead()
-
 
 func _on_area_2d_mouse_entered() -> void:
 	ui_stats.change_stats(self, true)
 
-
 func _on_area_2d_mouse_exited() -> void:
 	ui_stats.change_stats(self, false)
+	
+# Расчет расстояния Манхэттена между тайлами
+func calculate_path_length(from_tile: Vector2, to_tile: Vector2) -> int:
+	return int(abs(from_tile.x - to_tile.x) + abs(from_tile.y - to_tile.y))

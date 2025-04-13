@@ -14,8 +14,6 @@ func _ready() -> void:
 
 func _process(_delta: float) -> void:
 	update_visibility()
-	if command and is_instance_valid(command):
-		command.global_position = global_position
 
 func update_visibility() -> void:
 	if block.is_menu_command:
@@ -26,13 +24,13 @@ func update_visibility() -> void:
 func add_command(new_command: Node2D) -> void:
 	if command != null or not is_instance_valid(new_command):
 		return
-	if new_command is Block:
-		new_command.parent_slot = self
-		
 	command = new_command
 	if command is Command:
 		command.slot = self
 		command.block = block
+	elif command is Block:
+		command.parent_slot = self
+	# Обновляем позицию команды явно при добавлении
 	command.global_position = global_position
 	command.visible = true
 	command.z_index = block.z_index + 1
