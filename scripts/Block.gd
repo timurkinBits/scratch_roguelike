@@ -1,12 +1,9 @@
 extends Node2D
 class_name Block
 
-enum BlockType { NONE, CONDITION, LOOP, ABILITY }
-
-@export_category("Block Settings")
-@export var type: BlockType
+@export var type: ItemData.BlockType
 @export var text: String
-@export var slot_offset_start := Vector2(28, 32)
+@export var is_menu_command: bool = true
 
 const MAX_TEXT_LENGTH := 14
 
@@ -24,91 +21,68 @@ const MAX_TEXT_LENGTH := 14
 var slot_manager: SlotManager
 var parent_slot: CommandSlot = null
 var config: Dictionary
-var is_menu_command: bool = false
 var is_settings: bool = false
 var loop_count: int
+var slot_offset_start := Vector2(28, 32)
 
 static var available_conditions = []  # Will be populated with purchased conditions
 static var available_loops = []       # Will be populated with purchased loops
 static var available_abilities = []   # Will be populated with purchased abilities
 
-# Slot count for different block types
-static var condition_slots = {
-	"начало хода": 13,
-	"здоровье < 50%": 3,
-}
-
-static var ability_slots = {
-	"+1 движ.": 1,
-	"+1 атака": 1,
-	"+1 защита": 1,
-	"+1 леч.": 1,
-}
-
-static var loop_slots = {
-	"Повторить 2 раз": 2,
-	"Повторить 3 раз": 3,
-}
-
-# Block configurations
-const BLOCK_CONFIGS = {
-	BlockType.CONDITION: {
-		"prefix": "Если ",
-		"color": Color.YELLOW,
-		"icon": "res://sprites/fb13.png"
-	},
-	BlockType.LOOP: {
-		"prefix": "Повторить ",
-		"color": Color.CHOCOLATE,
-		"icon": "res://sprites/fb666.png"
-	},
-	BlockType.ABILITY: {
-		"prefix": "Улучшить ",
-		"color": Color.TURQUOISE,
-		"icon": "res://sprites/fb12.png"
-	},
-	BlockType.NONE: {
-		"prefix": "none ",
-		"color": Color.WHITE,
-		"icon": ""
-	}
-}
-
 func _ready() -> void:
 	add_to_group("blocks")
-	config = BLOCK_CONFIGS[type]
+	
+	# Инициализация типа блока и текста на основе типа
+	if text.is_empty() and !is_menu_command:
+		initialize_block_properties()
+	
+	config = ItemData.get_block_config(type)
 	slot_manager = SlotManager.new(self, slot_offset_start)
 	add_child(slot_manager)
 	slot_manager.connect("slots_updated", _on_slots_updated)
 	
-	# If this is an ability block and no ability is set but available ones exist,
-	# set the first available ability automatically
-	if type == BlockType.ABILITY and (text.is_empty() or text == "") and !available_abilities.is_empty():
-		text = available_abilities[0]
-	
 	update_appearance()
-	initialize_slots_for_current_type()
+	
+	# Теперь инициализируем слоты с правильным количеством
+	slot_manager.initialize_slots(ItemData.get_slot_count(type, text))
 	
 	# Hide buttons initially
 	buttons[0].visible = false
 	buttons[1].visible = false
 	button_color.visible = false
 
-# Initialize slots based on block type
-func initialize_slots_for_current_type() -> void:
-	slot_manager.initialize_slots(get_slot_count_for_current_type())
-
-# Get slot count based on block type and text
-func get_slot_count_for_current_type() -> int:
+# Новый метод для инициализации свойств блока на основе его типа
+func initialize_block_properties() -> void:
+	# Устанавливаем текст по умолчанию на основании типа блока
 	match type:
-		BlockType.CONDITION:
-			return condition_slots.get(text, 3)
-		BlockType.LOOP:
-			return loop_slots.get(text, 2)
-		BlockType.ABILITY:
-			return ability_slots.get(text, 1)
-		_:
-			return 1
+		ItemData.BlockType.CONDITION:
+			if not available_conditions.is_empty():
+				text = available_conditions[0]
+			else:
+				text = "здоровье < 50%"  # Значение по умолчанию
+		ItemData.BlockType.LOOP:
+			if not available_loops.is_empty():
+				text = available_loops[0]
+			else:
+				text = "Повторить 2 раз"  # Значение по умолчанию
+			# Установка количества повторений для цикла
+			var parts = text.split(" ")
+			if parts.size() > 1:
+				loop_count = int(parts[1])
+		ItemData.BlockType.ABILITY:
+			if not available_abilities.is_empty():
+				text = available_abilities[0]
+			else:
+				text = "+1 атака"  # Значение по умолчанию
+	
+	# Проверка по словарю TEXT_TO_ITEM_TYPE
+	if type == ItemData.BlockType.LOOP and not "Повторить" in text:
+		text = "Повторить 2 раз"
+		loop_count = 2
+	elif type == ItemData.BlockType.CONDITION and not text in ItemData.TEXT_TO_ITEM_TYPE:
+		text = "здоровье < 50%"
+	elif type == ItemData.BlockType.ABILITY and not text in ItemData.TEXT_TO_ITEM_TYPE:
+		text = "+1 атака"
 
 func update_appearance() -> void:
 	texture.modulate = config["color"]
@@ -116,8 +90,11 @@ func update_appearance() -> void:
 	label.text = get_display_text()
 
 func get_display_text() -> String:
-	if type == BlockType.LOOP:
-		return config["prefix"] + str(loop_count) + " раз"
+	if type == ItemData.BlockType.LOOP:
+		if !is_menu_command:
+			return config["prefix"] + str(loop_count) + " раз"
+		else:
+			return config["prefix"]
 	return config["prefix"] + truncate_text(text)
 
 func truncate_text(input_text: String) -> String:
@@ -207,15 +184,15 @@ func update_command_positions(base_z_index: int) -> void:
 
 # Set block condition with command preservation
 func set_condition(new_condition: String) -> void:
-	if type != BlockType.CONDITION or not new_condition in available_conditions:
+	if type != ItemData.BlockType.CONDITION or not new_condition in available_conditions:
 		return
 		
 	# Calculate slot changes
-	var old_slot_count = get_slot_count_for_current_type()
+	var old_slot_count = ItemData.get_slot_count(type, text)
 	var old_text = text
 	
 	text = new_condition
-	var new_slot_count = get_slot_count_for_current_type()
+	var new_slot_count = ItemData.get_slot_count(type, text)
 	text = old_text  # Restore temporarily
 	
 	# Gather commands that might be displaced
@@ -230,15 +207,15 @@ func set_condition(new_condition: String) -> void:
 
 # Set block ability with command preservation
 func set_ability(new_ability: String) -> void:
-	if type != BlockType.ABILITY or not new_ability in available_abilities:
+	if type != ItemData.BlockType.ABILITY or not new_ability in available_abilities:
 		return
 		
 	# Calculate slot changes
-	var old_slot_count = get_slot_count_for_current_type()
+	var old_slot_count = ItemData.get_slot_count(type, text)
 	var old_text = text
 	
 	text = new_ability
-	var new_slot_count = get_slot_count_for_current_type()
+	var new_slot_count = ItemData.get_slot_count(type, text)
 	text = old_text  # Restore temporarily
 	
 	# Gather commands that might be displaced
@@ -269,7 +246,7 @@ func gather_commands_in_excess_slots(old_slot_count: int, new_slot_count: int) -
 func update_slots_count_and_release_commands(commands_to_release: Array, new_slot_count: int = -1) -> void:
 	# Use current type's slot count if not specified
 	if new_slot_count == -1:
-		new_slot_count = get_slot_count_for_current_type()
+		new_slot_count = ItemData.get_slot_count(type, text)
 	
 	# Clear connections between commands and slots
 	for command in commands_to_release:
@@ -295,11 +272,11 @@ func update_slots_count_and_release_commands(commands_to_release: Array, new_slo
 
 func navigate_options(direction: int) -> void:
 	match type:
-		BlockType.CONDITION:
+		ItemData.BlockType.CONDITION:
 			_navigate_conditions(direction)  
-		BlockType.LOOP:
-			_navigate_loops(direction)  # Changed to use the new function
-		BlockType.ABILITY:
+		ItemData.BlockType.LOOP:
+			_navigate_loops(direction)
+		ItemData.BlockType.ABILITY:
 			_navigate_abilities(direction)
 			
 func _navigate_loops(direction: int) -> void:
@@ -317,15 +294,15 @@ func _navigate_loops(direction: int) -> void:
 	set_loop(available_loops[current_index])
 
 func set_loop(new_loop: String) -> void:
-	if type != BlockType.LOOP or not new_loop in available_loops:
+	if type != ItemData.BlockType.LOOP or not new_loop in available_loops:
 		return
 		
 	# Calculate slot changes
-	var old_slot_count = get_slot_count_for_current_type()
+	var old_slot_count = ItemData.get_slot_count(type, text)
 	var old_text = text
 	
 	text = new_loop
-	var new_slot_count = get_slot_count_for_current_type()
+	var new_slot_count = ItemData.get_slot_count(type, text)
 	text = old_text  # Restore temporarily
 	
 	# Gather commands that might be displaced

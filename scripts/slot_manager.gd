@@ -101,15 +101,7 @@ func adjust_slot_count() -> void:
 		return
 	
 	# Determine max slots based on block type
-	var max_slots
-	if parent_block.type == Block.BlockType.CONDITION:
-		max_slots = parent_block.condition_slots.get(parent_block.text, 3)
-	elif parent_block.type == Block.BlockType.ABILITY:
-		max_slots = parent_block.ability_slots.get(parent_block.text, 3)
-	elif parent_block.type == Block.BlockType.LOOP:
-		max_slots = 3
-	else:
-		max_slots = 3
+	var max_slots = ItemData.get_slot_count(parent_block.type, parent_block.text)
 	
 	# Count occupied slots
 	var command_count = 0
@@ -141,12 +133,12 @@ func prepare_for_insertion(target_slot: CommandSlot) -> void:
 	
 	# Determine max slots based on block type
 	var max_slots
-	if parent_block.type == Block.BlockType.CONDITION:
-		max_slots = parent_block.condition_slots.get(parent_block.text, 3)
-	elif parent_block.type == Block.BlockType.ABILITY:
-		max_slots = parent_block.ability_slots.get(parent_block.text, 3)
-	elif parent_block.type == Block.BlockType.LOOP:
-		max_slots = 3
+	if parent_block.type == ItemData.BlockType.CONDITION:
+		max_slots = ItemData.get_slot_count(ItemData.BlockType.CONDITION, parent_block.text)
+	elif parent_block.type == ItemData.BlockType.ABILITY:
+		max_slots = ItemData.get_slot_count(ItemData.BlockType.ABILITY, parent_block.text)
+	elif parent_block.type == ItemData.BlockType.LOOP:
+		max_slots = ItemData.get_slot_count(ItemData.BlockType.LOOP, parent_block.text)
 	else:
 		max_slots = 3
 	

@@ -32,10 +32,10 @@ const DOOR_POSITIONS = {
 }
 
 const DOOR_ICONS = {
-	RoomType.NORMAL: "res://sprites/fb727.png",
-	RoomType.ELITE: "res://sprites/fb729.png",
-	RoomType.SHOP: "res://sprites/fb136.png",
-	RoomType.CHALLENGE: "res://sprites/fb71.png"
+	RoomType.NORMAL: "res://sprites/normal.png",
+	RoomType.ELITE: "res://sprites/elite.png",
+	RoomType.SHOP: "res://sprites/shop.png",
+	RoomType.CHALLENGE: "res://sprites/challenge.png"
 }
 
 const OPPOSITE_DIRECTIONS = {

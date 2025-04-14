@@ -19,33 +19,40 @@ var remaining_heal_points: int
 var remaining_defense_points: int
 
 var block_limits: Dictionary = {
-	Block.BlockType.CONDITION: 0,  # Start with 0 until conditions are available
-	Block.BlockType.LOOP: 0,       # Start with 0 until loops are available
-	Block.BlockType.ABILITY: 0     # Start with 0 until abilities are available
+	ItemData.BlockType.CONDITION: 0,  # Start with 0 until conditions are available
+	ItemData.BlockType.LOOP: 0,       # Start with 0 until loops are available
+	ItemData.BlockType.ABILITY: 0     # Start with 0 until abilities are available
 }
 
 var remaining_blocks: Dictionary = {
-	Block.BlockType.CONDITION: 0,
-	Block.BlockType.LOOP: 0,
-	Block.BlockType.ABILITY: 0
+	ItemData.BlockType.CONDITION: 0,
+	ItemData.BlockType.LOOP: 0,
+	ItemData.BlockType.ABILITY: 0
 }
 
 # Track purchased abilities, conditions and loops
-var purchased_abilities: Dictionary = {
-	"+1 движ.": false,
-	"+1 атака": false,
-	"+1 защита": false,
-	"+1 леч.": false
-}
+var purchased_abilities: Dictionary = {}
+var purchased_conditions: Dictionary = {}
+var purchased_loops: Dictionary = {}
 
-var purchased_conditions: Dictionary = {
-	"здоровье < 50%": false
-}
-
-var purchased_loops: Dictionary = {
-	"Повторить 2 раз": false,
-	"Повторить 3 раз": false
-}
+func _ready() -> void:
+	# Initialize purchased items dictionaries
+	for item_type in ItemData.ItemType.values():
+		var ability_name = ItemData.get_ability_name(item_type)
+		if ability_name != "":
+			purchased_abilities[ability_name] = false
+		
+		var condition_name = ItemData.get_condition_name(item_type)
+		if condition_name != "":
+			purchased_conditions[condition_name] = false
+		
+		var loop_name = ItemData.get_loop_name(item_type)
+		if loop_name != "":
+			purchased_loops[loop_name] = false
+	
+	reset_remaining_points()
+	reset_remaining_blocks()
+	update_available_block_types()
 
 func reset_remaining_points() -> void:
 	remaining_move_points = points[Command.TypeCommand.MOVE]
@@ -158,26 +165,6 @@ func purchase_loop(loop_name: String) -> void:
 		# Update available loops
 		update_available_block_types()
 		
-# Get mapping of item types to ability/condition/loop names
-func get_ability_name_for_item_type(item_type) -> String:
-	match item_type:
-		Item.ItemType.ABILITY_PLUS_MOVE:
-			return "+1 движ."
-		Item.ItemType.ABILITY_PLUS_ATTACK:
-			return "+1 атака"
-		Item.ItemType.ABILITY_PLUS_DEFENSE:
-			return "+1 защита"
-		Item.ItemType.ABILITY_PLUS_HEAL:
-			return "+1 леч."
-		Item.ItemType.CONDITION_BELOW_HALF_HP:
-			return "здоровье < 50%"
-		Item.ItemType.LOOP_2_TIMES:
-			return "Повторить 2 раз"
-		Item.ItemType.LOOP_3_TIMES:
-			return "Повторить 3 раз"
-		_:
-			return ""
-
 # Check if an ability has been purchased
 func is_ability_purchased(ability_name: String) -> bool:
 	return ability_name in purchased_abilities and purchased_abilities[ability_name]
@@ -189,6 +176,22 @@ func is_condition_purchased(condition_name: String) -> bool:
 # Check if a loop has been purchased
 func is_loop_purchased(loop_name: String) -> bool:
 	return loop_name in purchased_loops and purchased_loops[loop_name]
+
+# Process item purchase based on its type
+func purchase_item(item_type: int) -> void:
+	var ability_name = ItemData.get_ability_name(item_type)
+	var condition_name = ItemData.get_condition_name(item_type)
+	var loop_name = ItemData.get_loop_name(item_type)
+	var block_type = ItemData.get_block_type(item_type)
+	
+	if ability_name != "":
+		purchase_ability(ability_name)
+	elif condition_name != "":
+		purchase_condition(condition_name)
+	elif loop_name != "":
+		purchase_loop(loop_name)
+	elif block_type != -1:
+		increase_block_limit(block_type)
 
 # Update the available block types for all blocks
 func update_available_block_types() -> void:
@@ -216,15 +219,11 @@ func update_available_block_types() -> void:
 	Block.available_loops = updated_loops
 	
 	# Update block limits based on availability
-	if Block.available_abilities.size() > 0 and block_limits[Block.BlockType.ABILITY] == 0:
-		increase_block_limit(Block.BlockType.ABILITY)
+	if Block.available_abilities.size() > 0 and block_limits[ItemData.BlockType.ABILITY] == 0:
+		increase_block_limit(ItemData.BlockType.ABILITY)
 	
-	if Block.available_conditions.size() > 0 and block_limits[Block.BlockType.CONDITION] == 0:
-		increase_block_limit(Block.BlockType.CONDITION)
+	if Block.available_conditions.size() > 0 and block_limits[ItemData.BlockType.CONDITION] == 0:
+		increase_block_limit(ItemData.BlockType.CONDITION)
 	
-	if Block.available_loops.size() > 0 and block_limits[Block.BlockType.LOOP] == 0:
-		increase_block_limit(Block.BlockType.LOOP)
-
-# Call this at startup to initialize the available lists
-func _ready() -> void:
-	update_available_block_types()
+	if Block.available_loops.size() > 0 and block_limits[ItemData.BlockType.LOOP] == 0:
+		increase_block_limit(ItemData.BlockType.LOOP)

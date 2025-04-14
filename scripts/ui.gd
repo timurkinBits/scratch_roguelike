@@ -46,9 +46,9 @@ func update_all_counters():
 	heal_label.text = str(Global.get_remaining_points(Command.TypeCommand.HEAL))
 	
 	# Update block counts
-	condition_label.text = str(Global.get_remaining_blocks(Block.BlockType.CONDITION))
-	loop_label.text = str(Global.get_remaining_blocks(Block.BlockType.LOOP))
-	ability_label.text = str(Global.get_remaining_blocks(Block.BlockType.ABILITY))
+	condition_label.text = str(Global.get_remaining_blocks(ItemData.BlockType.CONDITION))
+	loop_label.text = str(Global.get_remaining_blocks(ItemData.BlockType.LOOP))
+	ability_label.text = str(Global.get_remaining_blocks(ItemData.BlockType.ABILITY))
 
 func update_coin_display():
 	# Update coin counter in UI

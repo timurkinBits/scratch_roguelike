@@ -9,7 +9,7 @@ var outline_panels: Array[Node] = []
 
 func clear_start_turn_commands_preserve_blocks(start_turn_block: Block) -> void:
 	if not is_instance_valid(start_turn_block) or \
-	   start_turn_block.type != Block.BlockType.CONDITION or \
+	   start_turn_block.type != ItemData.BlockType.CONDITION or \
 	   start_turn_block.text != "начало хода":
 		return
 	
@@ -40,7 +40,7 @@ func clear_start_turn_commands_preserve_blocks(start_turn_block: Block) -> void:
 func check_and_execute_conditions(trigger_time: String) -> bool:
 	# Get all condition blocks
 	var condition_blocks = get_tree().get_nodes_in_group("blocks").filter(
-		func(block): return is_instance_valid(block) and block.type == Block.BlockType.CONDITION)
+		func(block): return is_instance_valid(block) and block.type == ItemData.BlockType.CONDITION)
 	
 	for block in condition_blocks:
 		# Check if condition should execute
@@ -73,10 +73,10 @@ func execute_block(block: Block) -> void:
 	var outline = create_outline_panel(block)
 	
 	# Determine iterations (for loops)
-	var iterations = max(1, block.loop_count) if (block.type == Block.BlockType.LOOP) else 1
+	var iterations = max(1, block.loop_count) if (block.type == ItemData.BlockType.LOOP) else 1
 	
 	# Apply ability properties
-	if block.type == Block.BlockType.ABILITY:
+	if block.type == ItemData.BlockType.ABILITY:
 		_apply_ability_properties(block)
 	
 	# Execute iterations
@@ -149,7 +149,7 @@ func clear_main_commands() -> void:
 	
 	var start_turn_blocks = get_tree().get_nodes_in_group("blocks").filter(
 		func(block): return is_instance_valid(block) and \
-					  block.type == Block.BlockType.CONDITION and \
+					  block.type == ItemData.BlockType.CONDITION and \
 					  block.text == "начало хода")
 	
 	for block in start_turn_blocks:
@@ -207,7 +207,7 @@ func clear_all() -> void:
 	if is_inside_tree():
 		var start_turn_blocks = get_tree().get_nodes_in_group("blocks").filter(
 			func(block): return is_instance_valid(block) and \
-						  block.type == Block.BlockType.CONDITION and \
+						  block.type == ItemData.BlockType.CONDITION and \
 						  block.text == "начало хода")
 		for block in start_turn_blocks:
 			await clear_start_turn_commands_preserve_blocks(block)
@@ -217,7 +217,7 @@ func clear_all() -> void:
 	var blocks_to_update = []
 	if is_inside_tree():
 		for block in get_tree().get_nodes_in_group("blocks"):
-			if !is_instance_valid(block) or block.type == Block.BlockType.CONDITION:
+			if !is_instance_valid(block) or block.type == ItemData.BlockType.CONDITION:
 				continue
 			for slot in block.slot_manager.slots:
 				if !is_instance_valid(slot) or !is_instance_valid(slot.command):
@@ -244,7 +244,7 @@ func clear_all() -> void:
 	update_root_blocks()
 
 func _collect_commands_from_block(block: Block, commands: Array, blocks_to_update: Array) -> void:
-	if !is_instance_valid(block) or block.type == Block.BlockType.CONDITION:
+	if !is_instance_valid(block) or block.type == ItemData.BlockType.CONDITION:
 		return
 	
 	var had_commands = false
