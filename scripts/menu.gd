@@ -12,10 +12,10 @@ func _ready() -> void:
 
 func setup_menu_item(item) -> void:
 	if item is Command:
-		item.is_menu_command = true
+		#item.is_menu_command = true
 		item.menu_card_clicked.connect(_on_menu_command_clicked)
 	elif item is Block:
-		item.is_menu_command = true
+		#item.is_menu_command = true
 		var area = item.get_node("Area2D")
 		area.input_pickable = true
 		area.input_event.connect(func(_viewport, event, _shape_idx):

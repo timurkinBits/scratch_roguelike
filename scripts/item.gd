@@ -2,6 +2,7 @@ extends ObjectRoom
 class_name Item
 
 @onready var key_edit: LineEdit = $LineEdit
+@onready var icon: Sprite2D = $Sprite2D
 
 var key: int = 0
 var linked_info: Info  # Прямая ссылка на связанную информацию
@@ -14,6 +15,7 @@ func _ready() -> void:
 	key_edit.visible = false
 	key_edit.text = ""
 	generate_random_type()
+	icon.texture = load(ItemData.get_item_icon(type))
 	call_deferred("find_and_link_info")  # Вызываем после загрузки сцены
 
 # Выбор случайного типа на основе весов вероятности

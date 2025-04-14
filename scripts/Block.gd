@@ -1,10 +1,9 @@
 extends Node2D
 class_name Block
 
-@export_category("Block Settings")
-@export var type: int  # Использует ItemData.BlockType
+@export var type: ItemData.BlockType
 @export var text: String
-@export var slot_offset_start := Vector2(28, 32)
+@export var is_menu_command: bool = true
 
 const MAX_TEXT_LENGTH := 14
 
@@ -22,9 +21,9 @@ const MAX_TEXT_LENGTH := 14
 var slot_manager: SlotManager
 var parent_slot: CommandSlot = null
 var config: Dictionary
-var is_menu_command: bool = false
 var is_settings: bool = false
 var loop_count: int
+var slot_offset_start := Vector2(28, 32)
 
 static var available_conditions = []  # Will be populated with purchased conditions
 static var available_loops = []       # Will be populated with purchased loops
@@ -32,23 +31,58 @@ static var available_abilities = []   # Will be populated with purchased abiliti
 
 func _ready() -> void:
 	add_to_group("blocks")
+	
+	# Инициализация типа блока и текста на основе типа
+	if text.is_empty() and !is_menu_command:
+		initialize_block_properties()
+	
 	config = ItemData.get_block_config(type)
 	slot_manager = SlotManager.new(self, slot_offset_start)
 	add_child(slot_manager)
 	slot_manager.connect("slots_updated", _on_slots_updated)
 	
-	# If this is an ability block and no ability is set but available ones exist,
-	# set the first available ability automatically
-	if type == ItemData.BlockType.ABILITY and (text.is_empty() or text == "") and !available_abilities.is_empty():
-		text = available_abilities[0]
+	update_appearance()
 	
-	call_deferred('update_appearance')
+	# Теперь инициализируем слоты с правильным количеством
 	slot_manager.initialize_slots(ItemData.get_slot_count(type, text))
 	
 	# Hide buttons initially
 	buttons[0].visible = false
 	buttons[1].visible = false
 	button_color.visible = false
+
+# Новый метод для инициализации свойств блока на основе его типа
+func initialize_block_properties() -> void:
+	# Устанавливаем текст по умолчанию на основании типа блока
+	match type:
+		ItemData.BlockType.CONDITION:
+			if not available_conditions.is_empty():
+				text = available_conditions[0]
+			else:
+				text = "здоровье < 50%"  # Значение по умолчанию
+		ItemData.BlockType.LOOP:
+			if not available_loops.is_empty():
+				text = available_loops[0]
+			else:
+				text = "Повторить 2 раз"  # Значение по умолчанию
+			# Установка количества повторений для цикла
+			var parts = text.split(" ")
+			if parts.size() > 1:
+				loop_count = int(parts[1])
+		ItemData.BlockType.ABILITY:
+			if not available_abilities.is_empty():
+				text = available_abilities[0]
+			else:
+				text = "+1 атака"  # Значение по умолчанию
+	
+	# Проверка по словарю TEXT_TO_ITEM_TYPE
+	if type == ItemData.BlockType.LOOP and not "Повторить" in text:
+		text = "Повторить 2 раз"
+		loop_count = 2
+	elif type == ItemData.BlockType.CONDITION and not text in ItemData.TEXT_TO_ITEM_TYPE:
+		text = "здоровье < 50%"
+	elif type == ItemData.BlockType.ABILITY and not text in ItemData.TEXT_TO_ITEM_TYPE:
+		text = "+1 атака"
 
 func update_appearance() -> void:
 	texture.modulate = config["color"]
@@ -57,7 +91,7 @@ func update_appearance() -> void:
 
 func get_display_text() -> String:
 	if type == ItemData.BlockType.LOOP:
-		if not is_menu_command:
+		if !is_menu_command:
 			return config["prefix"] + str(loop_count) + " раз"
 		else:
 			return config["prefix"]

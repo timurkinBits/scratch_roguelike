@@ -228,6 +228,13 @@ func spawn_coin() -> void:
 	get_parent().add_child(coin_instance)
 	coin_instance.position = position
 	
+	var room = get_parent()
+	var is_elite = room.get("type") == room.RoomType.ELITE
+		
+	# Determine random coin type based on enemy type
+	var coin_type = Coin.get_random_coin_type(is_elite)
+	coin_instance.set_type(coin_type)
+	
 func dead():
 	spawn_coin()  # Создаем монету на месте смерти врага
 	ui_stats.change_stats(self, false)

@@ -28,33 +28,33 @@ var command_configs = {
 	TypeCommand.ATTACK: {
 		"prefix": "Атака ",
 		"color": Color.RED,
-		"icon": "res://sprites/fb663.png"
+		"icon": "res://sprites/attack.png"
 	},
 	TypeCommand.MOVE: {
 		"prefix": "Перейти ",
 		"color": Color.BLUE,
-		"icon": "res://sprites/fb658.png"
+		"icon": "res://sprites/move.png"
 	},
 	TypeCommand.TURN: {
 		"prefix": "Поворот ",
 		"color": Color.LIGHT_BLUE,
-		"icon": "res://sprites/fb647.png",
+		"icon": "res://sprites/turn.png",
 		"values": [90, -90, 180]  # Значения углов: вправо, влево, разворот
 	},
 	TypeCommand.USE: {
 		"prefix": "Использовать ",
 		"color": Color.BLUE_VIOLET,
-		"icon": "res://sprites/fb658.png"
+		"icon": "res://sprites/move.png"
 	},
 	TypeCommand.HEAL: {
 		"prefix": "Лечение ",
 		"color": Color.GREEN,
-		"icon": "res://sprites/fb615.png"
+		"icon": "res://sprites/heal.png"
 	},
 	TypeCommand.DEFENSE: {
 		"prefix": "Защита ",
 		"color": Color.SILVER,
-		"icon": "res://sprites/fb613.png"
+		"icon": "res://sprites/defense.png"
 	},
 	TypeCommand.NONE: {
 		"prefix": "none ",

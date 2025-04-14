@@ -22,10 +22,9 @@
 [ext_resource type="PackedScene" uid="uid://cqa3vxgvdii24" path="res://scenes/heal_point.tscn" id="13_mwfav"]
 [ext_resource type="LabelSettings" uid="uid://di7qwojobxj1y" path="res://sprites/Command.tres" id="15_3p2gp"]
 [ext_resource type="PackedScene" uid="uid://bik2ueyp5uy6i" path="res://scenes/Info.tscn" id="15_ebg2g"]
-[ext_resource type="Texture2D" uid="uid://dnml5jw2a8wx" path="res://sprites/fb950.png" id="16_2ofn6"]
-[ext_resource type="Texture2D" uid="uid://tnindadpwhan" path="res://sprites/fb12.png" id="17_36rkl"]
+[ext_resource type="Texture2D" uid="uid://dnml5jw2a8wx" path="res://sprites/info.png" id="16_2ofn6"]
+[ext_resource type="Texture2D" uid="uid://tnindadpwhan" path="res://sprites/ability.png" id="17_36rkl"]
 [ext_resource type="PackedScene" uid="uid://cbd5bhmk60s5o" path="res://scenes/item.tscn" id="17_xa025"]
-[ext_resource type="Texture2D" uid="uid://dclo6ofblwxmy" path="res://sprites/fb2116.png" id="21_ebg2g"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_2ofn6"]
 atlas = ExtResource("12_nfivy")
@@ -66,6 +65,10 @@ region = Rect2(64, 1312, 32, 32)
 [sub_resource type="LabelSettings" id="LabelSettings_ebg2g"]
 font_size = 22
 
+[sub_resource type="AtlasTexture" id="AtlasTexture_xa025"]
+atlas = ExtResource("13_cvmbd")
+region = Rect2(128, 256, 32, 32)
+
 [sub_resource type="LabelSettings" id="LabelSettings_q8u5g"]
 font_size = 83
 
@@ -81,6 +84,7 @@ position = Vector2(218, -25)
 scale = Vector2(0.9, 0.9)
 type = 1
 text = "начало хода"
+is_menu_command = false
 
 [node name="TurnExecutor" type="Node" parent="Table" node_paths=PackedStringArray("ui_node", "room")]
 script = ExtResource("5_a1joa")
@@ -266,7 +270,7 @@ offset_top = -62.0
 offset_right = -853.0
 offset_bottom = -22.0
 scale = Vector2(0.8, 0.8)
-texture = ExtResource("21_ebg2g")
+texture = SubResource("AtlasTexture_xa025")
 
 [node name="EnemyStats" type="Control" parent="UI"]
 layout_mode = 1

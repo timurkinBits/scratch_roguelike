@@ -25,7 +25,7 @@ enum BlockType {
 # Данные предметов
 const ITEMS = {
 	ItemType.LOOP_BLOCK: {
-		"icon": "res://sprites/fb666.png",
+		"icon": "res://sprites/loop.png",
 		"description": "Блок цикл",
 		"cost": 8,
 		"weight": 0.5,
@@ -33,7 +33,7 @@ const ITEMS = {
 		"slot_count": 1
 	},
 	ItemType.CONDITION_BLOCK: {
-		"icon": "res://sprites/fb13.png",
+		"icon": "res://sprites/condition.png",
 		"description": "Блок условие",
 		"cost": 8,
 		"weight": 0.5,
@@ -41,7 +41,7 @@ const ITEMS = {
 		"slot_count": 1
 	},
 	ItemType.ABILITY_BLOCK: {
-		"icon": "res://sprites/fb12.png",
+		"icon": "res://sprites/ability.png",
 		"description": "Блок навык",
 		"cost": 8,
 		"weight": 0.5,
@@ -49,7 +49,7 @@ const ITEMS = {
 		"slot_count": 1
 	},
 	ItemType.ABILITY_PLUS_ATTACK: {
-		"icon": "res://sprites/attack_icon.png",
+		"icon": "res://sprites/attack.png",
 		"description": "Навык +1 атака",
 		"cost": 3,
 		"weight": 3.0,
@@ -58,7 +58,7 @@ const ITEMS = {
 		"slot_count": 1
 	},
 	ItemType.ABILITY_PLUS_MOVE: {
-		"icon": "res://sprites/move_icon.png",
+		"icon": "res://sprites/move.png",
 		"description": "Навык +1 перемещение",
 		"cost": 2,
 		"weight": 3.0,
@@ -67,7 +67,7 @@ const ITEMS = {
 		"slot_count": 1
 	},
 	ItemType.ABILITY_PLUS_HEAL: {
-		"icon": "res://sprites/heal_icon.png",
+		"icon": "res://sprites/heal.png",
 		"description": "Навык +1 лечение",
 		"cost": 5,
 		"weight": 2.0,
@@ -76,7 +76,7 @@ const ITEMS = {
 		"slot_count": 1
 	},
 	ItemType.ABILITY_PLUS_DEFENSE: {
-		"icon": "res://sprites/defense_icon.png",
+		"icon": "res://sprites/defense.png",
 		"description": "Навык +1 защита",
 		"cost": 3,
 		"weight": 2.5,
@@ -85,7 +85,7 @@ const ITEMS = {
 		"slot_count": 1
 	},
 	ItemType.LOOP_2_TIMES: {
-		"icon": "res://sprites/loop2_icon.png",
+		"icon": "res://sprites/loop2.png",
 		"description": "Цикл на 2 повторения",
 		"cost": 6,
 		"weight": 2.0,
@@ -94,7 +94,7 @@ const ITEMS = {
 		"slot_count": 2
 	},
 	ItemType.LOOP_3_TIMES: {
-		"icon": "res://sprites/loop3_icon.png",
+		"icon": "res://sprites/loop3.png",
 		"description": "Цикл на 3 повторения",
 		"cost": 8,
 		"weight": 1.0,
@@ -103,7 +103,7 @@ const ITEMS = {
 		"slot_count": 2
 	},
 	ItemType.CONDITION_BELOW_HALF_HP: {
-		"icon": "res://sprites/hp50_icon.png",
+		"icon": "res://sprites/below_half_hp.png",
 		"description": "Условие здоровье < 50%",
 		"cost": 3,
 		"weight": 3.0,
@@ -128,17 +128,17 @@ const BLOCK_CONFIGS = {
 	BlockType.CONDITION: {
 		"prefix": "Если ",
 		"color": Color.YELLOW,
-		"icon": "res://sprites/fb13.png"
+		"icon": "res://sprites/condition.png"
 	},
 	BlockType.LOOP: {
 		"prefix": "Повторить ",
 		"color": Color.CHOCOLATE,
-		"icon": "res://sprites/fb666.png"
+		"icon": "res://sprites/loop.png"
 	},
 	BlockType.ABILITY: {
 		"prefix": "Улучшить ",
 		"color": Color.TURQUOISE,
-		"icon": "res://sprites/fb12.png"
+		"icon": "res://sprites/ability.png"
 	},
 	BlockType.NONE: {
 		"prefix": "none ",

@@ -256,6 +256,7 @@ func create_block_copy(type: int) -> void:
 		
 	var new_block = block_scene.instantiate() as Block
 	new_block.type = type
+	new_block.is_menu_command = false
 	
 	# Установка значений по умолчанию в зависимости от типа
 	match type:
