@@ -1,22 +1,17 @@
 extends ObjectRoom
 class_name Item
 
-@onready var key_edit: LineEdit = $LineEdit
 @onready var icon: Sprite2D = $Sprite2D
+@onready var info: Label = $Label
 
-var key: int = 0
-var linked_info: Info  # Прямая ссылка на связанную информацию
 var type: int  # Использует ItemData.ItemType
 
 func _ready() -> void:
 	super._ready()
 	add_to_group('items')
 	add_to_group('barrier')
-	key_edit.visible = false
-	key_edit.text = ""
 	generate_random_type()
 	icon.texture = load(ItemData.get_item_icon(type))
-	call_deferred("find_and_link_info")  # Вызываем после загрузки сцены
 
 # Выбор случайного типа на основе весов вероятности
 func generate_random_type() -> void:
@@ -142,22 +137,6 @@ func get_fallback_type(purchase_status: Dictionary) -> int:
 	else:
 		return basic_types[randi() % basic_types.size()]
 
-# Поиск и связывание с информацией по ключу
-func find_and_link_info() -> void:
-	if key > 0 and !linked_info:
-		for info_node in get_tree().get_nodes_in_group('info'):
-			if info_node.key == key:
-				link_with_info(info_node)
-				break
-
-# Установка связи с информацией
-func link_with_info(info_node) -> void:
-	if !linked_info:  # Проверка что связь устанавливается только один раз
-		linked_info = info_node
-		# Если информация еще не связана с нами, устанавливаем связь
-		if info_node.linked_item != self:
-			info_node.link_with_item(self)
-
 func use():
 	# Check if player has enough coins
 	var cost = ItemData.get_item_cost(type)
@@ -172,19 +151,17 @@ func use():
 	process_purchase()
 	
 	# Show feedback and remove item
-	if linked_info:
-		var item_name = ItemData.get_item_description(type)
-		show_info_message('Добавлено: ' + item_name, 0.8)
+	var item_name = ItemData.get_item_description(type)
+	show_info_message('Добавлено: ' + item_name, 0.8)
 	
 	# Remove the item and its linked info
-	cleanup_and_remove()
+	queue_free()
 
 # Helper function to display messages in info panel
 func show_info_message(message: String, duration: float) -> void:
-	if linked_info:
-		linked_info.info.text = message
-		await get_tree().create_timer(duration).timeout
-		linked_info.info.text = ''
+	info.text = message
+	await get_tree().create_timer(duration).timeout
+	info.text = ''
 
 # Process the purchase based on item type
 func process_purchase() -> void:
@@ -208,15 +185,15 @@ func process_purchase() -> void:
 			if block_type != -1:
 				Global.increase_block_limit(block_type)
 
-# Remove the item and its linked info
-func cleanup_and_remove() -> void:
-	if linked_info:
-		linked_info.queue_free()
-	queue_free()
+func _on_area_2d_mouse_entered() -> void:
+	info.get_node("ColorRect").visible = true
+	info.text = ItemData.get_item_description(type) + \
+	"\nЦена: " + str(ItemData.get_item_cost(type))
+	if type not in [ItemData.ItemType.LOOP_BLOCK, ItemData.ItemType.CONDITION_BLOCK, ItemData.ItemType.ABILITY_BLOCK]:
+		info.text += "\nСлотов: " + str(ItemData.get_slot_count(ItemData.get_block_type(type), 
+	ItemData.get_ability_name_for_item_type(type)))
 
-func _on_line_edit_text_submitted(_new_text: String) -> void:
-	key = key_edit.text.to_int()
-	key_edit.visible = false
-	get_tree().get_first_node_in_group("edit_mode").is_editing_key = false
-	
-	find_and_link_info()  # Ищем информацию по новому ключу
+
+func _on_area_2d_mouse_exited() -> void:
+	info.get_node("ColorRect").visible = false
+	info.text = ""

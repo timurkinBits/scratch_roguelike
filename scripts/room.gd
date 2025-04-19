@@ -264,25 +264,17 @@ func get_available_spawn_positions() -> Array:
 func calculate_path_length(from_tile: Vector2, to_tile: Vector2) -> int:
 	return int(abs(from_tile.x - to_tile.x) + abs(from_tile.y - to_tile.y))
 
-func spawn_object_at_position(type_obj: EditMode.PlacementType, tile_position: Vector2i, rotation_degree: int = 0, key: int = 0) -> Node:
-	var instance
+func spawn_object_at_position(type_obj: EditMode.PlacementType, tile_position: Vector2i, rotation_degree: int = 0) -> void:
 	match type_obj:
 		EditMode.PlacementType.WALL:
-			instance = spawn_object(wall_scene, tile_position, rotation_degree)
+			spawn_object(wall_scene, tile_position, rotation_degree)
 		EditMode.PlacementType.DOOR:
-			instance = spawn_object(door_scene, tile_position, rotation_degree)
-		EditMode.PlacementType.INFO:
-			instance = spawn_object(info_scene, tile_position, rotation_degree)
-			if instance and key > 0:
-				instance.key = key
+			spawn_object(door_scene, tile_position, rotation_degree)
 		EditMode.PlacementType.ITEM:
-			instance = spawn_object(item_scene, tile_position, rotation_degree)
-			if instance and key > 0:
-				instance.key = key
-	return instance
+			spawn_object(item_scene, tile_position, rotation_degree)
 
 # В room.gd
-func spawn_object(scene: PackedScene, tile_position: Vector2i, rotation_degree: int = 0) -> Node:
+func spawn_object(scene: PackedScene, tile_position: Vector2i, rotation_degree: int = 0) -> void:
 	if scene:
 		var instance = scene.instantiate()
 		add_child(instance)
@@ -291,6 +283,3 @@ func spawn_object(scene: PackedScene, tile_position: Vector2i, rotation_degree: 
 		instance.position = instance.get_world_position_from_tile(pos)
 		if instance.has_method('set_rotation_degree'):
 			instance.set_rotation_degree(rotation_degree)
-		
-		return instance
-	return null

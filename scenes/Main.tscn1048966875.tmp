@@ -104,6 +104,7 @@ wall_scene = ExtResource("9_qmy6f")
 door_scene = ExtResource("11_bb450")
 info_scene = ExtResource("15_ebg2g")
 item_scene = ExtResource("17_xa025")
+allow_layout_editing = true
 
 [node name="Player" parent="Room" instance=ExtResource("5_k4xvw")]
 position = Vector2(360.154, 501.223)
@@ -153,7 +154,7 @@ scale = Vector2(0.37037, 0.37037)
 shape = SubResource("RectangleShape2D_fs0b5")
 
 [node name="Item" type="Sprite2D" parent="Room/EditModeManager/ObjectMenu"]
-position = Vector2(25.6489, 79.0842)
+position = Vector2(26.1833, 125.039)
 scale = Vector2(1.36928, 1.26909)
 texture = ExtResource("17_36rkl")
 

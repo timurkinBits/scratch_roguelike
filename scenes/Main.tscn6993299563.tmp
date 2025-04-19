@@ -1,4 +1,4 @@
-[gd_scene load_steps=37 format=3 uid="uid://x83t6t456pdf"]
+[gd_scene load_steps=36 format=3 uid="uid://x83t6t456pdf"]
 
 [ext_resource type="PackedScene" uid="uid://pllgtdsxxw2s" path="res://scenes/table.tscn" id="1_2gx6p"]
 [ext_resource type="Script" uid="uid://bs0f6ystj1uo2" path="res://scripts/table.gd" id="2_wk856"]
@@ -21,7 +21,6 @@
 [ext_resource type="Texture2D" uid="uid://djwyqrfy3bdly" path="res://sprites/32x32.png" id="13_cvmbd"]
 [ext_resource type="PackedScene" uid="uid://cqa3vxgvdii24" path="res://scenes/heal_point.tscn" id="13_mwfav"]
 [ext_resource type="LabelSettings" uid="uid://di7qwojobxj1y" path="res://sprites/Command.tres" id="15_3p2gp"]
-[ext_resource type="PackedScene" uid="uid://bik2ueyp5uy6i" path="res://scenes/Info.tscn" id="15_ebg2g"]
 [ext_resource type="Texture2D" uid="uid://tnindadpwhan" path="res://sprites/ability.png" id="17_36rkl"]
 [ext_resource type="PackedScene" uid="uid://cbd5bhmk60s5o" path="res://scenes/item.tscn" id="17_xa025"]
 
@@ -40,7 +39,7 @@ region = Rect2(112, 64, 16, 16)
 size = Vector2(42.7483, 42.7482)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_e2s0e"]
-size = Vector2(31.2195, 33.6842)
+size = Vector2(31.6097, 32)
 
 [sub_resource type="InputEventKey" id="InputEventKey_u50so"]
 device = -1
@@ -102,8 +101,8 @@ scale = Vector2(0.935711, 0.935711)
 enemy_scene = ExtResource("8_uc31q")
 wall_scene = ExtResource("9_qmy6f")
 door_scene = ExtResource("11_bb450")
-info_scene = ExtResource("15_ebg2g")
 item_scene = ExtResource("17_xa025")
+allow_layout_editing = true
 
 [node name="Player" parent="Room" instance=ExtResource("5_k4xvw")]
 position = Vector2(360.154, 501.223)
@@ -160,7 +159,8 @@ texture = ExtResource("17_36rkl")
 [node name="ItemButton" type="Area2D" parent="Room/EditModeManager/ObjectMenu/Item"]
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Room/EditModeManager/ObjectMenu/Item/ItemButton"]
-position = Vector2(-0.390228, 0.842117)
+position = Vector2(-0.195129, 0)
+scale = Vector2(1, 1)
 shape = SubResource("RectangleShape2D_e2s0e")
 
 [node name="UI" type="Control" parent="." node_paths=PackedStringArray("player", "max_scores", "player_bars")]

@@ -1,0 +1,21 @@
+[gd_scene load_steps=4 format=3 uid="uid://c8vh3t0iaxrpu"]
+
+[ext_resource type="Texture2D" uid="uid://cni2isbjoq12d" path="res://sprites/Tileset.png" id="1_mi6dp"]
+[ext_resource type="Script" uid="uid://dlrlgsgoxf8d7" path="res://scripts/button.gd" id="1_rhj8v"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_rhj8v"]
+atlas = ExtResource("1_mi6dp")
+region = Rect2(112, 96, 16, 16)
+
+[node name="Button" type="Node2D"]
+script = ExtResource("1_rhj8v")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture = SubResource("AtlasTexture_rhj8v")
+
+[node name="LineEdit" type="LineEdit" parent="."]
+visible = false
+offset_left = -34.0
+offset_top = -15.0
+offset_right = 35.0
+offset_bottom = 16.0
