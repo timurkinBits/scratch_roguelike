@@ -1,6 +1,9 @@
-[gd_scene load_steps=3 format=3 uid="uid://btb601n6tsxuw"]
+[gd_scene load_steps=4 format=3 uid="uid://btb601n6tsxuw"]
 
 [ext_resource type="Script" uid="uid://bgrkvs0lsbygv" path="res://scripts/main_menu.gd" id="1_l6cm7"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_ekxnf"]
+font_size = 34
 
 [sub_resource type="LabelSettings" id="LabelSettings_l6cm7"]
 font_size = 20
@@ -23,6 +26,37 @@ grow_vertical = 2
 scale = Vector2(1.3, 1.3)
 size_flags_vertical = 4
 
+[node name="Label" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 0
+text = "ScratchLike "
+label_settings = SubResource("LabelSettings_ekxnf")
+horizontal_alignment = 1
+
+[node name="Label6" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 0
+
+[node name="Label5" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 0
+
+[node name="Label8" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 0
+
+[node name="Label7" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 0
+
+[node name="Label4" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 0
+
+[node name="Label3" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 0
+
 [node name="start_game" type="Button" parent="VBoxContainer"]
 layout_mode = 2
 text = "НАЧАТЬ ИГРУ"
@@ -36,6 +70,7 @@ layout_mode = 2
 text = "ОБ ИГРЕ"
 
 [node name="about" type="Label" parent="."]
+visible = false
 offset_left = 1.0
 offset_right = 1151.0
 offset_bottom = 649.0
