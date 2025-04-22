@@ -6,7 +6,7 @@ signal coins_changed
 
 var points: Dictionary = {
 	Command.TypeCommand.MOVE: 10,
-	Command.TypeCommand.ATTACK: 10,
+	Command.TypeCommand.ATTACK: 20,
 	Command.TypeCommand.HEAL: 3,
 	Command.TypeCommand.DEFENSE: 3
 }

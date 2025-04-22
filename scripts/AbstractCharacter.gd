@@ -2,10 +2,10 @@ extends ObjectRoom
 class_name AbstractCharacter
 
 # Общие свойства
-var is_dead: bool = false
-var current_direction: String = "up"
-var hp: int = 1  # Базовое здоровье
-var is_moving: bool = false  # Общее свойство для отслеживания движения
+var is_dead := false
+var current_direction := "up"
+var hp := 1  # Базовое здоровье
+var is_moving := false  # Общее свойство для отслеживания движения
 
 # Векторы направлений
 const DIRECTION_VECTORS := {

@@ -1,7 +1,14 @@
-[gd_scene load_steps=3 format=3 uid="uid://cbd5bhmk60s5o"]
+[gd_scene load_steps=5 format=3 uid="uid://cbd5bhmk60s5o"]
 
 [ext_resource type="Script" uid="uid://46v3ggrp5osy" path="res://scripts/item.gd" id="1_4gq7n"]
 [ext_resource type="Texture2D" uid="uid://tnindadpwhan" path="res://sprites/ability.png" id="2_s8enn"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_s8enn"]
+size = Vector2(29.9426, 28.0712)
+
+[sub_resource type="LabelSettings" id="LabelSettings_s8enn"]
+font_size = 20
+font_color = Color(0, 0, 0, 1)
 
 [node name="Item" type="Node2D"]
 script = ExtResource("1_4gq7n")
@@ -10,10 +17,33 @@ script = ExtResource("1_4gq7n")
 scale = Vector2(1.34375, 1.34375)
 texture = ExtResource("2_s8enn")
 
-[node name="LineEdit" type="LineEdit" parent="."]
-offset_right = 68.5625
-offset_bottom = 31.0
-max_length = 1
-context_menu_enabled = false
+[node name="Area2D" type="Area2D" parent="."]
 
-[connection signal="text_submitted" from="LineEdit" to="." method="_on_line_edit_text_submitted"]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D"]
+position = Vector2(0.935707, 1.87142)
+shape = SubResource("RectangleShape2D_s8enn")
+
+[node name="Label" type="Label" parent="."]
+z_index = 3
+offset_left = -157.0
+offset_top = -136.0
+offset_right = 159.0
+offset_bottom = -18.9996
+label_settings = SubResource("LabelSettings_s8enn")
+horizontal_alignment = 1
+vertical_alignment = 2
+
+[node name="ColorRect" type="ColorRect" parent="Label"]
+visible = false
+z_index = 2
+z_as_relative = false
+layout_mode = 0
+offset_left = 29.0
+offset_top = 33.0
+offset_right = 284.0
+offset_bottom = 117.0
+mouse_filter = 2
+color = Color(1, 1, 1, 0.690196)
+
+[connection signal="mouse_entered" from="Area2D" to="." method="_on_area_2d_mouse_entered"]
+[connection signal="mouse_exited" from="Area2D" to="." method="_on_area_2d_mouse_exited"]

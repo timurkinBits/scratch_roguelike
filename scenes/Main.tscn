@@ -1,4 +1,4 @@
-[gd_scene load_steps=39 format=3 uid="uid://x83t6t456pdf"]
+[gd_scene load_steps=37 format=3 uid="uid://x83t6t456pdf"]
 
 [ext_resource type="PackedScene" uid="uid://pllgtdsxxw2s" path="res://scenes/table.tscn" id="1_2gx6p"]
 [ext_resource type="Script" uid="uid://bs0f6ystj1uo2" path="res://scripts/table.gd" id="2_wk856"]
@@ -22,7 +22,6 @@
 [ext_resource type="PackedScene" uid="uid://cqa3vxgvdii24" path="res://scenes/heal_point.tscn" id="13_mwfav"]
 [ext_resource type="LabelSettings" uid="uid://di7qwojobxj1y" path="res://sprites/Command.tres" id="15_3p2gp"]
 [ext_resource type="PackedScene" uid="uid://bik2ueyp5uy6i" path="res://scenes/Info.tscn" id="15_ebg2g"]
-[ext_resource type="Texture2D" uid="uid://dnml5jw2a8wx" path="res://sprites/info.png" id="16_2ofn6"]
 [ext_resource type="Texture2D" uid="uid://tnindadpwhan" path="res://sprites/ability.png" id="17_36rkl"]
 [ext_resource type="PackedScene" uid="uid://cbd5bhmk60s5o" path="res://scenes/item.tscn" id="17_xa025"]
 
@@ -39,9 +38,6 @@ region = Rect2(112, 64, 16, 16)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_fs0b5"]
 size = Vector2(42.7483, 42.7482)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_ma7h6"]
-size = Vector2(83.4657, 80.6404)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_e2s0e"]
 size = Vector2(31.2195, 33.6842)
@@ -156,21 +152,8 @@ scale = Vector2(0.37037, 0.37037)
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Room/EditModeManager/ObjectMenu/Door/Door_button"]
 shape = SubResource("RectangleShape2D_fs0b5")
 
-[node name="Info" type="Sprite2D" parent="Room/EditModeManager/ObjectMenu"]
-position = Vector2(25.8597, 78.9148)
-scale = Vector2(1.32271, 1.27968)
-texture = ExtResource("16_2ofn6")
-
-[node name="InfoButton" type="Area2D" parent="Room/EditModeManager/ObjectMenu/Info"]
-position = Vector2(-0.479477, 15.3532)
-scale = Vector2(0.395819, 0.395819)
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Room/EditModeManager/ObjectMenu/Info/InfoButton"]
-position = Vector2(-0.324585, -38.2218)
-shape = SubResource("RectangleShape2D_ma7h6")
-
 [node name="Item" type="Sprite2D" parent="Room/EditModeManager/ObjectMenu"]
-position = Vector2(26.1833, 125.039)
+position = Vector2(25.6489, 79.0842)
 scale = Vector2(1.36928, 1.26909)
 texture = ExtResource("17_36rkl")
 
@@ -381,5 +364,4 @@ label_settings = SubResource("LabelSettings_q8u5g")
 
 [connection signal="input_event" from="Room/EditModeManager/ObjectMenu/Wall/Wall_button" to="Room/EditModeManager" method="_on_wall_button_input_event"]
 [connection signal="input_event" from="Room/EditModeManager/ObjectMenu/Door/Door_button" to="Room/EditModeManager" method="_on_door_button_input_event"]
-[connection signal="input_event" from="Room/EditModeManager/ObjectMenu/Info/InfoButton" to="Room/EditModeManager" method="_on_info_button_input_event"]
 [connection signal="input_event" from="Room/EditModeManager/ObjectMenu/Item/ItemButton" to="Room/EditModeManager" method="_on_item_button_input_event"]
