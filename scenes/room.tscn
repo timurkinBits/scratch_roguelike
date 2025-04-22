@@ -414,7 +414,7 @@ atlas = ExtResource("1_68nli")
 region = Rect2(76, 32, 4, 16)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_ffxv4"]
-size = Vector2(38, 46.0001)
+size = Vector2(39.9994, 46.0001)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_14vil"]
 size = Vector2(40.5, 45)
@@ -423,7 +423,7 @@ size = Vector2(40.5, 45)
 size = Vector2(43.0001, 43)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_36trf"]
-size = Vector2(39.5, 35)
+size = Vector2(39.5, 40.0001)
 
 [node name="Room" type="Node2D"]
 script = ExtResource("1_ffxv4")
@@ -517,19 +517,18 @@ metadata/_edit_use_anchors_ = true
 
 [node name="button" type="TextureRect" parent="ExitDoors/DownDoor"]
 offset_left = 337.0
-offset_top = 525.0
+offset_top = 528.0
 offset_right = 1137.0
-offset_bottom = 1325.0
+offset_bottom = 1369.0
 scale = Vector2(0.057546, 0.0475623)
 expand_mode = 3
-metadata/_edit_use_anchors_ = true
 
 [node name="DownDoor" type="Area2D" parent="ExitDoors/DownDoor/button"]
 position = Vector2(-5578.15, -5045.97)
 scale = Vector2(17.3774, 21.0251)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="ExitDoors/DownDoor/button/DownDoor"]
-position = Vector2(344, 258.998)
+position = Vector2(344, 259.998)
 rotation = 1.5708
 shape = SubResource("RectangleShape2D_ffxv4")
 
@@ -621,7 +620,7 @@ rotation = -1.5708
 scale = Vector2(20.069, 17.4255)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="ExitDoors/RightDoor/button/RightDoor"]
-position = Vector2(19.75, 22.5)
+position = Vector2(19.7501, 24.9999)
 shape = SubResource("RectangleShape2D_36trf")
 
 [connection signal="input_event" from="ExitDoors/DownDoor/button/DownDoor" to="." method="_on_down_door_input_event"]

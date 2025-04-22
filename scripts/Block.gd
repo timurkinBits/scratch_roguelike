@@ -3,7 +3,7 @@ class_name Block
 
 @export var type: ItemData.BlockType
 @export var text: String
-@export var is_menu_command: bool = true
+@export var is_menu_command := true
 
 const MAX_TEXT_LENGTH := 14
 
@@ -21,13 +21,13 @@ const MAX_TEXT_LENGTH := 14
 var slot_manager: SlotManager
 var parent_slot: CommandSlot = null
 var config: Dictionary
-var is_settings: bool = false
+var is_settings := false
 var loop_count: int
 var slot_offset_start := Vector2(28, 32)
 
-static var available_conditions = []  # Will be populated with purchased conditions
-static var available_loops = []       # Will be populated with purchased loops
-static var available_abilities = []   # Will be populated with purchased abilities
+static var available_conditions := []  # Will be populated with purchased conditions
+static var available_loops := []       # Will be populated with purchased loops
+static var available_abilities := []   # Will be populated with purchased abilities
 
 func _ready() -> void:
 	add_to_group("blocks")

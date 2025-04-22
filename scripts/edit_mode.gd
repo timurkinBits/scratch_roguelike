@@ -31,7 +31,8 @@ var room_layouts: Dictionary = {}
 var current_room_type: int = 0
 var edit_mode: bool = false
 var selected_layout_index: int = -1
-var degree: int = 0
+var degree: int = 0: 
+	get: return 0 if degree == 360 else degree
 var is_editing_key: bool = false
 
 # Создаем имена для файлов и отображаемые имена типов комнат
@@ -88,8 +89,6 @@ func _input(event: InputEvent) -> void:
 			KEY_R:
 				if edit_mode:
 					degree += 90
-					if degree == 360:
-						degree = 0
 			KEY_S:
 				if edit_mode:
 					save_current_layout(current_room_type)

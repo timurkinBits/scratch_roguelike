@@ -1,6 +1,9 @@
-[gd_scene load_steps=2 format=3 uid="uid://btb601n6tsxuw"]
+[gd_scene load_steps=3 format=3 uid="uid://btb601n6tsxuw"]
 
 [ext_resource type="Script" uid="uid://bgrkvs0lsbygv" path="res://scripts/main_menu.gd" id="1_l6cm7"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_l6cm7"]
+font_size = 20
 
 [node name="MainMenu" type="CanvasLayer"]
 script = ExtResource("1_l6cm7")
@@ -28,5 +31,45 @@ text = "НАЧАТЬ ИГРУ"
 layout_mode = 2
 text = "ЗАКРЫТЬ ИГРУ"
 
+[node name="about_game" type="Button" parent="VBoxContainer"]
+layout_mode = 2
+text = "ОБ ИГРЕ"
+
+[node name="about" type="Label" parent="."]
+offset_left = 1.0
+offset_right = 1151.0
+offset_bottom = 649.0
+text = "Слева от поля расположено меню выбора команд и блоков, которых будет использовать в своей программе. 
+При нажатии на команду или блок они появляется на столе, на котором происходит построение программы. 
+После того как игрок составил программу своих действий в свой ход он может нажать кнопку “запуск” 
+и команды начнут по порядку выполняться.
+
+На обычном уровне есть игрок (жёлтый робот), враги (серые роботы) и стены которые они должны обходить. 
+Игрок будет перемещаться в сторону, на которую направлен его взгляд, который можно определить 
+по зелёным очкам. После хода игрока начнётся ход противников. Каждый имеет свою скорость 
+(количество клеток которое он пройдёт), урон и здоровье. Они будут стараться приблизиться к игроку 
+и нанести ему урон. Здоровье врага можно узнать, наведя на него курсор.
+По победы над врагом с него выпадет случайное количество монет, которые можно подобрать при помощи 
+команды “Использовать”. Когда врагов на уровне не останется, на дверях по краям появятся иконки, 
+означающие тип следующей комнаты.
+
+Есть 4 типа комнат: Обычная, элитная, испытание, магазин. 
+В элитной комнате появляются усложнённые враги, с которых выпадает больше монет. 
+В магазине можно купить блоки разных типов, которые сделают игру интереснее и разнообразнее.
+В испытании я планирую добавить разные головоломки, за которые можно получить полезную награду, но 
+из этой комнаты можно выйти в любой момент.
+"
+label_settings = SubResource("LabelSettings_l6cm7")
+
+[node name="close_about_game" type="Button" parent="about"]
+layout_mode = 2
+offset_left = 485.0
+offset_top = 586.0
+offset_right = 684.0
+offset_bottom = 642.0
+text = "Закрыть"
+
 [connection signal="pressed" from="VBoxContainer/start_game" to="." method="_on_start_game_pressed"]
 [connection signal="pressed" from="VBoxContainer/close_game" to="." method="_on_close_game_pressed"]
+[connection signal="pressed" from="VBoxContainer/about_game" to="." method="_on_about_game_pressed"]
+[connection signal="pressed" from="about/close_about_game" to="." method="_on_close_about_game_pressed"]
