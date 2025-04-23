@@ -1,9 +1,8 @@
-extends Node2D
+extends Card
 class_name Block
 
 @export var type: ItemData.BlockType
 @export var text: String
-@export var is_menu_command := true
 
 const MAX_TEXT_LENGTH := 14
 
@@ -15,7 +14,6 @@ const MAX_TEXT_LENGTH := 14
 @onready var texture_down = $Texture/TextureDown
 @onready var texture_left = $Texture/TextureLeft
 @onready var buttons = [$'Buttons/Up', $'Buttons/Down']
-@onready var table = $'../..'
 @onready var button_color: ColorRect = $'Buttons/ColorRect'
 
 var slot_manager: SlotManager
@@ -30,6 +28,7 @@ static var available_loops := []       # Will be populated with purchased loops
 static var available_abilities := []   # Will be populated with purchased abilities
 
 func _ready() -> void:
+	super._ready()
 	add_to_group("blocks")
 	
 	# Инициализация типа блока и текста на основе типа
@@ -50,6 +49,10 @@ func _ready() -> void:
 	buttons[0].visible = false
 	buttons[1].visible = false
 	button_color.visible = false
+
+# Переопределение получения размера блока
+func get_size() -> Vector2:
+	return get_full_size()
 
 # Новый метод для инициализации свойств блока на основе его типа
 func initialize_block_properties() -> void:
@@ -350,21 +353,18 @@ func _navigate_abilities(direction: int) -> void:
 			
 	set_ability(available_abilities[current_index])
 
-# Handle block interaction
-func _on_area_2d_input_event(_viewport: Node, event: InputEvent, shape_idx: int) -> void:
-	if not event is InputEventMouseButton or not event.pressed:
-		return
-		
-	if shape_idx != 0:  # Not the top part
-		if event.button_index == MOUSE_BUTTON_RIGHT and !is_menu_command \
-			and text != 'начало хода' and not table.is_turn_in_progress:
+# Модифицированная функция для обработки клика, теперь использует базовую логику перемещения
+func _on_area_2d_input_event(viewport: Node, event: InputEvent, shape_idx: int) -> void:
+	# Then handle block-specific interactions
+	if event is InputEventMouseButton:
+		if shape_idx != 0:  # Not the top part
+			super._on_area_input_event(viewport, event, shape_idx)
+			if event.button_index == MOUSE_BUTTON_RIGHT and event.pressed and \
+			   !is_menu_command and text != 'начало хода' and not table.is_turn_in_progress:
 				queue_free()
-		else:
-			is_settings = false
-			change_settings(is_settings)
-	else:  # Top part
-		if event.button_index == MOUSE_BUTTON_LEFT and !is_menu_command \
-			and text != 'начало хода' and not table.is_turn_in_progress:
+		else:  # Top part - настройки блока
+			if event.button_index == MOUSE_BUTTON_LEFT and event.pressed and \
+			   !is_menu_command and text != 'начало хода' and not table.is_turn_in_progress:
 				is_settings = !is_settings
 				change_settings(is_settings)
 

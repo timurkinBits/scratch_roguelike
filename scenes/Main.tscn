@@ -80,7 +80,6 @@ position = Vector2(218, -25)
 scale = Vector2(0.9, 0.9)
 type = 1
 text = "начало хода"
-is_menu_command = false
 
 [node name="TurnExecutor" type="Node" parent="Table" node_paths=PackedStringArray("ui_node", "room")]
 script = ExtResource("5_a1joa")
