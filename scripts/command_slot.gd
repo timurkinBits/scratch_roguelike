@@ -3,7 +3,7 @@ class_name CommandSlot
 
 var command: Node2D = null
 @onready var block: Block = get_parent() as Block
-@onready var table: Node2D = get_tree().get_root().get_node("Main/Table") as Node2D
+@onready var table: Node2D = find_parent("Table") as Node2D
 
 func _ready() -> void:
 	if has_node("Area2D"):
@@ -19,17 +19,28 @@ func update_visibility() -> void:
 	if block.is_menu_command:
 		visible = false
 	else:
-		visible = table.dragged_card != null and command == null
+		# Check if any card is being dragged
+		var any_card_dragged = false
+		for card in get_tree().get_nodes_in_group("cards"):
+			if card is Card and card.is_being_dragged:
+				any_card_dragged = true
+				break
+		
+		visible = any_card_dragged and command == null
 
 func add_command(new_command: Node2D) -> void:
 	if command != null or not is_instance_valid(new_command):
 		return
+		
 	command = new_command
-	if command is Command:
+	if command is Card:
 		command.slot = self
+		
+	if command is Command:
 		command.block = block
 	elif command is Block:
 		command.parent_slot = self
+	
 	# Обновляем позицию команды явно при добавлении
 	command.global_position = global_position
 	command.visible = true

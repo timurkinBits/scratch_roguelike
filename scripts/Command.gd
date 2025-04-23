@@ -1,4 +1,4 @@
-extends Node2D
+extends Card
 class_name Command
 
 enum TypeCommand { NONE, TURN, ATTACK, MOVE, USE, HEAL, DEFENSE }
@@ -6,9 +6,7 @@ enum TypeCommand { NONE, TURN, ATTACK, MOVE, USE, HEAL, DEFENSE }
 @export var type: TypeCommand
 var value: int = 0
 var chances: Array[int] = [0, 6, 6, 7, 1, 1]
-var is_menu_command: bool = false
 var is_settings: bool = false
-var slot: CommandSlot
 var block: Block
 var additional_properties: String
 var config: Dictionary  # Кэшированная конфигурация для типа команды
@@ -22,7 +20,6 @@ signal menu_card_clicked(type: int)
 @onready var up_button: Button = $Texture/Up
 @onready var down_button: Button = $Texture/Down
 @onready var ui_node: UI = $'../../../UI'
-@onready var table: Table = get_parent().get_parent()
 
 var command_configs = {
 	TypeCommand.ATTACK: {
@@ -64,6 +61,8 @@ var command_configs = {
 }
 
 func _ready() -> void:
+	super._ready()
+	
 	# Убедимся, что тип команды существует в конфигурации
 	if type in command_configs:
 		config = command_configs[type]
@@ -87,7 +86,11 @@ func _ready() -> void:
 		for i in range(1, TypeCommand.size()):
 			chances[i] = 1 if i < chances.size() else 1
 	update_appearance()
-	
+
+# Переопределение получения размера команды
+func get_size() -> Vector2:
+	return $Texture.size
+
 func update_appearance() -> void:
 	sprite.color = config["color"]
 	
@@ -173,7 +176,12 @@ func get_max_points() -> int:
 		TypeCommand.DEFENSE: return Global.points[Command.TypeCommand.DEFENSE]
 		_: return 0
 
-func _on_area_2d_input_event(_viewport: Node, event: InputEvent, _shape_idx: int) -> void:
+# Переопределение обработки событий ввода
+func _on_area_2d_input_event(viewport: Node, event: InputEvent, shape_idx: int) -> void:
+	# First, call the parent method to handle dragging
+	super._on_area_input_event(viewport, event, shape_idx)
+	
+	# Then handle command-specific interactions
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 			if is_menu_command:
@@ -181,7 +189,8 @@ func _on_area_2d_input_event(_viewport: Node, event: InputEvent, _shape_idx: int
 			else:
 				is_settings = false
 				change_settings(is_settings)
-		elif event.button_index == MOUSE_BUTTON_RIGHT and !is_menu_command and event.pressed:
+		elif event.button_index == MOUSE_BUTTON_RIGHT and !is_menu_command and event.pressed and \
+			not table.is_turn_in_progress:
 			Global.release_points(type, value)
 			queue_free()
 
@@ -213,7 +222,7 @@ func _exit_tree() -> void:
 	
 	# Возвращаем очки в общий пул и обновляем UI
 	if !is_menu_command and value > 0 and type != TypeCommand.TURN and type != TypeCommand.USE:
-		
+		Global.release_points(type, value)
 		if ui_node and is_instance_valid(ui_node):
 			ui_node.change_scores(type)
 		
