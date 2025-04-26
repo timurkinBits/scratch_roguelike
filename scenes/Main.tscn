@@ -1,4 +1,4 @@
-[gd_scene load_steps=37 format=3 uid="uid://x83t6t456pdf"]
+[gd_scene load_steps=39 format=3 uid="uid://x83t6t456pdf"]
 
 [ext_resource type="PackedScene" uid="uid://pllgtdsxxw2s" path="res://scenes/table.tscn" id="1_2gx6p"]
 [ext_resource type="Script" uid="uid://bs0f6ystj1uo2" path="res://scripts/table.gd" id="2_wk856"]
@@ -16,14 +16,72 @@
 [ext_resource type="Script" uid="uid://b46fjemq5kbto" path="res://scripts/edit_mode.gd" id="10_ft6cd"]
 [ext_resource type="PackedScene" uid="uid://b1n1mnvax3cup" path="res://scenes/hp_bar.tscn" id="10_wp0k4"]
 [ext_resource type="PackedScene" uid="uid://bfbsx0uvdydab" path="res://scenes/door.tscn" id="11_bb450"]
+[ext_resource type="Texture2D" uid="uid://dnml5jw2a8wx" path="res://sprites/info.png" id="12_2ofn6"]
 [ext_resource type="Texture2D" uid="uid://cni2isbjoq12d" path="res://sprites/Tileset.png" id="12_nfivy"]
 [ext_resource type="Script" uid="uid://okdqbifhl0ui" path="res://scripts/enemy_stats.gd" id="13_3p2gp"]
 [ext_resource type="Texture2D" uid="uid://djwyqrfy3bdly" path="res://sprites/32x32.png" id="13_cvmbd"]
 [ext_resource type="PackedScene" uid="uid://cqa3vxgvdii24" path="res://scenes/heal_point.tscn" id="13_mwfav"]
 [ext_resource type="LabelSettings" uid="uid://di7qwojobxj1y" path="res://sprites/Command.tres" id="15_3p2gp"]
-[ext_resource type="PackedScene" uid="uid://bik2ueyp5uy6i" path="res://scenes/Info.tscn" id="15_ebg2g"]
 [ext_resource type="Texture2D" uid="uid://tnindadpwhan" path="res://sprites/ability.png" id="17_36rkl"]
 [ext_resource type="PackedScene" uid="uid://cbd5bhmk60s5o" path="res://scenes/item.tscn" id="17_xa025"]
+
+[sub_resource type="GDScript" id="GDScript_xa025"]
+script/source = "extends ObjectRoom
+class_name Info
+
+
+@onready var key_edit: LineEdit = $LineEdit
+
+var key: int = 0
+var linked_item: Item  # Прямая ссылка на связанный предмет
+
+func _ready() -> void:
+	super._ready()
+	add_to_group('info')
+	key_edit.visible = false
+	key_edit.text = \"\"
+	call_deferred(\"find_and_link_item\")  # Найти и связаться с предметом после того, как сцена полностью загрузится
+
+# Поиск и связывание с предметом по ключу
+func find_and_link_item() -> void:
+	if key > 0 and !linked_item:
+		for item in get_tree().get_nodes_in_group('items'):
+			if item.key == key:
+				link_with_item(item)
+				break
+
+# Установка связи с предметом
+func link_with_item(item: Item) -> void:
+	if !linked_item:  # Проверка что связь устанавливается только один раз
+		linked_item = item
+		item.link_with_info(self)  # Обратная связь
+
+
+
+func _on_line_edit_text_submitted(_new_text: String) -> void:
+	key = key_edit.text.to_int()
+	key_edit.visible = false
+	var edit_mode = get_tree().get_first_node_in_group(\"edit_mode\")
+	if edit_mode:
+		edit_mode.is_editing_key = false
+	
+	# После изменения ключа пытаемся найти и привязаться к предмету
+	linked_item = null  # Сбрасываем текущую связь
+	find_and_link_item()  # Ищем предмет по новому ключу
+"
+
+[sub_resource type="PackedScene" id="PackedScene_36rkl"]
+_bundled = {
+"conn_count": 1,
+"conns": PackedInt32Array(1073741827, 1073741826, 14, 13, 2, 0, 0),
+"editable_instances": [],
+"names": PackedStringArray("Info", "Node2D", "scale", "script", "Sprite2D", "Sprite2D", "texture", "LineEdit", "LineEdit", "offset_right", "offset_bottom", "max_length", "context_menu_enabled", "_on_line_edit_text_submitted", "text_submitted"),
+"node_count": 3,
+"node_paths": [NodePath("."), NodePath("."), NodePath("."), NodePath("LineEdit")],
+"nodes": PackedInt32Array(-1, -1, 1, 0, -1, 2, 2, 0, 3, 1, 0, 1073741824, 0, 5, 4, -1, 1, 6, 2, 0, 1073741825, 0, 8, 7, -1, 4, 9, 3, 10, 4, 11, 5, 12, 6, 0),
+"variants": [Vector2(1.06871, 1.06871), SubResource("GDScript_xa025"), ExtResource("12_2ofn6"), 68.5625, 31.0, 1, false],
+"version": 3
+}
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_2ofn6"]
 atlas = ExtResource("12_nfivy")
@@ -101,8 +159,9 @@ scale = Vector2(0.935711, 0.935711)
 enemy_scene = ExtResource("8_uc31q")
 wall_scene = ExtResource("9_qmy6f")
 door_scene = ExtResource("11_bb450")
-info_scene = ExtResource("15_ebg2g")
+info_scene = SubResource("PackedScene_36rkl")
 item_scene = ExtResource("17_xa025")
+allow_layout_editing = true
 
 [node name="Player" parent="Room" instance=ExtResource("5_k4xvw")]
 position = Vector2(360.154, 501.223)
