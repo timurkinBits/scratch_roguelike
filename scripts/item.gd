@@ -10,8 +10,26 @@ func _ready() -> void:
 	super._ready()
 	add_to_group('items')
 	add_to_group('barrier')
-	generate_random_type()
-	icon.texture = load(ItemData.get_item_icon(type))
+	
+	# Проверяем, находимся ли мы в комнате испытаний
+	var room = get_parent()
+	if room.type == room.RoomType.CHALLENGE:
+		generate_challenge_reward()
+	else:
+		generate_random_type()
+		icon.texture = load(ItemData.get_item_icon(type))
+	
+# Генерация особой награды за испытание
+func generate_challenge_reward() -> void:
+	# Получаем случайную награду из списка наград за испытания
+	var challenge_rewards = ItemData.get_challenge_rewards()
+	if challenge_rewards.is_empty():
+		generate_random_type()  # Если список наград пуст, используем обычную генерацию
+		return
+	
+	# Выбираем случайную награду
+	challenge_rewards.shuffle()
+	type = challenge_rewards[0]  # Берем первый элемент из перемешанного списка
 
 # Выбор случайного типа на основе весов вероятности
 func generate_random_type() -> void:

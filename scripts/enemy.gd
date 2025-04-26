@@ -229,7 +229,7 @@ func spawn_coin() -> void:
 	coin_instance.position = position
 	
 	var room = get_parent()
-	var is_elite = room.get("type") == room.RoomType.ELITE
+	var is_elite = room.type == room.RoomType.ELITE
 		
 	# Determine random coin type based on enemy type
 	var coin_type = Coin.get_random_coin_type(is_elite)

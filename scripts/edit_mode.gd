@@ -194,7 +194,7 @@ func apply_layout_by_index(index: int, room_type: int) -> void:
 	var selected_layout = layouts[index]
 	if not selected_layout is Array:
 		return
-	
+	room.type = room_type
 	# Первый проход: создаем все объекты
 	for object_data in selected_layout:
 		if object_data is Dictionary and object_data.has("x") and object_data.has("y") and object_data.has("t"):
