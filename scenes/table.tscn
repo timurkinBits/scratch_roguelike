@@ -15,23 +15,27 @@ offset_left = 457.0
 offset_top = -42.0
 offset_right = 463.0
 offset_bottom = 518.0
+mouse_filter = 2
 color = Color(0.535993, 0.416087, 0.244675, 1)
 
 [node name="BorderRect5" type="ColorRect" parent="."]
 offset_top = -42.0
 offset_right = 6.0
 offset_bottom = 518.0
+mouse_filter = 2
 color = Color(0.535993, 0.416087, 0.244675, 1)
 
 [node name="BorderRect3" type="ColorRect" parent="."]
 offset_top = 512.0
 offset_right = 463.0
 offset_bottom = 518.0
+mouse_filter = 2
 color = Color(0.535993, 0.416087, 0.244675, 1)
 
 [node name="BorderRect4" type="ColorRect" parent="."]
 offset_top = -42.0
 offset_right = 463.0
 offset_bottom = -36.0
+mouse_filter = 2
 color = Color(0.535993, 0.416087, 0.244675, 1)
 metadata/_edit_use_anchors_ = true

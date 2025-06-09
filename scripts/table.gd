@@ -31,31 +31,48 @@ func create_command_copy(type: int) -> void:
 	new_command.set_number(1)
 	new_command.position = Vector2(8, 8)
 
-# Создание копии блока
-func create_block_copy(type: int) -> void:
+# Улучшенный метод создания блока с упрощенной логикой
+func create_block_copy(type: int, text: String = "", loop_count: int = 0) -> void:
 	if is_turn_in_progress:
+		return
+	
+	# Проверяем, можно ли создать блок
+	if not Global.can_use_block(type):
 		return
 		
 	var new_block = block_scene.instantiate() as Block
 	new_block.type = type
 	new_block.is_menu_command = false
 	
-	# Установка значений по умолчанию в зависимости от типа
-	match type:
-		ItemData.BlockType.CONDITION:
-			new_block.text = Block.available_conditions[0]
-		ItemData.BlockType.LOOP:
-			new_block.loop_count = Block.available_loops[0]
-		ItemData.BlockType.ABILITY:
-			new_block.text = Block.available_abilities[0]
+	# Устанавливаем значения
+	if text != "":
+		new_block.text = text
+		if type == ItemData.BlockType.LOOP:
+			new_block.loop_count = loop_count
+	else:
+		# Устанавливаем значения по умолчанию
+		set_default_block_values(new_block)
 			
 	table_texture.add_child(new_block)
 	new_block.update_appearance()
 	
-	# Блок инициализируется после добавления в дерево сцены
-	new_block.button_color.visible = true
 	new_block.position = Vector2(8, 8)
 	new_block.scale = Vector2(0.9, 0.9)
+
+func set_default_block_values(block: Block) -> void:
+	match block.type:
+		ItemData.BlockType.CONDITION:
+			if not Block.available_conditions.is_empty():
+				block.text = Block.available_conditions[0]
+		ItemData.BlockType.LOOP:
+			if not Block.available_loops.is_empty():
+				block.text = Block.available_loops[0]
+				var parts = block.text.split(" ")
+				if parts.size() > 1:
+					block.loop_count = int(parts[1])
+		ItemData.BlockType.ABILITY:
+			if not Block.available_abilities.is_empty():
+				block.text = Block.available_abilities[0]
 
 # Общий метод создания карты
 func create_card(kind, type: int) -> void:

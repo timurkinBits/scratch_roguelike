@@ -200,16 +200,16 @@ func process_purchase() -> void:
 		_:
 			# For block types, increase the block limit
 			var block_type = ItemData.get_block_type(type)
-			if block_type != -1:
-				Global.increase_block_limit(block_type)
+			#if block_type != -1:
+				#Global.increase_block_limit(block_type)
 
 func _on_area_2d_mouse_entered() -> void:
 	info.get_node("ColorRect").visible = true
-	info.text = ItemData.get_item_description(type) + \
-	"\nЦена: " + str(ItemData.get_item_cost(type))
+	info.text = ItemData.get_item_description(type)
 	if type not in [ItemData.ItemType.LOOP_BLOCK, ItemData.ItemType.CONDITION_BLOCK, ItemData.ItemType.ABILITY_BLOCK]:
 		info.text += "\nСлотов: " + str(ItemData.get_slot_count(ItemData.get_block_type(type), 
 	ItemData.get_ability_name_for_item_type(type)))
+	info.text += "\nЦена: " + str(ItemData.get_item_cost(type))
 
 
 func _on_area_2d_mouse_exited() -> void:

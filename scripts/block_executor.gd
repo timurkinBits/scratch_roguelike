@@ -38,12 +38,12 @@ func clear_start_turn_commands_preserve_blocks(start_turn_block: Block) -> void:
 	
 ## Check and execute condition blocks
 func check_and_execute_conditions(trigger_time: String) -> bool:
-	# Get all condition blocks
 	var condition_blocks = get_tree().get_nodes_in_group("blocks").filter(
 		func(block): return is_instance_valid(block) and block.type == ItemData.BlockType.CONDITION)
 	
 	for block in condition_blocks:
-		# Check if condition should execute
+		if not is_instance_valid(block):
+			continue
 		var should_execute = trigger_time != "" if block.text == trigger_time else \
 		block.text != "начало хода" and check_condition(block.text)
 		

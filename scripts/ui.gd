@@ -10,6 +10,7 @@ var is_dead := false
 @export var player: Player
 @export var max_scores: Control
 @export var player_bars: Control
+@export var block_menu: Node2D
 @onready var health_bar: ColorRect = player_bars.get_node('hp_bar/HealthRect')
 @onready var defense_bar: ColorRect = player_bars.get_node('defense_bar/DefenseRect')
 @onready var coin_label: Label = player_bars.get_node('CoinLabel')
@@ -17,12 +18,6 @@ var is_dead := false
 @onready var attack_label: Label = max_scores.get_node('AttackLabel')
 @onready var heal_label: Label = max_scores.get_node('HealLabel')
 @onready var defense_label: Label = max_scores.get_node('DefenseLabel')
-
-# New block count labels
-@onready var condition_label: Label = max_scores.get_node('ConditionLabel')
-@onready var loop_label: Label = max_scores.get_node('LoopLabel')
-@onready var ability_label: Label = max_scores.get_node('AbilityLabel')
-
 
 func _ready():
 	if not player:
@@ -45,10 +40,8 @@ func update_all_counters():
 	defense_label.text = str(Global.get_remaining_points(Command.TypeCommand.DEFENSE))
 	heal_label.text = str(Global.get_remaining_points(Command.TypeCommand.HEAL))
 	
-	# Update block counts
-	condition_label.text = str(Global.get_remaining_blocks(ItemData.BlockType.CONDITION))
-	loop_label.text = str(Global.get_remaining_blocks(ItemData.BlockType.LOOP))
-	ability_label.text = str(Global.get_remaining_blocks(ItemData.BlockType.ABILITY))
+	## Update block counts
+	#block_menu.update_block_counters()
 
 func update_coin_display():
 	# Update coin counter in UI

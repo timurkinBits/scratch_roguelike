@@ -221,7 +221,8 @@ func _exit_tree() -> void:
 		slot.command = null  # Очищаем ссылку на эту команду в слоте
 	
 	# Возвращаем очки в общий пул и обновляем UI
-	if !is_menu_command and value > 0 and type != TypeCommand.TURN and type != TypeCommand.USE:
+	# USE и TURN команды не используют очки, поэтому не нужно их освобождать
+	if !is_menu_command and value > 0 and type != Command.TypeCommand.TURN and type != Command.TypeCommand.USE:
 		Global.release_points(type, value)
 		if ui_node and is_instance_valid(ui_node):
 			ui_node.change_scores(type)

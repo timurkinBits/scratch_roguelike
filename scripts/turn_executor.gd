@@ -25,7 +25,6 @@ func _ready() -> void:
 	
 	# Сброс счетчиков
 	Global.reset_remaining_points()
-	Global.reset_remaining_blocks()
 
 ## Обработка нажатия на кнопку "Выполнить"
 func _on_button_pressed() -> void:
@@ -69,8 +68,6 @@ func _disable_interactions() -> void:
 	# Отключаем команды и блоки
 	for command in get_tree().get_nodes_in_group("commands"):
 		command.change_settings(false)
-	for block in get_tree().get_nodes_in_group("blocks"):
-		block.change_settings(false)
 
 ## Обработка фазы хода с определенным триггером
 func _process_turn_phase(trigger_time: String) -> bool:

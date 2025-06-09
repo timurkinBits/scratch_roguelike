@@ -13,25 +13,21 @@ const MAX_TEXT_LENGTH := 14
 @onready var texture_up = $Texture/TextureUp
 @onready var texture_down = $Texture/TextureDown
 @onready var texture_left = $Texture/TextureLeft
-@onready var buttons = [$'Buttons/Up', $'Buttons/Down']
-@onready var button_color: ColorRect = $'Buttons/ColorRect'
 
 var slot_manager: SlotManager
 var parent_slot: CommandSlot = null
 var config: Dictionary
-var is_settings := false
 var loop_count: int
 var slot_offset_start := Vector2(28, 32)
 
-static var available_conditions := []  # Will be populated with purchased conditions
-static var available_loops := []       # Will be populated with purchased loops
-static var available_abilities := []   # Will be populated with purchased abilities
+static var available_conditions := []
+static var available_loops := []
+static var available_abilities := []
 
 func _ready() -> void:
 	super._ready()
 	add_to_group("blocks")
 	
-	# Инициализация типа блока и текста на основе типа
 	if text.is_empty() and !is_menu_command:
 		initialize_block_properties()
 	
@@ -42,33 +38,23 @@ func _ready() -> void:
 	
 	update_appearance()
 	
-	# Теперь инициализируем слоты с правильным количеством
 	slot_manager.initialize_slots(ItemData.get_slot_count(type, text))
-	
-	# Hide buttons initially
-	buttons[0].visible = false
-	buttons[1].visible = false
-	button_color.visible = false
 
-# Переопределение получения размера блока
 func get_size() -> Vector2:
 	return get_full_size()
 
-# Новый метод для инициализации свойств блока на основе его типа
 func initialize_block_properties() -> void:
-	# Устанавливаем текст по умолчанию на основании типа блока
 	match type:
 		ItemData.BlockType.CONDITION:
 			if not available_conditions.is_empty():
 				text = available_conditions[0]
 			else:
-				text = "здоровье < 50%"  # Значение по умолчанию
+				text = "здоровье < 50%"
 		ItemData.BlockType.LOOP:
 			if not available_loops.is_empty():
 				text = available_loops[0]
 			else:
-				text = "Повторить 2 раз"  # Значение по умолчанию
-			# Установка количества повторений для цикла
+				text = "Повторить 2 раз"
 			var parts = text.split(" ")
 			if parts.size() > 1:
 				loop_count = int(parts[1])
@@ -76,9 +62,8 @@ func initialize_block_properties() -> void:
 			if not available_abilities.is_empty():
 				text = available_abilities[0]
 			else:
-				text = "+1 атака"  # Значение по умолчанию
+				text = "+1 атака"
 	
-	# Проверка по словарю TEXT_TO_ITEM_TYPE
 	if type == ItemData.BlockType.LOOP and not "Повторить" in text:
 		text = "Повторить 2 раз"
 		loop_count = 2
@@ -112,7 +97,6 @@ func update_slots() -> void:
 func _on_slots_updated() -> void:
 	update_texture_sizes()
 	
-	# Update parent block if exists
 	if parent_slot and is_instance_valid(parent_slot) and parent_slot.block:
 		parent_slot.block.update_slots()
 
@@ -124,15 +108,12 @@ func update_texture_sizes() -> void:
 	recreate_collision_shapes(total_height)
 
 func recreate_collision_shapes(total_height: float) -> void:
-	# Clear existing shapes except CollisionUpProperty
 	for child in area.get_children():
 		if child.name != "CollisionUpProperty":
 			child.queue_free()
 	
-	# Create new collision shapes
-	var size_up = texture_up.size.x / 1.78
-	create_collision_rectangle("CollisionUp", Vector2(size_up, texture_up.size.y), 
-		Vector2(size_up / 2, texture_up.size.y / 2))
+	create_collision_rectangle("CollisionUp", texture_up.size, 
+		Vector2(texture_up.size.x / 2, texture_up.size.y / 2))
 	
 	create_collision_rectangle("CollisionDown", texture_down.size,
 		Vector2(texture_down.size.x / 2, total_height + texture_down.size.y / 2))
@@ -156,7 +137,6 @@ func get_full_size() -> Vector2:
 		texture_down.position.y + texture_down.size.y
 	)
 	
-	# Check size of all command slots
 	for slot in slot_manager.slots:
 		if not is_instance_valid(slot) or not slot.command:
 			continue
@@ -185,192 +165,15 @@ func cancel_insertion() -> void:
 func update_command_positions(base_z_index: int) -> void:
 	slot_manager.update_command_positions(base_z_index)
 
-# Set block condition with command preservation
-func set_condition(new_condition: String) -> void:
-	if type != ItemData.BlockType.CONDITION or not new_condition in available_conditions:
-		return
-		
-	# Calculate slot changes
-	var old_slot_count = ItemData.get_slot_count(type, text)
-	var old_text = text
-	
-	text = new_condition
-	var new_slot_count = ItemData.get_slot_count(type, text)
-	text = old_text  # Restore temporarily
-	
-	# Gather commands that might be displaced
-	var commands_to_release = gather_commands_in_excess_slots(old_slot_count, new_slot_count)
-	
-	# Apply new condition
-	text = new_condition
-	update_appearance()
-	
-	# Update slots and release excess commands
-	update_slots_count_and_release_commands(commands_to_release, new_slot_count)
-
-# Set block ability with command preservation
-func set_ability(new_ability: String) -> void:
-	if type != ItemData.BlockType.ABILITY or not new_ability in available_abilities:
-		return
-		
-	# Calculate slot changes
-	var old_slot_count = ItemData.get_slot_count(type, text)
-	var old_text = text
-	
-	text = new_ability
-	var new_slot_count = ItemData.get_slot_count(type, text)
-	text = old_text  # Restore temporarily
-	
-	# Gather commands that might be displaced
-	var commands_to_release = gather_commands_in_excess_slots(old_slot_count, new_slot_count)
-	
-	# Apply new ability
-	text = new_ability
-	update_appearance()
-	
-	# Update slots and release excess commands
-	update_slots_count_and_release_commands(commands_to_release, new_slot_count)
-
-# Gather commands from slots that will be removed
-func gather_commands_in_excess_slots(old_slot_count: int, new_slot_count: int) -> Array:
-	var commands_to_release = []
-	
-	# If new slot count is less than old, collect excess commands
-	if new_slot_count < old_slot_count:
-		for i in range(new_slot_count, min(old_slot_count, slot_manager.slots.size())):
-			if i < slot_manager.slots.size():
-				var slot = slot_manager.slots[i]
-				if is_instance_valid(slot) and slot.command:
-					commands_to_release.append(slot.command)
-	
-	return commands_to_release
-
-# Update slot count and release excess commands
-func update_slots_count_and_release_commands(commands_to_release: Array, new_slot_count: int = -1) -> void:
-	# Use current type's slot count if not specified
-	if new_slot_count == -1:
-		new_slot_count = ItemData.get_slot_count(type, text)
-	
-	# Clear connections between commands and slots
-	for command in commands_to_release:
-		if is_instance_valid(command):
-			if command.slot:
-				command.slot.command = null
-			command.slot = null
-	
-	# Remove excess slots if needed
-	while slot_manager.slots.size() > new_slot_count:
-		var last_slot = slot_manager.slots.pop_back()
-		if is_instance_valid(last_slot):
-			last_slot.queue_free()
-	
-	# Update remaining slots and positions
-	slot_manager.update_slots()
-	
-	# Place released commands on table
-	for i in range(commands_to_release.size()):
-		var command = commands_to_release[i]
-		if is_instance_valid(command):
-			command.global_position = global_position + Vector2(100, 50 + i * 30)
-
-func navigate_options(direction: int) -> void:
-	match type:
-		ItemData.BlockType.CONDITION:
-			_navigate_conditions(direction)  
-		ItemData.BlockType.LOOP:
-			_navigate_loops(direction)
-		ItemData.BlockType.ABILITY:
-			_navigate_abilities(direction)
-			
-func _navigate_loops(direction: int) -> void:
-	if available_loops.is_empty():
-		return
-		
-	var current_index = available_loops.find(text)
-	if current_index == -1:
-		current_index = 0
-	else:
-		current_index = (current_index + direction) % available_loops.size()
-		if current_index < 0:
-			current_index = available_loops.size() - 1
-			
-	set_loop(available_loops[current_index])
-
-func set_loop(new_loop: String) -> void:
-	if type != ItemData.BlockType.LOOP or not new_loop in available_loops:
-		return
-		
-	# Calculate slot changes
-	var old_slot_count = ItemData.get_slot_count(type, text)
-	var old_text = text
-	
-	text = new_loop
-	var new_slot_count = ItemData.get_slot_count(type, text)
-	text = old_text  # Restore temporarily
-	
-	# Gather commands that might be displaced
-	var commands_to_release = gather_commands_in_excess_slots(old_slot_count, new_slot_count)
-	
-	# Apply new loop
-	text = new_loop
-	
-	# Extract loop count from text (e.g., "Повторить 3 раз" -> 3)
-	var count_str = text.split(" ")[1]
-	loop_count = int(count_str)
-	
-	update_appearance()
-	
-	# Update slots and release excess commands
-	update_slots_count_and_release_commands(commands_to_release, new_slot_count)
-
-# Navigate through available conditions
-func _navigate_conditions(direction: int) -> void:
-	if available_conditions.is_empty():
-		return
-		
-	var current_index = available_conditions.find(text)
-	if current_index == -1:
-		current_index = 0
-	else:
-		current_index = (current_index + direction) % available_conditions.size()
-		if current_index < 0:
-			current_index = available_conditions.size() - 1
-			
-	set_condition(available_conditions[current_index])
-
-# Navigate through available abilities
-func _navigate_abilities(direction: int) -> void:
-	if available_abilities.is_empty():
-		return
-		
-	var current_index = available_abilities.find(text)
-	if current_index == -1:
-		current_index = 0
-	else:
-		current_index = (current_index + direction) % available_abilities.size()
-		if current_index < 0:
-			current_index = available_abilities.size() - 1
-			
-	set_ability(available_abilities[current_index])
-
-# Модифицированная функция для обработки клика, теперь использует базовую логику перемещения
 func _on_area_2d_input_event(viewport: Node, event: InputEvent, shape_idx: int) -> void:
-	# Then handle block-specific interactions
+	if is_menu_command:
+		return
+	
 	if event is InputEventMouseButton:
-		if shape_idx != 0:  # Not the top part
-			super._on_area_input_event(viewport, event, shape_idx)
-			if event.button_index == MOUSE_BUTTON_RIGHT and event.pressed and \
-			   !is_menu_command and text != 'начало хода' and not table.is_turn_in_progress:
-				queue_free()
-		else:  # Top part - настройки блока
-			if event.button_index == MOUSE_BUTTON_LEFT and event.pressed and \
-			   !is_menu_command and text != 'начало хода' and not table.is_turn_in_progress:
-				is_settings = !is_settings
-				change_settings(is_settings)
-
-func change_settings(settings: bool) -> void:
-	buttons[0].visible = settings
-	buttons[1].visible = settings
+		super._on_area_input_event(viewport, event, shape_idx)
+		if event.button_index == MOUSE_BUTTON_RIGHT and event.pressed and \
+		   !is_menu_command and text != 'начало хода' and not table.is_turn_in_progress:
+			queue_free()
 
 func _exit_tree() -> void:
 	var parent = null
@@ -378,15 +181,12 @@ func _exit_tree() -> void:
 		parent = parent_slot.block
 		parent_slot.command = null
 	
-	# Update parent after this node is removed
 	if parent and is_instance_valid(parent):
-		# Use call_deferred to ensure this happens after current operations complete
 		parent.call_deferred("update_slots")
 	
-	Global.release_block(type)
-
-func _on_up_pressed() -> void:
-	navigate_options(1)  # 1 означает переход к следующему элементу
-
-func _on_down_pressed() -> void:
-	navigate_options(-1)  # -1 означает переход к предыдущему элементу
+	if not is_menu_command:
+		Global.release_block(type, text)
+		
+		var block_menu = get_tree().get_first_node_in_group("block_menu")
+		if block_menu and is_instance_valid(block_menu):
+			block_menu.return_block_to_slot(type, text)

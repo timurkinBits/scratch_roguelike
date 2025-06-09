@@ -395,6 +395,13 @@ offset_bottom = -317.0
 text = "Поражение..."
 label_settings = SubResource("LabelSettings_q8u5g")
 
+[node name="Button2" type="Button" parent="UI"]
+layout_mode = 0
+offset_left = -1144.0
+offset_top = -189.0
+offset_right = -1068.0
+offset_bottom = -121.0
+
 [connection signal="input_event" from="Room/EditModeManager/ObjectMenu/Wall/Wall_button" to="Room/EditModeManager" method="_on_wall_button_input_event"]
 [connection signal="input_event" from="Room/EditModeManager/ObjectMenu/Door/Door_button" to="Room/EditModeManager" method="_on_door_button_input_event"]
 [connection signal="input_event" from="Room/EditModeManager/ObjectMenu/Item/ItemButton" to="Room/EditModeManager" method="_on_item_button_input_event"]
