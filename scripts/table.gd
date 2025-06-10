@@ -32,7 +32,7 @@ func create_command_copy(type: int) -> void:
 	new_command.position = Vector2(8, 8)
 
 # Улучшенный метод создания блока с упрощенной логикой
-func create_block_copy(type: int, text: String = "", loop_count: int = 0) -> void:
+func create_block_copy(type: int, text: String = "", loop_count: int = 0, block_id: String = "") -> void:
 	if is_turn_in_progress:
 		return
 	
@@ -43,6 +43,7 @@ func create_block_copy(type: int, text: String = "", loop_count: int = 0) -> voi
 	var new_block = block_scene.instantiate() as Block
 	new_block.type = type
 	new_block.is_menu_command = false
+	new_block.block_id = block_id
 	
 	# Устанавливаем значения
 	if text != "":

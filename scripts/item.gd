@@ -17,8 +17,10 @@ func _ready() -> void:
 		generate_challenge_reward()
 	else:
 		generate_random_type()
-		icon.texture = load(ItemData.get_item_icon(type))
 	
+	# Устанавливаем иконку после определения типа
+	icon.texture = load(ItemData.get_item_icon(type))
+
 # Генерация особой награды за испытание
 func generate_challenge_reward() -> void:
 	# Получаем случайную награду из списка наград за испытания
@@ -33,36 +35,20 @@ func generate_challenge_reward() -> void:
 
 # Выбор случайного типа на основе весов вероятности
 func generate_random_type() -> void:
-	# Check purchase status for different categories
-	var purchase_status = {
-		"ability": {
-			"any_purchased": has_any_purchased(Global.purchased_abilities),
-			"unpurchased_exist": has_unpurchased(Global.purchased_abilities)
-		},
-		"condition": {
-			"any_purchased": has_any_purchased(Global.purchased_conditions),
-			"unpurchased_exist": has_unpurchased(Global.purchased_conditions)
-		},
-		"loop": {
-			"any_purchased": has_any_purchased(Global.purchased_loops),
-			"unpurchased_exist": has_unpurchased(Global.purchased_loops)
-		}
-	}
+	# Получаем доступные типы предметов с их весами
+	var available_weights = get_available_item_weights()
 	
-	# Get available item types with their weights
-	var available_weights = get_available_item_weights(purchase_status)
-	
-	# Calculate total weight
+	# Рассчитываем общий вес
 	var total_weight = 0.0
 	for weight in available_weights.values():
 		total_weight += weight
 	
-	# If no valid weights, use fallback logic
+	# Если нет доступных весов, используем резервную логику
 	if total_weight <= 0:
-		type = get_fallback_type(purchase_status)
+		type = get_fallback_type()
 		return
 	
-	# Select random type based on weights
+	# Выбираем случайный тип на основе весов
 	var rand_value = randf() * total_weight
 	var current_sum = 0.0
 	
@@ -72,145 +58,115 @@ func generate_random_type() -> void:
 			type = item_type
 			return
 	
-	# Fallback to first available type if nothing was selected
+	# Резервный выбор первого доступного типа
 	if !available_weights.is_empty():
 		type = available_weights.keys()[0]
 
-# Helper function to check if any items in category are purchased
-func has_any_purchased(category_dict: Dictionary) -> bool:
-	for item in category_dict:
-		if category_dict[item]:
-			return true
-	return false
-
-# Helper function to check if any items in category are unpurchased
-func has_unpurchased(category_dict: Dictionary) -> bool:
-	for item in category_dict:
-		if !category_dict[item]:
-			return true
-	return false
-
-# Get available item types with their weights
-func get_available_item_weights(purchase_status: Dictionary) -> Dictionary:
+# Получить доступные типы предметов с их весами
+func get_available_item_weights() -> Dictionary:
 	var available_weights = {}
 	
-	for item_type in ItemData.ItemType.values():
-		if should_include_item_type(item_type, purchase_status):
+	# Проходим только по конкретным предметам (не абстрактным блокам)
+	var concrete_items = [
+		ItemData.ItemType.ABILITY_PLUS_ATTACK,
+		ItemData.ItemType.ABILITY_PLUS_MOVE,
+		ItemData.ItemType.ABILITY_PLUS_HEAL,
+		ItemData.ItemType.ABILITY_PLUS_DEFENSE,
+		ItemData.ItemType.LOOP_2_TIMES,
+		ItemData.ItemType.LOOP_3_TIMES,
+		ItemData.ItemType.CONDITION_BELOW_HALF_HP
+	]
+	
+	for item_type in concrete_items:
+		if should_include_item_type(item_type):
 			available_weights[item_type] = ItemData.get_item_weight(item_type)
 	
 	return available_weights
 
-# Determine if an item type should be included based on purchase status
-func should_include_item_type(item_type: int, purchase_status: Dictionary) -> bool:
-	# Block types - include only if at least one item of that category is purchased
-	if item_type == ItemData.ItemType.ABILITY_BLOCK:
-		return purchase_status.ability.any_purchased
-	elif item_type == ItemData.ItemType.CONDITION_BLOCK:
-		return purchase_status.condition.any_purchased
-	elif item_type == ItemData.ItemType.LOOP_BLOCK:
-		return purchase_status.loop.any_purchased
+# Определить, следует ли включить тип предмета
+func should_include_item_type(item_type: int) -> bool:
+	# Получаем текст блока для данного типа предмета
+	var block_text = ItemData.get_ability_name_for_item_type(item_type)
+	if block_text == "":
+		return false
 	
-	# Ability types - include only if not already purchased
-	elif item_type in [ItemData.ItemType.ABILITY_PLUS_ATTACK, ItemData.ItemType.ABILITY_PLUS_MOVE, 
-					ItemData.ItemType.ABILITY_PLUS_HEAL, ItemData.ItemType.ABILITY_PLUS_DEFENSE]:
-		var ability_name = ItemData.get_ability_name_for_item_type(item_type)
-		return !Global.is_ability_purchased(ability_name)
+	# Получаем тип блока
+	var block_type = ItemData.get_block_type(item_type)
+	if block_type == -1:
+		return false
 	
-	# Condition type
-	elif item_type == ItemData.ItemType.CONDITION_BELOW_HALF_HP:
-		var condition_name = ItemData.get_ability_name_for_item_type(item_type)
-		return !Global.is_condition_purchased(condition_name)
-	
-	# Loop types
-	elif item_type in [ItemData.ItemType.LOOP_2_TIMES, ItemData.ItemType.LOOP_3_TIMES]:
-		var loop_name = ItemData.get_ability_name_for_item_type(item_type)
-		return !Global.is_loop_purchased(loop_name)
-	
-	# Default - include
+	# Всегда разрешаем покупку блоков для получения дополнительных использований
+	# В новой системе каждый блок - отдельный экземпляр
 	return true
 
-# Get fallback item type when no weights are available
-func get_fallback_type(purchase_status: Dictionary) -> int:
-	var basic_types = []
-	
-	# If no abilities purchased, add the first unpurchased ability
-	if !purchase_status.ability.any_purchased and purchase_status.ability.unpurchased_exist:
-		for item_type in [ItemData.ItemType.ABILITY_PLUS_MOVE, ItemData.ItemType.ABILITY_PLUS_ATTACK, 
-						ItemData.ItemType.ABILITY_PLUS_HEAL, ItemData.ItemType.ABILITY_PLUS_DEFENSE]:
-			var ability_name = ItemData.get_ability_name_for_item_type(item_type)
-			if !Global.is_ability_purchased(ability_name):
-				basic_types.append(item_type)
-				break
-	
-	# If no conditions purchased, add the first condition
-	if !purchase_status.condition.any_purchased and purchase_status.condition.unpurchased_exist:
-		basic_types.append(ItemData.ItemType.CONDITION_BELOW_HALF_HP)
-	
-	# If no loops purchased, add the first loop
-	if !purchase_status.loop.any_purchased and purchase_status.loop.unpurchased_exist:
-		basic_types.append(ItemData.ItemType.LOOP_2_TIMES)
-	
-	if basic_types.is_empty():
-		return ItemData.ItemType.LOOP_2_TIMES  # Fallback option
-	else:
-		return basic_types[randi() % basic_types.size()]
+# Получить резервный тип предмета
+func get_fallback_type() -> int:
+	# Возвращаем самый базовый предмет
+	return ItemData.ItemType.ABILITY_PLUS_MOVE
 
 func use():
-	# Check if player has enough coins
+	# Проверяем, хватает ли денег
 	var cost = ItemData.get_item_cost(type)
 	if Global.get_coins() < cost:
 		show_info_message('Не хватает денег!', 0.6)
 		return
 	
-	# Process the purchase
+	# Покупаем предмет
 	Global.spend_coins(cost)
 	
-	# Process the purchase based on item type
+	# Обрабатываем покупку
 	process_purchase()
 	
-	# Show feedback and remove item
+	# Показываем сообщение и удаляем предмет
 	var item_name = ItemData.get_item_description(type)
 	show_info_message('Добавлено: ' + item_name, 0.8)
 	
-	# Remove the item and its linked info
+	# Удаляем предмет
 	queue_free()
 
-# Helper function to display messages in info panel
+# Вспомогательная функция для отображения сообщений
 func show_info_message(message: String, duration: float) -> void:
 	info.text = message
 	await get_tree().create_timer(duration).timeout
 	info.text = ''
 
-# Process the purchase based on item type
+# Обработка покупки в зависимости от типа предмета
 func process_purchase() -> void:
-	match type:
-		ItemData.ItemType.ABILITY_PLUS_ATTACK, ItemData.ItemType.ABILITY_PLUS_MOVE, \
-		ItemData.ItemType.ABILITY_PLUS_HEAL, ItemData.ItemType.ABILITY_PLUS_DEFENSE:
-			var ability_name = ItemData.get_ability_name_for_item_type(type)
-			Global.purchase_ability(ability_name)
-			
-		ItemData.ItemType.CONDITION_BELOW_HALF_HP:
-			var condition_name = ItemData.get_ability_name_for_item_type(type)
-			Global.purchase_condition(condition_name)
-			
-		ItemData.ItemType.LOOP_3_TIMES, ItemData.ItemType.LOOP_2_TIMES:
-			var loop_name = ItemData.get_ability_name_for_item_type(type)
-			Global.purchase_loop(loop_name)
-			
-		_:
-			# For block types, increase the block limit
-			var block_type = ItemData.get_block_type(type)
-			#if block_type != -1:
-				#Global.increase_block_limit(block_type)
+	var block_text = ItemData.get_ability_name_for_item_type(type)
+	var block_type = ItemData.get_block_type(type)
+	
+	if block_text != "" and block_type != -1:
+		# Покупаем конкретный блок с одним использованием
+		# В новой системе каждый purchase_block создает отдельный экземпляр
+		Global.purchase_block(block_type, block_text, 1)
+		
+		# Обновляем старые словари для совместимости
+		match block_type:
+			ItemData.BlockType.ABILITY:
+				Global.purchased_abilities[block_text] = true
+			ItemData.BlockType.CONDITION:
+				Global.purchased_conditions[block_text] = true
+			ItemData.BlockType.LOOP:
+				Global.purchased_loops[block_text] = true
 
 func _on_area_2d_mouse_entered() -> void:
 	info.get_node("ColorRect").visible = true
 	info.text = ItemData.get_item_description(type)
-	if type not in [ItemData.ItemType.LOOP_BLOCK, ItemData.ItemType.CONDITION_BLOCK, ItemData.ItemType.ABILITY_BLOCK]:
-		info.text += "\nСлотов: " + str(ItemData.get_slot_count(ItemData.get_block_type(type), 
-	ItemData.get_ability_name_for_item_type(type)))
+	
+	# Показываем информацию о слотах для конкретного блока
+	var block_text = ItemData.get_ability_name_for_item_type(type)
+	var block_type = ItemData.get_block_type(type)
+	
+	if block_text != "" and block_type != -1:
+		var slot_count = ItemData.get_slot_count(block_type, block_text)
+		info.text += "\nСлотов: " + str(slot_count)
+		
+		# Показываем текущее количество доступных блоков (неиспользованных)
+		var available_count = Global.get_available_block_count(block_type, block_text)
+		if available_count > 0:
+			info.text += "\nДоступно: " + str(available_count)
+	
 	info.text += "\nЦена: " + str(ItemData.get_item_cost(type))
-
 
 func _on_area_2d_mouse_exited() -> void:
 	info.get_node("ColorRect").visible = false

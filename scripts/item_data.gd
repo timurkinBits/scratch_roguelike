@@ -2,9 +2,11 @@ extends Node
 
 # Константы для типов предметов
 enum ItemType {
+	# Убираем абстрактные блоки из генерации, но оставляем для совместимости
 	LOOP_BLOCK,
 	CONDITION_BLOCK,
 	ABILITY_BLOCK,
+	# Конкретные предметы
 	ABILITY_PLUS_ATTACK,
 	ABILITY_PLUS_MOVE,
 	ABILITY_PLUS_HEAL,
@@ -24,11 +26,12 @@ enum BlockType {
 
 # Данные предметов
 const ITEMS = {
+	# Абстрактные блоки (не генерируются в магазине, но могут быть наградами за испытания)
 	ItemType.LOOP_BLOCK: {
 		"icon": "res://sprites/loop.png",
 		"description": "Блок цикл",
 		"cost": 8,
-		"weight": 0.5,
+		"weight": 0.0,  # Вес 0 = не генерируется в обычном магазине
 		"block_type": BlockType.LOOP,
 		"slot_count": 1
 	},
@@ -36,7 +39,7 @@ const ITEMS = {
 		"icon": "res://sprites/condition.png",
 		"description": "Блок условие",
 		"cost": 8,
-		"weight": 0.5,
+		"weight": 0.0,  # Вес 0 = не генерируется в обычном магазине
 		"block_type": BlockType.CONDITION,
 		"slot_count": 1
 	},
@@ -44,10 +47,11 @@ const ITEMS = {
 		"icon": "res://sprites/ability.png",
 		"description": "Блок навык",
 		"cost": 8,
-		"weight": 0.5,
+		"weight": 0.0,  # Вес 0 = не генерируется в обычном магазине
 		"block_type": BlockType.ABILITY,
 		"slot_count": 1
 	},
+	# Конкретные предметы
 	ItemType.ABILITY_PLUS_ATTACK: {
 		"icon": "res://sprites/attack.png",
 		"description": "Навык +1 атака",
@@ -147,6 +151,25 @@ const BLOCK_CONFIGS = {
 	}
 }
 
+# Награды за испытания (могут включать абстрактные блоки)
+const CHALLENGE_REWARDS = [
+	ItemType.ABILITY_PLUS_ATTACK,
+	ItemType.ABILITY_PLUS_MOVE,
+	ItemType.ABILITY_PLUS_HEAL,
+	ItemType.ABILITY_PLUS_DEFENSE,
+	ItemType.LOOP_2_TIMES,
+	ItemType.LOOP_3_TIMES,
+	ItemType.CONDITION_BELOW_HALF_HP,
+	# Абстрактные блоки как особые награды
+	ItemType.LOOP_BLOCK,
+	ItemType.CONDITION_BLOCK,
+	ItemType.ABILITY_BLOCK
+]
+
+# Получить список наград за испытания
+func get_challenge_rewards() -> Array:
+	return CHALLENGE_REWARDS.duplicate()
+
 # Получить информацию о предмете
 func get_item_info(item_type: int) -> Dictionary:
 	if item_type in ITEMS:
@@ -245,5 +268,12 @@ func get_ability_name_for_item_type(item_type: int) -> String:
 			return "Повторить 2 раз"
 		ItemType.LOOP_3_TIMES:
 			return "Повторить 3 раз"
+		# Для абстрактных блоков возвращаем общие названия
+		ItemType.LOOP_BLOCK:
+			return "цикл"
+		ItemType.CONDITION_BLOCK:
+			return "условие"
+		ItemType.ABILITY_BLOCK:
+			return "навык"
 		_:
 			return ""

@@ -20,6 +20,9 @@ var config: Dictionary
 var loop_count: int
 var slot_offset_start := Vector2(28, 32)
 
+# Уникальный ID блока для новой системы
+var block_id: String = ""
+
 static var available_conditions := []
 static var available_loops := []
 static var available_abilities := []
@@ -184,9 +187,12 @@ func _exit_tree() -> void:
 	if parent and is_instance_valid(parent):
 		parent.call_deferred("update_slots")
 	
-	if not is_menu_command:
-		Global.release_block(type, text)
+	# ИСПРАВЛЕНИЕ: Освобождаем блок, если у него есть block_id (даже если это не is_menu_command)
+	if block_id != "":
+		# Освобождаем блок по его уникальному ID
+		Global.release_block(block_id)
 		
+		# Уведомляем блок-меню о возврате блока
 		var block_menu = get_tree().get_first_node_in_group("block_menu")
 		if block_menu and is_instance_valid(block_menu):
-			block_menu.return_block_to_slot(type, text)
+			block_menu.return_block_by_id(block_id)

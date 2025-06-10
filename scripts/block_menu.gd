@@ -3,7 +3,7 @@ extends Node2D
 @onready var table_node: Table = $".."
 
 const MAX_SLOTS = 8
-var block_slots: Array[Block] = []
+var block_slots: Array[Dictionary] = []  # [{ block: Block, block_id: String }]
 var refresh_pending: bool = false
 
 func _ready() -> void:
@@ -11,7 +11,7 @@ func _ready() -> void:
 	
 	block_slots.resize(MAX_SLOTS)
 	for i in range(MAX_SLOTS):
-		block_slots[i] = null
+		block_slots[i] = {}
 	
 	Global.connect("points_changed", refresh_menu)
 	if Global.has_signal("turn_state_changed"):
@@ -31,7 +31,7 @@ func refresh_menu() -> void:
 	# Очищаем текущие блоки
 	clear_menu()
 	
-	# Получаем все купленные блоки
+	# Получаем все купленные блоки (каждый экземпляр отдельно)
 	var purchased_blocks = Global.get_all_purchased_blocks()
 	
 	# Добавляем каждый блок в отдельный слот
@@ -40,7 +40,7 @@ func refresh_menu() -> void:
 		if slot_index >= MAX_SLOTS:
 			break
 		
-		create_block_in_slot(block_data.type, block_data.text, slot_index)
+		create_block_in_slot(block_data.id, block_data.type, block_data.text, slot_index)
 		slot_index += 1
 	
 	update_availability()
@@ -48,11 +48,11 @@ func refresh_menu() -> void:
 
 func clear_menu() -> void:
 	for i in range(block_slots.size()):
-		if block_slots[i] != null and is_instance_valid(block_slots[i]):
-			block_slots[i].queue_free()
-		block_slots[i] = null
+		if not block_slots[i].is_empty() and block_slots[i].has("block") and is_instance_valid(block_slots[i].block):
+			block_slots[i].block.queue_free()
+		block_slots[i] = {}
 
-func create_block_in_slot(block_type: int, block_text: String, slot_index: int) -> void:
+func create_block_in_slot(block_id: String, block_type: int, block_text: String, slot_index: int) -> void:
 	if not is_inside_tree():
 		return
 	
@@ -70,23 +70,38 @@ func create_block_in_slot(block_type: int, block_text: String, slot_index: int) 
 			block.loop_count = int(parts[1])
 	
 	add_child(block)
-	block_slots[slot_index] = block
+	
+	# Сохраняем блок с его уникальным ID
+	block_slots[slot_index] = {
+		"block": block,
+		"block_id": block_id
+	}
+	
 	block.position = Vector2(slot_index * 90, 0)
 	
 	# Сразу устанавливаем доступность и подключаем события
-	set_block_availability(block, block_type, block_text)
+	set_block_availability(block, block_id)
 	connect_block_input(block, slot_index)
 
-func set_block_availability(block: Block, block_type: int, block_text: String) -> void:
+func set_block_availability(block: Block, block_id: String) -> void:
 	if not is_instance_valid(block):
 		return
 	
-	var is_available = can_use_block(block_type, block_text)
+	# Проверяем доступность конкретного блока по его ID
+	var is_available = can_use_block_by_id(block_id)
 	block.modulate.a = 1.0 if is_available else 0.3
 	
 	var area = block.get_node("Area2D")
 	if area:
 		area.input_pickable = is_available
+
+func can_use_block_by_id(block_id: String) -> bool:
+	# Проверяем, не использован ли блок с данным ID
+	var purchased_blocks = Global.get_all_purchased_blocks()
+	for block_data in purchased_blocks:
+		if block_data.id == block_id:
+			return not block_data.used
+	return false
 
 func connect_block_input(block: Block, slot_index: int) -> void:
 	if not is_instance_valid(block):
@@ -103,24 +118,28 @@ func _on_block_clicked(viewport: Node, event: InputEvent, shape_idx: int, slot_i
 	if not (event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed):
 		return
 	
-	var block = block_slots[slot_index]
+	if slot_index < 0 or slot_index >= block_slots.size() or block_slots[slot_index].is_empty():
+		return
+	
+	var slot_data = block_slots[slot_index]
+	var block = slot_data.block
+	var block_id = slot_data.block_id
+	
 	if block == null or not is_instance_valid(block):
 		return
 	
-	if not can_use_block(block.type, block.text):
+	if not can_use_block_by_id(block_id):
 		return
 	
-	table_node.create_block_copy(block.type, block.text, block.loop_count)
+	# ИСПРАВЛЕНИЕ: Передаем block_id в create_block_copy
+	table_node.create_block_copy(block.type, block.text, block.loop_count, block_id)
 	
-	# Используем конкретный блок
-	if not Global.use_block(block.type, block.text):
+	# Используем конкретный блок по его ID
+	if not Global.use_block(block_id):
 		return
 	
 	# Обновляем только этот конкретный блок
 	update_single_block_availability(slot_index)
-
-func can_use_block(block_type: int, block_text: String) -> bool:
-	return Global.can_use_block(block_type, block_text)
 
 func update_availability() -> void:
 	if not is_inside_tree():
@@ -130,15 +149,18 @@ func update_availability() -> void:
 		update_single_block_availability(i)
 
 func update_single_block_availability(slot_index: int) -> void:
-	if slot_index < 0 or slot_index >= block_slots.size():
+	if slot_index < 0 or slot_index >= block_slots.size() or block_slots[slot_index].is_empty():
 		return
-		
-	var block = block_slots[slot_index]
+	
+	var slot_data = block_slots[slot_index]
+	var block = slot_data.block
+	var block_id = slot_data.block_id
+	
 	if block == null or not is_instance_valid(block):
 		return
 	
-	# Каждый блок проверяет только свою доступность
-	var can_use = can_use_block(block.type, block.text)
+	# Каждый блок проверяет только свою доступность по своему ID
+	var can_use = can_use_block_by_id(block_id)
 	
 	block.modulate.a = 1.0 if can_use else 0.3
 	
@@ -146,7 +168,10 @@ func update_single_block_availability(slot_index: int) -> void:
 	if area:
 		area.input_pickable = can_use
 
-func return_block_to_slot(block_type: int, block_text: String) -> bool:
-	Global.release_block(block_type, block_text)
+func return_block_by_id(block_id: String) -> bool:
+	# Возвращаем конкретный блок по его ID в Global
+	Global.release_block(block_id)
+	
+	# Обновляем доступность всех блоков в меню
 	update_availability()
 	return true
