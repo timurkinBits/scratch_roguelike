@@ -10,7 +10,7 @@ var points: Dictionary = {
 	Command.TypeCommand.DEFENSE: 3
 }
 
-var coins: int = 999
+var coins: int = 0
 
 var remaining_move_points: int
 var remaining_attack_points: int
@@ -135,14 +135,6 @@ func release_block(block_id: String) -> void:
 			block.used = false
 			points_changed.emit()
 			return
-
-# Получить количество доступных блоков данного типа и текста
-func get_available_block_count(block_type: int, block_text: String) -> int:
-	var count = 0
-	for block in purchased_blocks:
-		if block.type == block_type and block.text == block_text and not block.used:
-			count += 1
-	return count
 
 # Сбросить использования всех блоков
 func reset_all_blocks() -> void:

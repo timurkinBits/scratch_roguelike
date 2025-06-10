@@ -20,7 +20,6 @@ var config: Dictionary
 var loop_count: int
 var slot_offset_start := Vector2(28, 32)
 
-# Уникальный ID блока для новой системы
 var block_id: String = ""
 
 static var available_conditions := []
@@ -30,8 +29,13 @@ static var available_abilities := []
 func _ready() -> void:
 	super._ready()
 	add_to_group("blocks")
-	
-	if text.is_empty() and !is_menu_command:
+	if is_menu_card:
+		texture_down.visible = false
+		texture_left.visible = false
+		area.get_node('CollisionDown').queue_free()
+		area.get_node('CollisionLeft').queue_free()
+		
+	if text.is_empty():
 		initialize_block_properties()
 	
 	config = ItemData.get_block_config(type)
@@ -42,9 +46,6 @@ func _ready() -> void:
 	update_appearance()
 	
 	slot_manager.initialize_slots(ItemData.get_slot_count(type, text))
-
-func get_size() -> Vector2:
-	return get_full_size()
 
 func initialize_block_properties() -> void:
 	match type:
@@ -82,10 +83,7 @@ func update_appearance() -> void:
 
 func get_display_text() -> String:
 	if type == ItemData.BlockType.LOOP:
-		if !is_menu_command:
-			return config["prefix"] + str(loop_count) + " раз"
-		else:
-			return config["prefix"]
+		return config["prefix"] + str(loop_count) + " раз"
 	return config["prefix"] + truncate_text(text)
 
 func truncate_text(input_text: String) -> String:
@@ -98,6 +96,9 @@ func update_slots() -> void:
 	slot_manager.update_slots()
 
 func _on_slots_updated() -> void:
+	if is_menu_card:
+		return
+		
 	update_texture_sizes()
 	
 	if parent_slot and is_instance_valid(parent_slot) and parent_slot.block:
@@ -134,7 +135,7 @@ func create_collision_rectangle(name_collision: String, size: Vector2, position_
 	collision.position = position_collision
 	area.add_child(collision)
 
-func get_full_size() -> Vector2:
+func get_size() -> Vector2:
 	var base_size = Vector2(
 		max(texture_up.size.x, texture_down.size.x),
 		texture_down.position.y + texture_down.size.y
@@ -148,7 +149,7 @@ func get_full_size() -> Vector2:
 		var slot_pos = slot.position
 		
 		if slot.command is Block:
-			command_size = slot.command.get_full_size() * slot.command.scale
+			command_size = slot.command.get_size() * slot.command.scale
 		else:
 			var texture_node = slot.command.get_node("Texture")
 			if texture_node:
@@ -169,13 +170,13 @@ func update_command_positions(base_z_index: int) -> void:
 	slot_manager.update_command_positions(base_z_index)
 
 func _on_area_2d_input_event(viewport: Node, event: InputEvent, shape_idx: int) -> void:
-	if is_menu_command:
+	if is_menu_card:
 		return
 	
 	if event is InputEventMouseButton:
 		super._on_area_input_event(viewport, event, shape_idx)
 		if event.button_index == MOUSE_BUTTON_RIGHT and event.pressed and \
-		   !is_menu_command and text != 'начало хода' and not table.is_turn_in_progress:
+		   !is_menu_card and text != 'начало хода' and not table.is_turn_in_progress:
 			queue_free()
 
 func _exit_tree() -> void:
@@ -187,12 +188,5 @@ func _exit_tree() -> void:
 	if parent and is_instance_valid(parent):
 		parent.call_deferred("update_slots")
 	
-	# ИСПРАВЛЕНИЕ: Освобождаем блок, если у него есть block_id (даже если это не is_menu_command)
 	if block_id != "":
-		# Освобождаем блок по его уникальному ID
 		Global.release_block(block_id)
-		
-		# Уведомляем блок-меню о возврате блока
-		var block_menu = get_tree().get_first_node_in_group("block_menu")
-		if block_menu and is_instance_valid(block_menu):
-			block_menu.return_block_by_id(block_id)

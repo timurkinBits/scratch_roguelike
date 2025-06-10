@@ -12,12 +12,10 @@ func _ready() -> void:
 	update_command_appearances()
 
 func setup_menu_item(command) -> void:
-	if command is Command:
-		command.is_menu_command = true
-		command.menu_card_clicked.connect(_on_menu_command_clicked)
+	command.is_menu_card = true
+	command.menu_card_clicked.connect(_on_menu_command_clicked)
 
 func _on_menu_command_clicked(type: int) -> void:
-	# USE и TURN команды всегда доступны (бесконечные)
 	if type == Command.TypeCommand.USE or type == Command.TypeCommand.TURN:
 		if !table_node.is_turn_in_progress:
 			table_node.create_command_copy(type)
@@ -34,21 +32,20 @@ func update_command_appearances() -> void:
 		return
 		
 	# Update all command buttons
-	for command in get_tree().get_nodes_in_group("commands"):
+	for command in get_children():
 		command.update_buttons_state()
 		
 	# Update menu items visibility
 	for command in command_list:
-		if command is Command:
-			var is_available = false
-			
-			# USE и TURN команды всегда доступны
-			if command.type == Command.TypeCommand.USE or command.type == Command.TypeCommand.TURN:
-				is_available = true
-			else:
-				# Для остальных команд проверяем очки
-				var remaining = Global.get_remaining_points(command.type)
-				is_available = remaining > 0
-			
-			command.modulate.a = 1.0 if is_available else 0.3
-			command.get_node("Area2D").input_pickable = is_available
+		var is_available = false
+		
+		# USE и TURN команды всегда доступны
+		if command.type == Command.TypeCommand.USE or command.type == Command.TypeCommand.TURN:
+			is_available = true
+		else:
+			# Для остальных команд проверяем очки
+			var remaining = Global.get_remaining_points(command.type)
+			is_available = remaining > 0
+		
+		command.modulate.a = 1.0 if is_available else 0.3
+		command.get_node("Area2D").input_pickable = is_available

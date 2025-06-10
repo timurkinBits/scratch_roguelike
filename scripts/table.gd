@@ -42,7 +42,7 @@ func create_block_copy(type: int, text: String = "", loop_count: int = 0, block_
 		
 	var new_block = block_scene.instantiate() as Block
 	new_block.type = type
-	new_block.is_menu_command = false
+	new_block.is_menu_card = false
 	new_block.block_id = block_id
 	
 	# Устанавливаем значения
@@ -50,30 +50,11 @@ func create_block_copy(type: int, text: String = "", loop_count: int = 0, block_
 		new_block.text = text
 		if type == ItemData.BlockType.LOOP:
 			new_block.loop_count = loop_count
-	else:
-		# Устанавливаем значения по умолчанию
-		set_default_block_values(new_block)
 			
 	table_texture.add_child(new_block)
 	new_block.update_appearance()
 	
 	new_block.position = Vector2(8, 8)
-	new_block.scale = Vector2(0.9, 0.9)
-
-func set_default_block_values(block: Block) -> void:
-	match block.type:
-		ItemData.BlockType.CONDITION:
-			if not Block.available_conditions.is_empty():
-				block.text = Block.available_conditions[0]
-		ItemData.BlockType.LOOP:
-			if not Block.available_loops.is_empty():
-				block.text = Block.available_loops[0]
-				var parts = block.text.split(" ")
-				if parts.size() > 1:
-					block.loop_count = int(parts[1])
-		ItemData.BlockType.ABILITY:
-			if not Block.available_abilities.is_empty():
-				block.text = Block.available_abilities[0]
 
 # Общий метод создания карты
 func create_card(kind, type: int) -> void:

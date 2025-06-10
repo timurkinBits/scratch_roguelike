@@ -4,7 +4,6 @@ extends Node2D
 
 const MAX_SLOTS = 8
 var block_slots: Array[Dictionary] = []  # [{ block: Block, block_id: String }]
-var refresh_pending: bool = false
 
 func _ready() -> void:
 	add_to_group("block_menu")
@@ -17,16 +16,11 @@ func _ready() -> void:
 	if Global.has_signal("turn_state_changed"):
 		Global.connect("turn_state_changed", update_availability)
 	
-	call_deferred("initial_refresh")
-
-func initial_refresh() -> void:
-	refresh_menu()
+	call_deferred("refresh_menu")
 
 func refresh_menu() -> void:
-	if not is_inside_tree() or refresh_pending:
+	if not is_inside_tree():
 		return
-	
-	refresh_pending = true
 	
 	# Очищаем текущие блоки
 	clear_menu()
@@ -44,7 +38,6 @@ func refresh_menu() -> void:
 		slot_index += 1
 	
 	update_availability()
-	refresh_pending = false
 
 func clear_menu() -> void:
 	for i in range(block_slots.size()):
@@ -61,8 +54,7 @@ func create_block_in_slot(block_id: String, block_type: int, block_text: String,
 	
 	block.type = block_type
 	block.text = block_text
-	block.is_menu_command = true
-	block.scale = Vector2(0.45, 0.45)
+	block.is_menu_card = true
 	
 	if block_type == ItemData.BlockType.LOOP:
 		var parts = block_text.split(" ")
@@ -77,7 +69,7 @@ func create_block_in_slot(block_id: String, block_type: int, block_text: String,
 		"block_id": block_id
 	}
 	
-	block.position = Vector2(slot_index * 90, 0)
+	block.position = Vector2(0, slot_index * 30)
 	
 	# Сразу устанавливаем доступность и подключаем события
 	set_block_availability(block, block_id)
@@ -88,14 +80,14 @@ func set_block_availability(block: Block, block_id: String) -> void:
 		return
 	
 	# Проверяем доступность конкретного блока по его ID
-	var is_available = can_use_block_by_id(block_id)
+	var is_available = can_use_block(block_id)
 	block.modulate.a = 1.0 if is_available else 0.3
 	
 	var area = block.get_node("Area2D")
 	if area:
 		area.input_pickable = is_available
 
-func can_use_block_by_id(block_id: String) -> bool:
+func can_use_block(block_id: String) -> bool:
 	# Проверяем, не использован ли блок с данным ID
 	var purchased_blocks = Global.get_all_purchased_blocks()
 	for block_data in purchased_blocks:
@@ -128,7 +120,7 @@ func _on_block_clicked(viewport: Node, event: InputEvent, shape_idx: int, slot_i
 	if block == null or not is_instance_valid(block):
 		return
 	
-	if not can_use_block_by_id(block_id):
+	if not can_use_block(block_id):
 		return
 	
 	# ИСПРАВЛЕНИЕ: Передаем block_id в create_block_copy
@@ -160,18 +152,10 @@ func update_single_block_availability(slot_index: int) -> void:
 		return
 	
 	# Каждый блок проверяет только свою доступность по своему ID
-	var can_use = can_use_block_by_id(block_id)
+	var can_use = can_use_block(block_id)
 	
 	block.modulate.a = 1.0 if can_use else 0.3
 	
 	var area = block.get_node("Area2D")
 	if area:
 		area.input_pickable = can_use
-
-func return_block_by_id(block_id: String) -> bool:
-	# Возвращаем конкретный блок по его ID в Global
-	Global.release_block(block_id)
-	
-	# Обновляем доступность всех блоков в меню
-	update_availability()
-	return true

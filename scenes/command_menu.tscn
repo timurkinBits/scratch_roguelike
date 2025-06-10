@@ -1,7 +1,19 @@
-[gd_scene load_steps=3 format=3 uid="uid://befuuhuf4myhq"]
+[gd_scene load_steps=7 format=3 uid="uid://befuuhuf4myhq"]
 
 [ext_resource type="Script" uid="uid://bsgmj065sao8k" path="res://scripts/command_menu.gd" id="1_lxkem"]
 [ext_resource type="PackedScene" uid="uid://bfi0oibojw25c" path="res://scenes/Command.tscn" id="2_xdt26"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_xdt26"]
+font_color = Color(0, 0, 0, 1)
+
+[sub_resource type="LabelSettings" id="LabelSettings_83ksq"]
+font_color = Color(0, 0, 0, 1)
+
+[sub_resource type="LabelSettings" id="LabelSettings_36ujx"]
+font_color = Color(0, 0, 0, 1)
+
+[sub_resource type="LabelSettings" id="LabelSettings_c8ekt"]
+font_color = Color(0, 0, 0, 1)
 
 [node name="CommandMenu" type="Node2D"]
 script = ExtResource("1_lxkem")
@@ -9,17 +21,49 @@ script = ExtResource("1_lxkem")
 [node name="Move" parent="." instance=ExtResource("2_xdt26")]
 type = 3
 
+[node name="MoveLabel" type="Label" parent="Move"]
+offset_left = 94.0
+offset_top = -3.0
+offset_right = 116.0
+offset_bottom = 23.0
+label_settings = SubResource("LabelSettings_xdt26")
+horizontal_alignment = 1
+
 [node name="Attack" parent="." instance=ExtResource("2_xdt26")]
 position = Vector2(0, 30)
 type = 2
+
+[node name="AttackLabel" type="Label" parent="Attack"]
+offset_left = 94.0
+offset_top = -3.0
+offset_right = 116.0
+offset_bottom = 23.0
+label_settings = SubResource("LabelSettings_83ksq")
+horizontal_alignment = 1
 
 [node name="Heal" parent="." instance=ExtResource("2_xdt26")]
 position = Vector2(0, 60)
 type = 5
 
+[node name="HealLabel" type="Label" parent="Heal"]
+offset_left = 95.0
+offset_top = -3.0
+offset_right = 117.0
+offset_bottom = 23.0
+label_settings = SubResource("LabelSettings_36ujx")
+horizontal_alignment = 1
+
 [node name="Defense" parent="." instance=ExtResource("2_xdt26")]
 position = Vector2(0, 90)
 type = 6
+
+[node name="DefenseLabel" type="Label" parent="Defense"]
+offset_left = 95.0
+offset_top = -3.0
+offset_right = 117.0
+offset_bottom = 23.0
+label_settings = SubResource("LabelSettings_c8ekt")
+horizontal_alignment = 1
 
 [node name="Turn" parent="." instance=ExtResource("2_xdt26")]
 position = Vector2(0, 120)

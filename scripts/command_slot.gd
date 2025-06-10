@@ -16,7 +16,7 @@ func _process(_delta: float) -> void:
 	update_visibility()
 
 func update_visibility() -> void:
-	if block.is_menu_command:
+	if block.is_menu_card:
 		visible = false
 	else:
 		# Check if any card is being dragged

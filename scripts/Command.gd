@@ -80,7 +80,7 @@ func _ready() -> void:
 	add_to_group("commands")
 	
 	if get_parent().name == "CommandMenu":
-		is_menu_command = true  # Устанавливаем для команд в меню
+		is_menu_card = true  # Устанавливаем для команд в меню
 	if chances.size() < TypeCommand.size():
 		chances.resize(TypeCommand.size())
 		for i in range(1, TypeCommand.size()):
@@ -94,7 +94,7 @@ func get_size() -> Vector2:
 func update_appearance() -> void:
 	sprite.color = config["color"]
 	
-	if !is_menu_command:
+	if !is_menu_card:
 		if type == TypeCommand.TURN:
 			num_label.text = str(value)
 			num_label.visible = true
@@ -132,7 +132,7 @@ func set_number(new_value):
 	# Для остальных типов команд - стандартная логика
 	# Освобождаем очки текущего значения
 	
-	if !is_menu_command and value > 0:
+	if !is_menu_card and value > 0:
 		Global.release_points(type, value)
 	
 	# Получаем максимальное количество доступных очков
@@ -140,7 +140,7 @@ func set_number(new_value):
 	var max_available = Global.get_remaining_points(type)
 	
 	# Для не-меню команд добавляем обратно текущее значение, так как мы его только что освободили
-	if !is_menu_command:
+	if !is_menu_card:
 		max_available += value
 		
 	# Ограничиваем значение
@@ -149,7 +149,7 @@ func set_number(new_value):
 	
 	# Устанавливаем новое значение и используем очки
 	value = clamped_value
-	if !is_menu_command:
+	if !is_menu_card:
 		Global.use_points(type, value)
 		# Обновляем UI с актуальными оставшимися очками
 		if ui_node and is_instance_valid(ui_node):
@@ -184,12 +184,12 @@ func _on_area_2d_input_event(viewport: Node, event: InputEvent, shape_idx: int) 
 	# Then handle command-specific interactions
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
-			if is_menu_command:
+			if is_menu_card:
 				menu_card_clicked.emit(type)
 			else:
 				is_settings = false
 				change_settings(is_settings)
-		elif event.button_index == MOUSE_BUTTON_RIGHT and !is_menu_command and event.pressed and \
+		elif event.button_index == MOUSE_BUTTON_RIGHT and !is_menu_card and event.pressed and \
 			not table.is_turn_in_progress:
 			Global.release_points(type, value)
 			queue_free()
@@ -222,7 +222,7 @@ func _exit_tree() -> void:
 	
 	# Возвращаем очки в общий пул и обновляем UI
 	# USE и TURN команды не используют очки, поэтому не нужно их освобождать
-	if !is_menu_command and value > 0 and type != Command.TypeCommand.TURN and type != Command.TypeCommand.USE:
+	if !is_menu_card and value > 0 and type != Command.TypeCommand.TURN and type != Command.TypeCommand.USE:
 		Global.release_points(type, value)
 		if ui_node and is_instance_valid(ui_node):
 			ui_node.change_scores(type)
@@ -233,7 +233,7 @@ func _exit_tree() -> void:
 
 func _on_num_area_input_event(_viewport: Node, event: InputEvent, _shape_idx: int) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
-		if not is_menu_command and not table.is_turn_in_progress:
+		if not is_menu_card and not table.is_turn_in_progress:
 			is_settings = !is_settings
 			change_settings(is_settings)
 			update_all_buttons()

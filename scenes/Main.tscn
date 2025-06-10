@@ -1,4 +1,4 @@
-[gd_scene load_steps=40 format=3 uid="uid://x83t6t456pdf"]
+[gd_scene load_steps=39 format=3 uid="uid://x83t6t456pdf"]
 
 [ext_resource type="PackedScene" uid="uid://pllgtdsxxw2s" path="res://scenes/table.tscn" id="1_2gx6p"]
 [ext_resource type="Script" uid="uid://bs0f6ystj1uo2" path="res://scripts/table.gd" id="2_wk856"]
@@ -22,7 +22,6 @@
 [ext_resource type="Script" uid="uid://okdqbifhl0ui" path="res://scripts/enemy_stats.gd" id="13_3p2gp"]
 [ext_resource type="Texture2D" uid="uid://djwyqrfy3bdly" path="res://sprites/32x32.png" id="13_cvmbd"]
 [ext_resource type="PackedScene" uid="uid://cqa3vxgvdii24" path="res://scenes/heal_point.tscn" id="13_mwfav"]
-[ext_resource type="LabelSettings" uid="uid://di7qwojobxj1y" path="res://sprites/Command.tres" id="15_3p2gp"]
 [ext_resource type="Texture2D" uid="uid://tnindadpwhan" path="res://sprites/ability.png" id="17_36rkl"]
 [ext_resource type="PackedScene" uid="uid://cbd5bhmk60s5o" path="res://scenes/item.tscn" id="17_xa025"]
 
@@ -131,12 +130,11 @@ font_size = 83
 metadata/_edit_horizontal_guides_ = [-43.0]
 
 [node name="Table" parent="." groups=["table"] instance=ExtResource("1_2gx6p")]
-position = Vector2(121, 91)
+position = Vector2(189, 50)
 script = ExtResource("2_wk856")
 
 [node name="Block" parent="Table" instance=ExtResource("3_jfkan")]
-position = Vector2(218, -25)
-scale = Vector2(0.9, 0.9)
+position = Vector2(212, 14)
 type = 1
 text = "начало хода"
 
@@ -152,10 +150,10 @@ script = ExtResource("5_yxlcp")
 script = ExtResource("6_ebg2g")
 
 [node name="CommandMenu" parent="Table" instance=ExtResource("5_wp0k4")]
-position = Vector2(-120, -38)
+position = Vector2(-151, 4)
 
 [node name="block_menu" parent="Table" instance=ExtResource("8_xa025")]
-position = Vector2(-116, 148)
+position = Vector2(-181, 184)
 
 [node name="Room" parent="." instance=ExtResource("4_r2l36")]
 position = Vector2(531, 117)
@@ -165,7 +163,6 @@ wall_scene = ExtResource("9_qmy6f")
 door_scene = ExtResource("11_bb450")
 info_scene = SubResource("PackedScene_36rkl")
 item_scene = ExtResource("17_xa025")
-allow_layout_editing = true
 
 [node name="Player" parent="Room" instance=ExtResource("5_k4xvw")]
 position = Vector2(360.154, 501.223)
@@ -225,7 +222,7 @@ texture = ExtResource("17_36rkl")
 position = Vector2(-0.390228, 0.842117)
 shape = SubResource("RectangleShape2D_e2s0e")
 
-[node name="UI" type="Control" parent="." node_paths=PackedStringArray("player", "max_scores", "player_bars", "block_menu")]
+[node name="UI" type="Control" parent="." node_paths=PackedStringArray("player", "player_bars", "command_menu")]
 layout_mode = 3
 anchors_preset = 0
 offset_left = 1155.0
@@ -235,18 +232,17 @@ offset_bottom = 707.0
 mouse_filter = 2
 script = ExtResource("9_wp0k4")
 player = NodePath("../Room/Player")
-max_scores = NodePath("MaxScores")
 player_bars = NodePath("PlayerBars")
-block_menu = NodePath("../Table/block_menu")
+command_menu = NodePath("../Table/CommandMenu")
 metadata/_edit_use_anchors_ = true
 
 [node name="Button" type="Button" parent="UI"]
 layout_mode = 1
 anchors_preset = -1
-anchor_left = -3.27168
-anchor_top = -0.86523
+anchor_left = -3.05649
+anchor_top = -0.865231
 anchor_right = -1.80735
-anchor_bottom = -0.115078
+anchor_bottom = -0.115077
 offset_left = -0.147949
 offset_top = -0.00799561
 offset_right = 0.124008
@@ -340,50 +336,6 @@ offset_top = 3.0
 offset_right = -34.0
 offset_bottom = 3.0
 mouse_filter = 2
-
-[node name="MaxScores" type="Control" parent="UI"]
-anchors_preset = 0
-offset_left = -1060.0
-offset_top = -602.0
-offset_right = -1040.0
-offset_bottom = -492.0
-mouse_filter = 2
-
-[node name="MoveLabel" type="Label" parent="UI/MaxScores"]
-layout_mode = 0
-offset_left = -1.0
-offset_top = -4.0
-offset_right = 21.0
-offset_bottom = 22.0
-label_settings = ExtResource("15_3p2gp")
-horizontal_alignment = 1
-
-[node name="HealLabel" type="Label" parent="UI/MaxScores"]
-layout_mode = 0
-offset_left = -1.0
-offset_top = 56.0
-offset_right = 21.0
-offset_bottom = 82.0
-label_settings = ExtResource("15_3p2gp")
-horizontal_alignment = 1
-
-[node name="DefenseLabel" type="Label" parent="UI/MaxScores"]
-layout_mode = 0
-offset_left = -1.0
-offset_top = 86.0
-offset_right = 21.0
-offset_bottom = 112.0
-label_settings = ExtResource("15_3p2gp")
-horizontal_alignment = 1
-
-[node name="AttackLabel" type="Label" parent="UI/MaxScores"]
-layout_mode = 0
-offset_left = -1.0
-offset_top = 26.0
-offset_right = 21.0
-offset_bottom = 52.0
-label_settings = ExtResource("15_3p2gp")
-horizontal_alignment = 1
 
 [node name="DefeatLabel" type="Label" parent="UI"]
 visible = false

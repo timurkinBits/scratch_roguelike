@@ -160,11 +160,6 @@ func _on_area_2d_mouse_entered() -> void:
 	if block_text != "" and block_type != -1:
 		var slot_count = ItemData.get_slot_count(block_type, block_text)
 		info.text += "\nСлотов: " + str(slot_count)
-		
-		# Показываем текущее количество доступных блоков (неиспользованных)
-		var available_count = Global.get_available_block_count(block_type, block_text)
-		if available_count > 0:
-			info.text += "\nДоступно: " + str(available_count)
 	
 	info.text += "\nЦена: " + str(ItemData.get_item_cost(type))
 

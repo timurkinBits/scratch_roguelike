@@ -9,7 +9,7 @@ signal drag_finished
 var is_being_dragged := false
 var drag_offset := Vector2.ZERO
 var original_slot: CommandSlot = null
-var is_menu_command := false
+var is_menu_card := false
 var slot: CommandSlot = null
 var hovered_slot: CommandSlot = null
 var hover_timer := 0.0
@@ -21,7 +21,6 @@ const Z_INDEX_NORMAL := 3
 const Z_INDEX_DRAGGING := 100
 const HOVER_THRESHOLD := 0.5
 
-# Reference to table
 var table: Node2D = null
 
 func _ready() -> void:
@@ -32,7 +31,7 @@ func get_size() -> Vector2:
 	return Vector2.ZERO  # Override in subclasses
 
 func start_drag() -> void:
-	if is_menu_command or table.is_turn_in_progress:
+	if is_menu_card or table.is_turn_in_progress:
 		return
 		
 	is_being_dragged = true
@@ -95,7 +94,7 @@ func check_parent_block_boundaries(block: Block, table_rect: Rect2) -> void:
 	if not is_instance_valid(block):
 		return
 	
-	var full_size = block.get_full_size() * block.get_global_transform().get_scale()
+	var full_size = block.get_size() * block.get_global_transform().get_scale()
 	var current_position = block.global_position
 	
 	var new_position = current_position.clamp(
