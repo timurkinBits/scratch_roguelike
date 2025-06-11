@@ -2,11 +2,6 @@ extends Node
 
 # Константы для типов предметов
 enum ItemType {
-	# Убираем абстрактные блоки из генерации, но оставляем для совместимости
-	LOOP_BLOCK,
-	CONDITION_BLOCK,
-	ABILITY_BLOCK,
-	# Конкретные предметы
 	ABILITY_PLUS_ATTACK,
 	ABILITY_PLUS_MOVE,
 	ABILITY_PLUS_HEAL,
@@ -134,11 +129,7 @@ const CHALLENGE_REWARDS = [
 	ItemType.ABILITY_PLUS_DEFENSE,
 	ItemType.LOOP_2_TIMES,
 	ItemType.LOOP_3_TIMES,
-	ItemType.CONDITION_BELOW_HALF_HP,
-	# Абстрактные блоки как особые награды
-	ItemType.LOOP_BLOCK,
-	ItemType.CONDITION_BLOCK,
-	ItemType.ABILITY_BLOCK
+	ItemType.CONDITION_BELOW_HALF_HP
 ]
 
 # Получить список наград за испытания
@@ -232,13 +223,6 @@ func get_ability_name_for_item_type(item_type: int) -> String:
 		ItemType.LOOP_2_TIMES:
 			return "Повторить 2 раз"
 		ItemType.LOOP_3_TIMES:
-			return "Повторить 3 раз"
-		# Для абстрактных блоков возвращаем общие названия
-		ItemType.LOOP_BLOCK:
-			return "цикл"
-		ItemType.CONDITION_BLOCK:
-			return "условие"
-		ItemType.ABILITY_BLOCK:
-			return "навык"
+			return "Повторить 3 раз" 
 		_:
 			return ""

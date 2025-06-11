@@ -29,7 +29,9 @@ func _on_button_pressed() -> void:
 		return
 	
 	# Отключаем взаимодействие и устанавливаем флаг начала хода
-	_disable_interactions()
+	_turn_interactions(false)
+	for command in get_tree().get_nodes_in_group("commands"):
+		command.change_settings(false)
 	table.is_turn_in_progress = true
 	
 	# Выполняем все фазы хода
@@ -59,12 +61,14 @@ func _execute_turn_phases() -> void:
 	await _prepare_next_turn()
 
 ## Отключение всех интерактивных элементов
-func _disable_interactions() -> void:
-	button.disabled = true
+func _turn_interactions(turn: bool) -> void:
+	button.disabled = !turn
 	
 	# Отключаем команды и блоки
-	for command in get_tree().get_nodes_in_group("commands"):
-		command.change_settings(false)
+	if turn:
+		table.modulate = Color(table.modulate, 1)
+	else:
+		table.modulate = Color(table.modulate, 0.5)
 
 ## Обработка фазы хода с определенным триггером
 func _process_turn_phase(trigger_time: String) -> bool:
@@ -103,10 +107,9 @@ func _prepare_next_turn() -> void:
 	# Небольшая задержка для плавности
 	await get_tree().process_frame
 	
-	# Сброс защиты и флага хода (БЕЗ сброса очков команд)
 	ui_node.reset_defense()
 	table.is_turn_in_progress = false
-	button.disabled = false
+	_turn_interactions(true)
 	
 	# Показываем двери, если врагов не осталось
 	if get_tree().get_nodes_in_group('enemies').is_empty():
@@ -126,8 +129,7 @@ func end_game_player_dead() -> void:
 	await block_executor.clear_all()
 	
 	# Отключаем кнопку и показываем экран поражения
-	if button:
-		button.disabled = true
+	_turn_interactions(false)
 	room.visible = false
 	defeat_label.visible = true
 	

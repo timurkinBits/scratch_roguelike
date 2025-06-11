@@ -28,7 +28,6 @@ func _ready() -> void:
 	add_to_group("blocks")
 	
 	_setup_menu_card()
-	_initialize_text()
 	_setup_config()
 	_setup_slot_manager()
 	update_appearance()
@@ -41,19 +40,6 @@ func _setup_menu_card() -> void:
 	texture_left.visible = false
 	area.get_node('CollisionDown').queue_free()
 	area.get_node('CollisionLeft').queue_free()
-
-func _initialize_text() -> void:
-	if not text.is_empty():
-		return
-		
-	match type:
-		ItemData.BlockType.CONDITION:
-			text = "здоровье < 50%"
-		ItemData.BlockType.LOOP:
-			text = "Повторить 2 раз"
-			loop_count = 2
-		ItemData.BlockType.ABILITY:
-			text = "+1 атака"
 
 func _setup_config() -> void:
 	config = ItemData.get_block_config(type)
