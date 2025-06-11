@@ -191,8 +191,8 @@ func _on_area_2d_input_event(viewport: Node, event: InputEvent, shape_idx: int) 
 				change_settings(is_settings)
 		elif event.button_index == MOUSE_BUTTON_RIGHT and !is_menu_card and event.pressed and \
 			not table.is_turn_in_progress:
-			Global.release_points(type, value)
 			queue_free()
+			Global.release_points(type, value)
 
 func _on_up_pressed() -> void:
 	if type == TypeCommand.TURN:
@@ -219,15 +219,7 @@ func _exit_tree() -> void:
 	if slot and is_instance_valid(slot):
 		parent_block = slot.block
 		slot.command = null  # Очищаем ссылку на эту команду в слоте
-	
-	# Возвращаем очки в общий пул и обновляем UI
-	# USE и TURN команды не используют очки, поэтому не нужно их освобождать
-	if !is_menu_card and value > 0 and type != Command.TypeCommand.TURN and type != Command.TypeCommand.USE:
-		Global.release_points(type, value)
-		if ui_node and is_instance_valid(ui_node):
-			ui_node.change_scores(type)
 		
-	# Обновляем блок после всех изменений
 	if parent_block and is_instance_valid(parent_block):
 		parent_block.update_slots()
 

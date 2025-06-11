@@ -41,13 +41,19 @@ func _ready() -> void:
 			purchased_loops[loop_name] = false
 	
 	reset_remaining_points()
+	reset_all_blocks()  # Добавляем вызов сброса блоков
 
+# Функция для сброса очков - теперь вызывается только при необходимости
 func reset_remaining_points() -> void:
 	remaining_move_points = points[Command.TypeCommand.MOVE]
 	remaining_attack_points = points[Command.TypeCommand.ATTACK]
 	remaining_heal_points = points[Command.TypeCommand.HEAL]
 	remaining_defense_points = points[Command.TypeCommand.DEFENSE]
 	points_changed.emit()
+
+# Добавляем функцию для обратной совместимости
+func reset_remaining_blocks() -> void:
+	reset_all_blocks()
 
 func get_remaining_points(command_type) -> int:
 	match command_type:
@@ -136,7 +142,7 @@ func release_block(block_id: String) -> void:
 			points_changed.emit()
 			return
 
-# Сбросить использования всех блоков
+# Сбросить использования всех блоков (НЕ СБРАСЫВАЕТ ОЧКИ КОМАНД)
 func reset_all_blocks() -> void:
 	for block in purchased_blocks:
 		block.used = false

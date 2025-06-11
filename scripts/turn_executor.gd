@@ -22,9 +22,6 @@ func _ready() -> void:
 		button.pressed.connect(_on_button_pressed)
 	if player:
 		player.tree_exited.connect(_on_player_dead)
-	
-	# Сброс счетчиков
-	Global.reset_remaining_points()
 
 ## Обработка нажатия на кнопку "Выполнить"
 func _on_button_pressed() -> void:
@@ -106,7 +103,7 @@ func _prepare_next_turn() -> void:
 	# Небольшая задержка для плавности
 	await get_tree().process_frame
 	
-	# Сброс защиты и флага хода
+	# Сброс защиты и флага хода (БЕЗ сброса очков команд)
 	ui_node.reset_defense()
 	table.is_turn_in_progress = false
 	button.disabled = false
