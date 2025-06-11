@@ -186,6 +186,11 @@ func _process(delta: float) -> void:
 	if is_being_dragged and not table.is_turn_in_progress:
 		update_drag_position(delta)
 
+func _input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+		if not event.pressed and is_being_dragged:
+			finish_drag()
+
 func _on_area_input_event(_viewport: Node, event: InputEvent, _shape_idx: int) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
 		if event.pressed:

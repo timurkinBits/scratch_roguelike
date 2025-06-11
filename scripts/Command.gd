@@ -3,13 +3,11 @@ class_name Command
 
 enum TypeCommand { NONE, TURN, ATTACK, MOVE, USE, HEAL, DEFENSE }
 
-@export var type: TypeCommand
+@export var type: TypeCommand = TypeCommand.NONE
 var value: int = 0
-var chances: Array[int] = [0, 6, 6, 7, 1, 1]
 var is_settings: bool = false
 var block: Block
-var additional_properties: String
-var config: Dictionary  # Кэшированная конфигурация для типа команды
+var additional_properties: String = ""
 
 signal menu_card_clicked(type: int)
 
@@ -21,7 +19,8 @@ signal menu_card_clicked(type: int)
 @onready var down_button: Button = $Texture/Down
 @onready var ui_node: UI = $'../../../UI'
 
-var command_configs = {
+# Command configurations
+var configs = {
 	TypeCommand.ATTACK: {
 		"prefix": "Атака ",
 		"color": Color.RED,
@@ -36,7 +35,7 @@ var command_configs = {
 		"prefix": "Поворот ",
 		"color": Color.LIGHT_BLUE,
 		"icon": "res://sprites/turn.png",
-		"values": [90, -90, 180]  # Значения углов: вправо, влево, разворот
+		"values": [90, -90, 180]
 	},
 	TypeCommand.USE: {
 		"prefix": "Использовать ",
@@ -62,174 +61,175 @@ var command_configs = {
 
 func _ready() -> void:
 	super._ready()
-	
-	# Убедимся, что тип команды существует в конфигурации
-	if type in command_configs:
-		config = command_configs[type]
-	else:
-		# Если тип не найден, используем конфигурацию для NONE
-		config = command_configs[TypeCommand.NONE]
-	
-	# Инициализация значений углов для команды поворота
-	if type == TypeCommand.TURN:
-		if value == 0:  # Если значение не установлено, используем первый угол по умолчанию
-			value = config["values"][0]
-			
-	num_label.visible = false
-	
 	add_to_group("commands")
 	
-	if get_parent().name == "CommandMenu":
-		is_menu_card = true  # Устанавливаем для команд в меню
-	if chances.size() < TypeCommand.size():
-		chances.resize(TypeCommand.size())
-		for i in range(1, TypeCommand.size()):
-			chances[i] = 1 if i < chances.size() else 1
+	_setup_menu_card()
+	_initialize_turn_value()
 	update_appearance()
 
-# Переопределение получения размера команды
+func _setup_menu_card() -> void:
+	if get_parent().name == "CommandMenu":
+		is_menu_card = true
+
+func _initialize_turn_value() -> void:
+	if type == TypeCommand.TURN and value == 0:
+		value = configs[type]["values"][0]
+
+func update_appearance() -> void:
+	var config = _get_config()
+	
+	sprite.color = config["color"]
+	text_label.text = config["prefix"]
+	icon.texture = load(config["icon"]) if config["icon"] else null
+	
+	_update_number_display()
+	
+	if is_settings:
+		_update_all_buttons()
+
+func _get_config() -> Dictionary:
+	return configs.get(type, configs[TypeCommand.NONE])
+
+func _update_number_display() -> void:
+	if is_menu_card:
+		num_label.visible = false
+		return
+	
+	var should_show_number = type in [TypeCommand.TURN, TypeCommand.ATTACK, 
+									  TypeCommand.MOVE, TypeCommand.HEAL, TypeCommand.DEFENSE]
+	
+	if should_show_number:
+		num_label.text = str(value)
+		num_label.visible = true
+	else:
+		num_label.visible = false
+
 func get_size() -> Vector2:
 	return $Texture.size
 
-func update_appearance() -> void:
-	sprite.color = config["color"]
-	
-	if !is_menu_card:
-		if type == TypeCommand.TURN:
-			num_label.text = str(value)
-			num_label.visible = true
-		elif type in [TypeCommand.ATTACK, TypeCommand.MOVE, TypeCommand.HEAL, TypeCommand.DEFENSE]:
-			set_number(value)
-			num_label.visible = true
-
-	text_label.text = config["prefix"]
-	icon.texture = load(config["icon"])
-	
-	# Обновляем доступность кнопок в зависимости от оставшихся очков
-	if is_settings:
-		update_all_buttons()
-
-func update_all_buttons():
-	for command in get_tree().get_nodes_in_group("commands"):
-		command.update_buttons_state()
-			
-func set_number(new_value):
+func set_number(new_value: int) -> void:
 	if type == TypeCommand.TURN:
-		# Для поворота обрабатываем значения углов
-		var values = config["values"]
-		var current_index = values.find(value)
-		var new_index
-		
-		if new_value > value:  # Кнопка вверх
-			new_index = (current_index + 1) % values.size()
-		else:  # Кнопка вниз
-			new_index = (current_index - 1 + values.size()) % values.size()
-			
-		value = values[new_index]
-		num_label.text = str(value)
+		_handle_turn_value_change(new_value)
 		return
-		
-	# Для остальных типов команд - стандартная логика
-	# Освобождаем очки текущего значения
 	
-	if !is_menu_card and value > 0:
+	_handle_standard_value_change(new_value)
+
+func _handle_turn_value_change(new_value: int) -> void:
+	var values = configs[type]["values"]
+	var current_index = values.find(value)
+	var new_index: int
+	
+	if new_value > value:
+		new_index = (current_index + 1) % values.size()
+	else:
+		new_index = (current_index - 1 + values.size()) % values.size()
+	
+	value = values[new_index]
+	num_label.text = str(value)
+
+func _handle_standard_value_change(new_value: int) -> void:
+	# Release current points
+	if not is_menu_card and value > 0:
 		Global.release_points(type, value)
 	
-	# Получаем максимальное количество доступных очков
-	
+	# Calculate available points
 	var max_available = Global.get_remaining_points(type)
-	
-	# Для не-меню команд добавляем обратно текущее значение, так как мы его только что освободили
-	if !is_menu_card:
+	if not is_menu_card:
 		max_available += value
-		
-	# Ограничиваем значение
-	var clamped_value = min(new_value, max_available)
-	clamped_value = max(1, clamped_value)
 	
-	# Устанавливаем новое значение и используем очки
-	value = clamped_value
-	if !is_menu_card:
+	# Set new value within limits
+	value = clamp(new_value, 1, min(max_available, _get_max_points()))
+	
+	# Use new points
+	if not is_menu_card:
 		Global.use_points(type, value)
-		# Обновляем UI с актуальными оставшимися очками
 		if ui_node and is_instance_valid(ui_node):
 			ui_node.change_scores(type)
 	
-	# Обновляем текст
 	num_label.text = str(value)
 	
-	# Обновляем состояние кнопок
 	if is_settings:
-		update_all_buttons()
+		_update_all_buttons()
 
-func update_buttons_state() -> void:
-	if type in [TypeCommand.ATTACK, TypeCommand.MOVE, TypeCommand.HEAL, TypeCommand.DEFENSE]:
-		var remaining = Global.get_remaining_points(type)
-		up_button.disabled = (value >= remaining + value) or (value >= get_max_points())
-		down_button.disabled = (value <= 1)
-
-func get_max_points() -> int:
+func _get_max_points() -> int:
 	match type:
-		TypeCommand.ATTACK: return Global.points[Command.TypeCommand.ATTACK]
-		TypeCommand.MOVE: return Global.points[Command.TypeCommand.MOVE]
-		TypeCommand.HEAL: return Global.points[Command.TypeCommand.HEAL]
-		TypeCommand.DEFENSE: return Global.points[Command.TypeCommand.DEFENSE]
+		TypeCommand.ATTACK: return Global.points[TypeCommand.ATTACK]
+		TypeCommand.MOVE: return Global.points[TypeCommand.MOVE]
+		TypeCommand.HEAL: return Global.points[TypeCommand.HEAL]
+		TypeCommand.DEFENSE: return Global.points[TypeCommand.DEFENSE]
 		_: return 0
 
-# Переопределение обработки событий ввода
+func _update_all_buttons() -> void:
+	for command in get_tree().get_nodes_in_group("commands"):
+		command.update_buttons_state()
+
+func update_buttons_state() -> void:
+	if type not in [TypeCommand.ATTACK, TypeCommand.MOVE, TypeCommand.HEAL, TypeCommand.DEFENSE]:
+		return
+	
+	var remaining = Global.get_remaining_points(type)
+	up_button.disabled = (value >= remaining + value) or (value >= _get_max_points())
+	down_button.disabled = (value <= 1)
+
 func _on_area_2d_input_event(viewport: Node, event: InputEvent, shape_idx: int) -> void:
-	# First, call the parent method to handle dragging
 	super._on_area_input_event(viewport, event, shape_idx)
 	
-	# Then handle command-specific interactions
-	if event is InputEventMouseButton:
-		if event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
-			if is_menu_card:
-				menu_card_clicked.emit(type)
-			else:
-				is_settings = false
-				change_settings(is_settings)
-		elif event.button_index == MOUSE_BUTTON_RIGHT and !is_menu_card and event.pressed and \
-			not table.is_turn_in_progress:
-			queue_free()
-			Global.release_points(type, value)
+	if not event is InputEventMouseButton or not event.pressed:
+		return
+	
+	match event.button_index:
+		MOUSE_BUTTON_LEFT:
+			_handle_left_click()
+		MOUSE_BUTTON_RIGHT:
+			_handle_right_click()
+
+func _handle_left_click() -> void:
+	if is_menu_card:
+		menu_card_clicked.emit(type)
+	else:
+		is_settings = false
+		change_settings(is_settings)
+
+func _handle_right_click() -> void:
+	if not is_menu_card and not table.is_turn_in_progress:
+		Global.release_points(type, value)
+		queue_free()
 
 func _on_up_pressed() -> void:
 	if type == TypeCommand.TURN:
-		set_number(value + 1)  # Передаем любое значение, больше текущего
+		set_number(value + 1)
 		return
-		
-	var new_value = min(value + 1, Global.get_remaining_points(type) + value, get_max_points())
+	
+	var new_value = min(value + 1, Global.get_remaining_points(type) + value, _get_max_points())
 	if new_value > value:
 		set_number(new_value)
-	update_all_buttons()
+	_update_all_buttons()
 
 func _on_down_pressed() -> void:
 	if type == TypeCommand.TURN:
-		set_number(value - 1)  # Передаем любое значение, меньше текущего
+		set_number(value - 1)
 		return
-		
+	
 	if value > 1:
 		set_number(value - 1)
-	update_all_buttons()
-
-func _exit_tree() -> void:
-	# Сохраняем ссылку на слот и блок перед удалением
-	var parent_block = null
-	if slot and is_instance_valid(slot):
-		parent_block = slot.block
-		slot.command = null  # Очищаем ссылку на эту команду в слоте
-		
-	if parent_block and is_instance_valid(parent_block):
-		parent_block.update_slots()
+	_update_all_buttons()
 
 func _on_num_area_input_event(_viewport: Node, event: InputEvent, _shape_idx: int) -> void:
-	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
-		if not is_menu_card and not table.is_turn_in_progress:
-			is_settings = !is_settings
-			change_settings(is_settings)
-			update_all_buttons()
-			
-func change_settings(settings):
+	if (event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and 
+		event.pressed and not is_menu_card and not table.is_turn_in_progress):
+		is_settings = not is_settings
+		change_settings(is_settings)
+		_update_all_buttons()
+
+func change_settings(settings: bool) -> void:
 	up_button.visible = settings
 	down_button.visible = settings
+
+func _exit_tree() -> void:
+	# Clean up slot reference
+	if slot and is_instance_valid(slot):
+		var parent_block = slot.block
+		slot.command = null
+		
+		if parent_block and is_instance_valid(parent_block):
+			parent_block.update_slots()

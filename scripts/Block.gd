@@ -2,9 +2,9 @@ extends Card
 class_name Block
 
 @export var type: ItemData.BlockType
-@export var text: String
+@export var text: String = ""
 
-const MAX_TEXT_LENGTH := 14
+const MAX_TEXT_LENGTH = 14
 
 @onready var label: Label = $Label
 @onready var texture: Control = $Texture
@@ -15,82 +15,104 @@ const MAX_TEXT_LENGTH := 14
 @onready var texture_left = $Texture/TextureLeft
 
 var slot_manager: SlotManager
-var parent_slot: CommandSlot = null
+var parent_slot: CommandSlot
 var config: Dictionary
-var loop_count: int
-var slot_offset_start := Vector2(28, 32)
-
+var loop_count: int = 2
 var block_id: String = ""
 
-static var available_conditions := []
-static var available_loops := []
-static var available_abilities := []
+# Slot positioning
+var slot_offset_start = Vector2(28, 32)
 
 func _ready() -> void:
 	super._ready()
 	add_to_group("blocks")
-	if is_menu_card:
-		texture_down.visible = false
-		texture_left.visible = false
-		area.get_node('CollisionDown').queue_free()
-		area.get_node('CollisionLeft').queue_free()
-		
-	if text.is_empty():
-		initialize_block_properties()
 	
+	_setup_menu_card()
+	_initialize_text()
+	_setup_config()
+	_setup_slot_manager()
+	update_appearance()
+
+func _setup_menu_card() -> void:
+	if not is_menu_card:
+		return
+		
+	texture_down.visible = false
+	texture_left.visible = false
+	area.get_node('CollisionDown').queue_free()
+	area.get_node('CollisionLeft').queue_free()
+
+func _initialize_text() -> void:
+	if not text.is_empty():
+		return
+		
+	match type:
+		ItemData.BlockType.CONDITION:
+			text = "здоровье < 50%"
+		ItemData.BlockType.LOOP:
+			text = "Повторить 2 раз"
+			loop_count = 2
+		ItemData.BlockType.ABILITY:
+			text = "+1 атака"
+
+func _setup_config() -> void:
 	config = ItemData.get_block_config(type)
+
+func _setup_slot_manager() -> void:
 	slot_manager = SlotManager.new(self, slot_offset_start)
 	add_child(slot_manager)
 	slot_manager.connect("slots_updated", _on_slots_updated)
-	
-	update_appearance()
-	
 	slot_manager.initialize_slots(ItemData.get_slot_count(type, text))
 
-func initialize_block_properties() -> void:
-	match type:
-		ItemData.BlockType.CONDITION:
-			if not available_conditions.is_empty():
-				text = available_conditions[0]
-			else:
-				text = "здоровье < 50%"
-		ItemData.BlockType.LOOP:
-			if not available_loops.is_empty():
-				text = available_loops[0]
-			else:
-				text = "Повторить 2 раз"
-			var parts = text.split(" ")
-			if parts.size() > 1:
-				loop_count = int(parts[1])
-		ItemData.BlockType.ABILITY:
-			if not available_abilities.is_empty():
-				text = available_abilities[0]
-			else:
-				text = "+1 атака"
-	
-	if type == ItemData.BlockType.LOOP and not "Повторить" in text:
-		text = "Повторить 2 раз"
-		loop_count = 2
-	elif type == ItemData.BlockType.CONDITION and not text in ItemData.TEXT_TO_ITEM_TYPE:
-		text = "здоровье < 50%"
-	elif type == ItemData.BlockType.ABILITY and not text in ItemData.TEXT_TO_ITEM_TYPE:
-		text = "+1 атака"
-
 func update_appearance() -> void:
-	texture.modulate = config["color"]
-	icon.texture = load(config["icon"]) if config["icon"] else null
-	label.text = get_display_text()
+	texture.modulate = config.get("color", Color.WHITE)
+	if config.has("icon") and config["icon"]:
+		icon.texture = load(config["icon"])
+	label.text = _get_display_text()
 
-func get_display_text() -> String:
+func _get_display_text() -> String:
+	var prefix = config.get("prefix", "")
+	
 	if type == ItemData.BlockType.LOOP:
-		return config["prefix"] + str(loop_count) + " раз"
-	return config["prefix"] + truncate_text(text)
-
-func truncate_text(input_text: String) -> String:
-	return input_text.substr(0, MAX_TEXT_LENGTH) if input_text.length() > MAX_TEXT_LENGTH else input_text
+		return prefix + str(loop_count) + " раз"
+	
+	var display_text = text
+	if text.length() > MAX_TEXT_LENGTH:
+		display_text = text.substr(0, MAX_TEXT_LENGTH)
+	
+	return prefix + display_text
 
 func get_total_height() -> float:
 	return slot_manager.get_total_height()
+
+func get_size() -> Vector2:
+	var base_size = Vector2(
+		max(texture_up.size.x, texture_down.size.x),
+		texture_down.position.y + texture_down.size.y
+	)
+	
+	# Account for child commands
+	for slot in slot_manager.slots:
+		if not slot or not slot.command:
+			continue
+			
+		var command_size = _get_command_size(slot.command)
+		var slot_pos = slot.position
+		
+		base_size.x = max(base_size.x, slot_pos.x + command_size.x)
+		base_size.y = max(base_size.y, slot_pos.y + command_size.y)
+	
+	return base_size
+
+func _get_command_size(command) -> Vector2:
+	if command is Block:
+		return command.get_size() * command.scale
+	
+	var texture_node = command.get_node("Texture")
+	if texture_node:
+		return texture_node.size * command.scale
+	
+	return Vector2.ZERO
 
 func update_slots() -> void:
 	slot_manager.update_slots()
@@ -99,67 +121,46 @@ func _on_slots_updated() -> void:
 	if is_menu_card:
 		return
 		
-	update_texture_sizes()
+	_update_texture_sizes()
 	
 	if parent_slot and is_instance_valid(parent_slot) and parent_slot.block:
 		parent_slot.block.update_slots()
 
-func update_texture_sizes() -> void:
+func _update_texture_sizes() -> void:
 	var total_height = get_total_height()
 	texture_down.position.y = total_height
 	texture_left.size.y = total_height
-	
-	recreate_collision_shapes(total_height)
+	_recreate_collision_shapes(total_height)
 
-func recreate_collision_shapes(total_height: float) -> void:
+func _recreate_collision_shapes(total_height: float) -> void:
+	# Clear existing collision shapes (except special ones)
 	for child in area.get_children():
 		if child.name != "CollisionUpProperty":
 			child.queue_free()
 	
-	create_collision_rectangle("CollisionUp", texture_up.size, 
+	# Create new collision shapes
+	_create_collision_rectangle("CollisionUp", texture_up.size, 
 		Vector2(texture_up.size.x / 2, texture_up.size.y / 2))
 	
-	create_collision_rectangle("CollisionDown", texture_down.size,
+	_create_collision_rectangle("CollisionDown", texture_down.size,
 		Vector2(texture_down.size.x / 2, total_height + texture_down.size.y / 2))
 	
-	create_collision_rectangle("CollisionLeft", 
+	_create_collision_rectangle("CollisionLeft", 
 		Vector2(texture_left.size.x, total_height - texture_up.size.y),
 		Vector2(texture_left.size.x / 2, texture_up.size.y + (total_height - texture_up.size.y) / 2))
 
-func create_collision_rectangle(name_collision: String, size: Vector2, position_collision: Vector2) -> void:
+func _create_collision_rectangle(name: String, size: Vector2, pos: Vector2) -> void:
 	var collision = CollisionShape2D.new()
-	collision.name = name_collision
+	collision.name = name
+	
 	var shape = RectangleShape2D.new()
 	shape.size = size
 	collision.shape = shape
-	collision.position = position_collision
+	collision.position = pos
+	
 	area.add_child(collision)
 
-func get_size() -> Vector2:
-	var base_size = Vector2(
-		max(texture_up.size.x, texture_down.size.x),
-		texture_down.position.y + texture_down.size.y
-	)
-	
-	for slot in slot_manager.slots:
-		if not is_instance_valid(slot) or not slot.command:
-			continue
-		
-		var command_size = Vector2.ZERO
-		var slot_pos = slot.position
-		
-		if slot.command is Block:
-			command_size = slot.command.get_size() * slot.command.scale
-		else:
-			var texture_node = slot.command.get_node("Texture")
-			if texture_node:
-				command_size = texture_node.size * slot.command.scale
-		
-		base_size.x = max(base_size.x, slot_pos.x + command_size.x)
-		base_size.y = max(base_size.y, slot_pos.y + command_size.y)
-	
-	return base_size
-
+# Delegation methods
 func prepare_for_insertion(target_slot: CommandSlot) -> void:
 	slot_manager.prepare_for_insertion(target_slot)
 	
@@ -175,18 +176,21 @@ func _on_area_2d_input_event(viewport: Node, event: InputEvent, shape_idx: int) 
 	
 	if event is InputEventMouseButton:
 		super._on_area_input_event(viewport, event, shape_idx)
-		if event.button_index == MOUSE_BUTTON_RIGHT and event.pressed and \
-		   !is_menu_card and text != 'начало хода' and not table.is_turn_in_progress:
+		
+		# Right click to delete (with conditions)
+		if (event.button_index == MOUSE_BUTTON_RIGHT and event.pressed and 
+			text != 'начало хода' and not table.is_turn_in_progress):
 			queue_free()
 
 func _exit_tree() -> void:
-	var parent = null
+	# Clean up parent slot reference
 	if parent_slot and is_instance_valid(parent_slot):
-		parent = parent_slot.block
+		var parent = parent_slot.block
 		parent_slot.command = null
+		
+		if parent and is_instance_valid(parent):
+			parent.call_deferred("update_slots")
 	
-	if parent and is_instance_valid(parent):
-		parent.call_deferred("update_slots")
-	
+	# Release block resources
 	if block_id != "":
 		Global.release_block(block_id)

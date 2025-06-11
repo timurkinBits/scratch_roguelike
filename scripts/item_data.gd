@@ -26,31 +26,6 @@ enum BlockType {
 
 # Данные предметов
 const ITEMS = {
-	# Абстрактные блоки (не генерируются в магазине, но могут быть наградами за испытания)
-	ItemType.LOOP_BLOCK: {
-		"icon": "res://sprites/loop.png",
-		"description": "Блок цикл",
-		"cost": 8,
-		"weight": 0.0,  # Вес 0 = не генерируется в обычном магазине
-		"block_type": BlockType.LOOP,
-		"slot_count": 1
-	},
-	ItemType.CONDITION_BLOCK: {
-		"icon": "res://sprites/condition.png",
-		"description": "Блок условие",
-		"cost": 8,
-		"weight": 0.0,  # Вес 0 = не генерируется в обычном магазине
-		"block_type": BlockType.CONDITION,
-		"slot_count": 1
-	},
-	ItemType.ABILITY_BLOCK: {
-		"icon": "res://sprites/ability.png",
-		"description": "Блок навык",
-		"cost": 8,
-		"weight": 0.0,  # Вес 0 = не генерируется в обычном магазине
-		"block_type": BlockType.ABILITY,
-		"slot_count": 1
-	},
 	# Конкретные предметы
 	ItemType.ABILITY_PLUS_ATTACK: {
 		"icon": "res://sprites/attack.png",
@@ -233,17 +208,7 @@ func get_slot_count(block_type: int, text: String) -> int:
 		var item_type = TEXT_TO_ITEM_TYPE[text]
 		if item_type in ITEMS:
 			return ITEMS[item_type]['slot_count']
-	
-	# Если текст не найден, возвращаем значение по умолчанию для типа блока
-	match block_type:
-		BlockType.CONDITION:
-			return ITEMS[ItemType.CONDITION_BLOCK]['slot_count']
-		BlockType.LOOP:
-			return ITEMS[ItemType.LOOP_BLOCK]['slot_count']
-		BlockType.ABILITY:
-			return ITEMS[ItemType.ABILITY_BLOCK]['slot_count']
-		_:
-			return 2
+	return 0
 
 # Получить конфигурацию блока
 func get_block_config(block_type: int) -> Dictionary:

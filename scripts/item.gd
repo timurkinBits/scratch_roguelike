@@ -66,7 +66,6 @@ func generate_random_type() -> void:
 func get_available_item_weights() -> Dictionary:
 	var available_weights = {}
 	
-	# Проходим только по конкретным предметам (не абстрактным блокам)
 	var concrete_items = [
 		ItemData.ItemType.ABILITY_PLUS_ATTACK,
 		ItemData.ItemType.ABILITY_PLUS_MOVE,
