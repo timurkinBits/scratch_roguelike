@@ -10,7 +10,7 @@ var points: Dictionary = {
 	Command.TypeCommand.DEFENSE: 3
 }
 
-var coins: int = 999
+var coins: int = 0
 var remaining_points: Dictionary = {}
 
 # Block system

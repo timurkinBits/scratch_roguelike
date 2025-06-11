@@ -163,7 +163,6 @@ wall_scene = ExtResource("9_qmy6f")
 door_scene = ExtResource("11_bb450")
 info_scene = SubResource("PackedScene_36rkl")
 item_scene = ExtResource("17_xa025")
-allow_layout_editing = true
 normal_room_chance = 50
 shop_room_chance = 30
 
