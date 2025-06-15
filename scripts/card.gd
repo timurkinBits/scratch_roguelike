@@ -38,8 +38,16 @@ func start_drag() -> void:
 	z_index = Z_INDEX_DRAGGING
 	drag_offset = global_position - get_global_mouse_position()
 	
-	if original_slot:
-		original_slot.clear_command()
+	# Сохраняем ссылку на исходный слот для правильного обновления
+	if slot and is_instance_valid(slot):
+		original_slot = slot
+		var parent_block = slot.block
+		# Очищаем слот
+		slot.command = null
+		slot = null
+		# Обновляем слоты блока сразу после извлечения
+		if is_instance_valid(parent_block):
+			parent_block.slot_manager.update_slots()
 	
 	reset_hover_state()
 	drag_started.emit()
@@ -67,8 +75,13 @@ func handle_card_placement() -> void:
 			enforce_table_boundaries(global_position, table_rect)
 	else:
 		enforce_table_boundaries(global_position, table_rect)
+	
+	# Очищаем ссылку на исходный слот после завершения размещения
+	original_slot = null
 
 func reset_hover_state() -> void:
+	if affected_block and is_instance_valid(affected_block):
+		affected_block.slot_manager.cancel_insertion()
 	affected_block = null
 	hover_timer = 0.0
 	has_shifted_commands = false
@@ -81,12 +94,21 @@ func enforce_table_boundaries(target_position: Vector2, table_rect: Rect2) -> vo
 		table_rect.position + table_rect.size - size
 	)
 
-func place_card_in_slot(slot: CommandSlot) -> void:
-	slot.add_command(self)
-	position = Vector2.ZERO
-	slot.block.update_slots()
+func place_card_in_slot(target_slot: CommandSlot) -> void:
+	if not is_instance_valid(target_slot):
+		return
 	
-	check_parent_block_boundaries(slot.block, table.get_table_rect())
+	# Устанавливаем связи
+	target_slot.command = self
+	slot = target_slot
+	
+	# Устанавливаем позицию относительно блока
+	position = Vector2.ZERO
+	
+	# Обновляем слоты блока
+	if is_instance_valid(target_slot.block):
+		target_slot.block.slot_manager.update_slots()
+		check_parent_block_boundaries(target_slot.block, table.get_table_rect())
 
 func check_parent_block_boundaries(block: Block, table_rect: Rect2) -> void:
 	if not is_instance_valid(block):
@@ -104,19 +126,19 @@ func check_parent_block_boundaries(block: Block, table_rect: Rect2) -> void:
 		block.global_position = new_position
 		block.slot_manager.update_all_slot_positions()
 		
-		for slot in block.slot_manager.slots:
-			if slot.command and is_instance_valid(slot.command):
-				slot.command.global_position = block.to_global(slot.position)
+		for slot_item in block.slot_manager.slots:
+			if slot_item.command and is_instance_valid(slot_item.command):
+				slot_item.command.global_position = block.to_global(slot_item.position)
 	
 	if block.parent_slot and block.parent_slot.block:
 		check_parent_block_boundaries(block.parent_slot.block, table_rect)
 
-func would_fit_in_boundaries(slot: CommandSlot, table_rect: Rect2) -> bool:
-	if not is_instance_valid(slot) or not is_instance_valid(slot.block):
+func would_fit_in_boundaries(target_slot: CommandSlot, table_rect: Rect2) -> bool:
+	if not is_instance_valid(target_slot) or not is_instance_valid(target_slot.block):
 		return false
 	
 	var card_size = get_size() * scale
-	var slot_global_pos = slot.global_position
+	var slot_global_pos = target_slot.global_position
 	
 	return (
 		slot_global_pos.x >= table_rect.position.x and
@@ -165,10 +187,12 @@ func handle_hover_logic(delta: float) -> void:
 		hover_timer += delta
 		if hover_timer >= HOVER_THRESHOLD and not has_shifted_commands:
 			affected_block = hovered_slot.block
-			affected_block.prepare_for_insertion(hovered_slot)
-			has_shifted_commands = true
+			if is_instance_valid(affected_block):
+				affected_block.slot_manager.prepare_for_insertion(hovered_slot)
+				has_shifted_commands = true
 	elif has_shifted_commands and affected_block:
-		affected_block.cancel_insertion()
+		if is_instance_valid(affected_block):
+			affected_block.slot_manager.cancel_insertion()
 		has_shifted_commands = false
 		hover_timer = 0.0
 	else:

@@ -26,14 +26,14 @@ shape = SubResource("RectangleShape2D_s8enn")
 [node name="Label" type="Label" parent="."]
 z_index = 3
 offset_left = -157.0
-offset_top = -136.0
+offset_top = -169.0
 offset_right = 159.0
-offset_bottom = -18.9996
+offset_bottom = -51.9996
 label_settings = SubResource("LabelSettings_s8enn")
 horizontal_alignment = 1
 vertical_alignment = 2
 
-[node name="ColorRect" type="ColorRect" parent="Label"]
+[node name="BackGround" type="ColorRect" parent="Label"]
 visible = false
 z_index = 2
 z_as_relative = false

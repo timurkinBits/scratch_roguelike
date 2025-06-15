@@ -64,13 +64,21 @@ func update_slots() -> void:
 	shift_commands_up()
 	adjust_slot_count()
 	update_all_slot_positions()
+	
+	# Проверяем и восстанавливаем связи только если идет ход
 	if is_inside_tree():
-		if get_tree().get_first_node_in_group('table').is_turn_in_progress:
-			for block in get_tree().get_nodes_in_group("blocks"):
-				if is_instance_valid(block) and block.parent_slot:
-					block.parent_slot.command = block  # Восстанавливаем связь
-					block.update_command_positions(block.z_index)  # Обновляем позиции
+		var table = get_tree().get_first_node_in_group('table')
+		if table and table.is_turn_in_progress:
+			restore_command_links()
+	
 	emit_signal("slots_updated")
+
+func restore_command_links() -> void:
+	# Восстанавливаем связи между командами и слотами только во время хода
+	for block in get_tree().get_nodes_in_group("blocks"):
+		if is_instance_valid(block) and block.parent_slot:
+			block.parent_slot.command = block
+			block.update_command_positions(block.z_index)
 
 func shift_commands_up() -> void:
 	# Collect valid commands
@@ -79,20 +87,20 @@ func shift_commands_up() -> void:
 		if is_instance_valid(slot) and is_instance_valid(slot.command):
 			valid_items.append(slot.command)
 	
-	# Clear all slots
+	# Clear all slots first
 	for slot in slots:
 		if is_instance_valid(slot):
 			slot.command = null
 	
 	# Fill slots with commands from top
 	for i in min(valid_items.size(), slots.size()):
-		slots[i].command = valid_items[i]
-		if valid_items[i] is Command:
-			valid_items[i].slot = slots[i]
-		elif valid_items[i] is Block:
-			valid_items[i].parent_slot = slots[i]
-	
-	update_all_slot_positions()
+		if is_instance_valid(slots[i]):
+			slots[i].command = valid_items[i]
+			# Устанавливаем обратные связи
+			if valid_items[i] is Command:
+				valid_items[i].slot = slots[i]
+			elif valid_items[i] is Block:
+				valid_items[i].parent_slot = slots[i]
 
 func adjust_slot_count() -> void:
 	# Create at least one slot if none exist
@@ -112,9 +120,14 @@ func adjust_slot_count() -> void:
 	# Target slot count: commands + 1 empty slot (up to max allowed)
 	var target_count = min(command_count + 1, max_slots)
 	
-	# Remove empty slots at the end
-	while slots.size() > target_count and is_instance_valid(slots.back()) and not slots.back().command:
-		slots.pop_back().queue_free()
+	# Remove empty slots at the end if we have too many
+	while slots.size() > target_count:
+		var last_slot = slots.back()
+		if is_instance_valid(last_slot) and not is_instance_valid(last_slot.command):
+			slots.pop_back()
+			last_slot.queue_free()
+		else:
+			break
 	
 	# Add slots if needed
 	while slots.size() < target_count:
@@ -138,8 +151,8 @@ func prepare_for_insertion(target_slot: CommandSlot) -> void:
 	if not target_slot in slots:
 		return
 	
-	# Store original commands
-	original_slot_commands = []
+	# Store original commands state
+	original_slot_commands.clear()
 	for slot in slots:
 		original_slot_commands.append(slot.command)
 	
@@ -154,10 +167,18 @@ func prepare_for_insertion(target_slot: CommandSlot) -> void:
 	
 	# Shift commands down from insertion point
 	for i in range(slots.size() - 1, hover_index, -1):
-		slots[i].command = slots[i - 1].command
+		if i > 0 and i < slots.size():
+			slots[i].command = slots[i - 1].command
+			# Обновляем обратные связи
+			if is_instance_valid(slots[i].command):
+				if slots[i].command is Command:
+					slots[i].command.slot = slots[i]
+				elif slots[i].command is Block:
+					slots[i].command.parent_slot = slots[i]
 	
 	# Clear the insertion slot
-	slots[hover_index].command = null
+	if hover_index >= 0 and hover_index < slots.size():
+		slots[hover_index].command = null
 	
 	update_all_slot_positions()
 
@@ -166,16 +187,24 @@ func cancel_insertion() -> void:
 		return
 	
 	# Restore original slot commands
-	for i in min(slots.size(), original_slot_commands.size()):
-		slots[i].command = original_slot_commands[i]
+	var restore_size = min(slots.size(), original_slot_commands.size())
+	for i in restore_size:
+		if i < slots.size():
+			slots[i].command = original_slot_commands[i]
+			# Восстанавливаем обратные связи
+			if is_instance_valid(slots[i].command):
+				if slots[i].command is Command:
+					slots[i].command.slot = slots[i]
+				elif slots[i].command is Block:
+					slots[i].command.parent_slot = slots[i]
 	
-	# Remove extra slots
+	# Remove extra slots that were created during preparation
 	while slots.size() > original_slot_commands.size():
 		var slot = slots.pop_back()
 		if is_instance_valid(slot):
 			slot.queue_free()
 	
-	original_slot_commands = []
+	original_slot_commands.clear()
 	update_slots()
 
 func update_command_positions(base_z_index: int) -> void:

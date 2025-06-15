@@ -3,6 +3,7 @@ class_name Item
 
 @onready var icon: Sprite2D = $Sprite2D
 @onready var info: Label = $Label
+@onready var background: ColorRect = $Label/BackGround
 
 var type: int  # Использует ItemData.ItemType
 
@@ -12,26 +13,10 @@ func _ready() -> void:
 	add_to_group('barrier')
 	
 	# Проверяем, находимся ли мы в комнате испытаний
-	var room = get_parent()
-	if room.type == room.RoomType.CHALLENGE:
-		generate_challenge_reward()
-	else:
-		generate_random_type()
+	generate_random_type()
 	
 	# Устанавливаем иконку после определения типа
 	icon.texture = load(ItemData.get_item_icon(type))
-
-# Генерация особой награды за испытание
-func generate_challenge_reward() -> void:
-	# Получаем случайную награду из списка наград за испытания
-	var challenge_rewards = ItemData.get_challenge_rewards()
-	if challenge_rewards.is_empty():
-		generate_random_type()
-		return
-	
-	# Выбираем случайную награду
-	challenge_rewards.shuffle()
-	type = challenge_rewards[0]
 
 # Выбор случайного типа на основе весов вероятности
 func generate_random_type() -> void:
@@ -104,8 +89,31 @@ func process_purchase() -> void:
 		if table:
 			table.create_purchased_block(block_text)
 
+# Функция для обновления размера фона в зависимости от текста
+func update_background_size() -> void:
+	# Ждем один кадр, чтобы Label успел обновить свой размер
+	await get_tree().process_frame
+	
+	# Добавляем отступы (padding) для фона
+	var padding = Vector2(16, 12)  # горизонтальный и вертикальный отступ
+	
+	# Устанавливаем автоматический размер для Label
+	info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	info.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	info.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	
+	# Получаем реальный размер Label после обновления
+	await get_tree().process_frame
+	var label_size = info.get_rect().size
+	
+	# Устанавливаем размер фона с учетом отступов
+	background.size = label_size + padding
+	
+	# Позиционируем фон так, чтобы он был центрирован относительно Label
+	background.position = -padding / 2
+
 func _on_area_2d_mouse_entered() -> void:
-	info.get_node("ColorRect").visible = true
+	background.visible = true
 	info.text = ItemData.get_item_description(type)
 	
 	var block_text = ItemData.get_block_text(type)
@@ -114,7 +122,10 @@ func _on_area_2d_mouse_entered() -> void:
 		info.text += "\nСлотов: " + str(slot_count)
 	
 	info.text += "\nЦена: " + str(ItemData.get_item_cost(type))
+	
+	# Обновляем размер фона после установки текста
+	update_background_size()
 
 func _on_area_2d_mouse_exited() -> void:
-	info.get_node("ColorRect").visible = false
+	background.visible = false
 	info.text = ""

@@ -10,12 +10,11 @@ enum ItemType {
 	LOOP_3_TIMES
 }
 
-# Данные предметов (все теперь просто блоки) с индивидуальными иконками и цветами
 const ITEMS = {
 	ItemType.ABILITY_PLUS_ATTACK: {
 		"icon": "res://sprites/attack.png",
-		"color": Color.CRIMSON,  # Красный для атаки
-		"description": "Навык +1 атака",
+		"color": Color.CRIMSON,
+		"description": "Команды атаки получают способность: +1 очко",
 		"cost": 3,
 		"weight": 3.0,
 		"block_text": "+1 атака",
@@ -23,8 +22,8 @@ const ITEMS = {
 	},
 	ItemType.ABILITY_PLUS_MOVE: {
 		"icon": "res://sprites/move.png",
-		"color": Color.DODGER_BLUE,  # Синий для движения
-		"description": "Навык +1 перемещение",
+		"color": Color.DODGER_BLUE,
+		"description": "Команды перемещения получают способность: +1 очко",
 		"cost": 2,
 		"weight": 3.0,
 		"block_text": "+1 движ.",
@@ -32,8 +31,8 @@ const ITEMS = {
 	},
 	ItemType.ABILITY_PLUS_HEAL: {
 		"icon": "res://sprites/heal.png",
-		"color": Color.LIME_GREEN,  # Зеленый для лечения
-		"description": "Навык +1 лечение",
+		"color": Color.LIME_GREEN,
+		"description": "Команды лечения получают способность: +1 очко",
 		"cost": 5,
 		"weight": 2.0,
 		"block_text": "+1 леч.",
@@ -41,8 +40,8 @@ const ITEMS = {
 	},
 	ItemType.ABILITY_PLUS_DEFENSE: {
 		"icon": "res://sprites/defense.png",
-		"color": Color.CADET_BLUE,  # Золотой для защиты
-		"description": "Навык +1 защита",
+		"color": Color.CADET_BLUE,
+		"description": "Команды защиты получают способность: +1 очко",
 		"cost": 3,
 		"weight": 2.5,
 		"block_text": "+1 защита",
@@ -50,8 +49,8 @@ const ITEMS = {
 	},
 	ItemType.LOOP_2_TIMES: {
 		"icon": "res://sprites/loop2.png",
-		"color": Color.CORAL,  # Оранжевый для цикла x2
-		"description": "Цикл на 2 повторения",
+		"color": Color.CORAL,
+		"description": "После выполнения команд в блоке, выполнение начинается ещё раз",
 		"cost": 6,
 		"weight": 2.0,
 		"block_text": "Повторить 2 раз",
@@ -59,8 +58,8 @@ const ITEMS = {
 	},
 	ItemType.LOOP_3_TIMES: {
 		"icon": "res://sprites/loop3.png",
-		"color": Color.CHOCOLATE,  # Фиолетовый для цикла x3
-		"description": "Цикл на 3 повторения",
+		"color": Color.CHOCOLATE,
+		"description": "После выполнения команд в блоке, выполнение начинается ещё 2 раза",
 		"cost": 8,
 		"weight": 1.0,
 		"block_text": "Повторить 3 раз",
@@ -76,26 +75,6 @@ const TEXT_TO_ITEM_TYPE = {
 	"+1 леч.": ItemType.ABILITY_PLUS_HEAL,
 	"+1 защита": ItemType.ABILITY_PLUS_DEFENSE
 }
-
-# Награды за испытания
-const CHALLENGE_REWARDS = [
-	ItemType.ABILITY_PLUS_ATTACK,
-	ItemType.ABILITY_PLUS_MOVE,
-	ItemType.ABILITY_PLUS_HEAL,
-	ItemType.ABILITY_PLUS_DEFENSE,
-	ItemType.LOOP_2_TIMES,
-	ItemType.LOOP_3_TIMES
-]
-
-# Получить список наград за испытания
-func get_challenge_rewards() -> Array:
-	return CHALLENGE_REWARDS.duplicate()
-
-# Получить информацию о предмете
-func get_item_info(item_type: int) -> Dictionary:
-	if item_type in ITEMS:
-		return ITEMS[item_type]
-	return {}
 
 # Получить стоимость предмета
 func get_item_cost(item_type: int) -> int:
@@ -133,26 +112,8 @@ func get_block_text(item_type: int) -> String:
 		return ITEMS[item_type]["block_text"]
 	return ""
 
-# Получить название способности для предмета-способности
-func get_ability_name(item_type: int) -> String:
-	if item_type in ITEMS and "ability_name" in ITEMS[item_type]:
-		return ITEMS[item_type]["ability_name"]
-	return ""
-
-# Получить название условия для предмета-условия
-func get_condition_name(item_type: int) -> String:
-	if item_type in ITEMS and "condition_name" in ITEMS[item_type]:
-		return ITEMS[item_type]["condition_name"]
-	return ""
-
-# Получить название цикла для предмета-цикла
-func get_loop_name(item_type: int) -> String:
-	if item_type in ITEMS and "loop_name" in ITEMS[item_type]:
-		return ITEMS[item_type]["loop_name"]
-	return ""
-
 # Получить количество слотов для блока по его типу и тексту
-func get_slot_count(block_type: int, text: String) -> int:
+func get_slot_count(text: String) -> int:
 	if text == "начало хода":
 		return 10
 		
@@ -161,44 +122,8 @@ func get_slot_count(block_type: int, text: String) -> int:
 		if item_type in ITEMS:
 			return ITEMS[item_type]['slot_count']
 	return 0
-
-# Получить название предмета по типу элемента (для поиска соответствия)
-func get_ability_name_for_item_type(item_type: int) -> String:
-	match item_type:
-		ItemType.ABILITY_PLUS_ATTACK:
-			return "+1 атака"
-		ItemType.ABILITY_PLUS_MOVE:
-			return "+1 движ."
-		ItemType.ABILITY_PLUS_HEAL:
-			return "+1 леч."
-		ItemType.ABILITY_PLUS_DEFENSE:
-			return "+1 защита"
-		ItemType.LOOP_2_TIMES:
-			return "Повторить 2 раз"
-		ItemType.LOOP_3_TIMES:
-			return "Повторить 3 раз" 
-		_:
-			return ""
 			
 func get_slot_count_by_item_type(item_type: int) -> int:
 	if item_type in ITEMS and "slot_count" in ITEMS[item_type]:
 		return ITEMS[item_type]["slot_count"]
 	return 1  # По умолчанию 1 слот
-
-# Проверить, существует ли иконка для блока с данным текстом
-func has_icon_for_block(block_text: String) -> bool:
-	return block_text in TEXT_TO_ITEM_TYPE
-
-# Получить путь к иконке по тексту блока (удобный метод)
-func get_icon_path_by_text(block_text: String) -> String:
-	if block_text in TEXT_TO_ITEM_TYPE:
-		var item_type = TEXT_TO_ITEM_TYPE[block_text]
-		return get_item_icon(item_type)
-	return ""
-
-# Получить цвет по тексту блока (удобный метод)
-func get_color_by_text(block_text: String) -> Color:
-	if block_text in TEXT_TO_ITEM_TYPE:
-		var item_type = TEXT_TO_ITEM_TYPE[block_text]
-		return get_item_color(item_type)
-	return Color.WHITE
