@@ -1,7 +1,6 @@
 extends Card
 class_name Block
 
-@export var type: ItemData.BlockType
 @export var text: String = ""
 
 const MAX_TEXT_LENGTH = 14
@@ -42,13 +41,53 @@ func _setup_menu_card() -> void:
 	area.get_node('CollisionLeft').queue_free()
 
 func _setup_config() -> void:
-	config = ItemData.get_block_config(type)
+	config = _get_block_config()
+
+func _get_block_config() -> Dictionary:
+	# Специальная конфигурация для блока "начало хода"
+	if text == "начало хода":
+		return {
+			"prefix": "",
+			"color": Color.GREEN,
+			"icon": "res://sprites/start_turn.png"
+		}
+	
+	# Конфигурация для циклов
+	if _is_loop_block():
+		return {
+			"prefix": "Повторить ",
+			"color": Color.CHOCOLATE,
+			"icon": "res://sprites/loop.png"
+		}
+	
+	# Конфигурация для навыков (все остальные блоки)
+	return {
+		"prefix": "Улучшить ",
+		"color": Color.TURQUOISE,
+		"icon": "res://sprites/ability.png"
+	}
+
+func _is_loop_block() -> bool:
+	return text.contains("раз") or text == "Повторить 2 раз" or text == "Повторить 3 раз"
+
+func _is_start_turn_block() -> bool:
+	return text == "начало хода"
 
 func _setup_slot_manager() -> void:
 	slot_manager = SlotManager.new(self, slot_offset_start)
 	add_child(slot_manager)
 	slot_manager.connect("slots_updated", _on_slots_updated)
-	slot_manager.initialize_slots(ItemData.get_slot_count(type, text))
+	slot_manager.initialize_slots(_get_slot_count())
+
+func _get_slot_count() -> int:
+	if text == "начало хода":
+		return 10
+	elif text == "Повторить 2 раз":
+		return 2
+	elif text == "Повторить 3 раз":
+		return 2
+	else:
+		return 1  # Навыки имеют 1 слот
 
 func update_appearance() -> void:
 	texture.modulate = config.get("color", Color.WHITE)
@@ -59,8 +98,16 @@ func update_appearance() -> void:
 func _get_display_text() -> String:
 	var prefix = config.get("prefix", "")
 	
-	if type == ItemData.BlockType.LOOP:
-		return prefix + str(loop_count) + " раз"
+	if _is_loop_block():
+		if text == "Повторить 2 раз":
+			return prefix + "2 раз"
+		elif text == "Повторить 3 раз":
+			return prefix + "3 раз"
+		else:
+			return prefix + str(loop_count) + " раз"
+	
+	if text == "начало хода":
+		return text
 	
 	var display_text = text
 	if text.length() > MAX_TEXT_LENGTH:
@@ -161,11 +208,12 @@ func _on_area_2d_input_event(viewport: Node, event: InputEvent, shape_idx: int) 
 		return
 	
 	if event is InputEventMouseButton:
-		super._on_area_input_event(viewport, event, shape_idx)
+		# Вызываем родительский метод для обработки перетаскивания
+		_on_area_input_event(viewport, event, shape_idx)
 		
-		# Right click to delete (with conditions)
+		# Right click to delete (блок "начало хода" нельзя удалить)
 		if (event.button_index == MOUSE_BUTTON_RIGHT and event.pressed and 
-			text != 'начало хода' and not table.is_turn_in_progress):
+			not _is_start_turn_block() and not table.is_turn_in_progress):
 			queue_free()
 
 func _exit_tree() -> void:

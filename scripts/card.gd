@@ -61,9 +61,7 @@ func handle_card_placement() -> void:
 	if table.is_turn_in_progress:
 		enforce_table_boundaries(global_position, table_rect)
 	elif hovered_slot and is_instance_valid(hovered_slot):
-		var invalid_placement = self is Block and is_condition_block_in_block(hovered_slot)
-		
-		if would_fit_in_boundaries(hovered_slot, table_rect) and not invalid_placement:
+		if would_fit_in_boundaries(hovered_slot, table_rect):
 			place_card_in_slot(hovered_slot)
 		else:
 			enforce_table_boundaries(global_position, table_rect)
@@ -127,9 +125,6 @@ func would_fit_in_boundaries(slot: CommandSlot, table_rect: Rect2) -> bool:
 		slot_global_pos.y + card_size.y <= table_rect.position.y + table_rect.size.y
 	)
 
-func is_condition_block_in_block(target_slot: CommandSlot) -> bool:
-	return self is Block and self.type == ItemData.BlockType.CONDITION and target_slot and target_slot.block != null
-
 func update_hovered_slot() -> void:
 	hovered_slot = null
 	var query = PhysicsPointQueryParameters2D.new()
@@ -167,14 +162,11 @@ func handle_hover_logic(delta: float) -> void:
 	update_hovered_slot()
 	
 	if hovered_slot:
-		var is_condition_block = self is Block and self.type == ItemData.BlockType.CONDITION
-		
-		if not is_condition_block:
-			hover_timer += delta
-			if hover_timer >= HOVER_THRESHOLD and not has_shifted_commands:
-				affected_block = hovered_slot.block
-				affected_block.prepare_for_insertion(hovered_slot)
-				has_shifted_commands = true
+		hover_timer += delta
+		if hover_timer >= HOVER_THRESHOLD and not has_shifted_commands:
+			affected_block = hovered_slot.block
+			affected_block.prepare_for_insertion(hovered_slot)
+			has_shifted_commands = true
 	elif has_shifted_commands and affected_block:
 		affected_block.cancel_insertion()
 		has_shifted_commands = false

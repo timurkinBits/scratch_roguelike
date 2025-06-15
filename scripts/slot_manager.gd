@@ -100,8 +100,8 @@ func adjust_slot_count() -> void:
 		create_slot()
 		return
 	
-	# Determine max slots based on block type
-	var max_slots = ItemData.get_slot_count(parent_block.type, parent_block.text)
+	# Determine max slots based on block text
+	var max_slots = _get_max_slots_for_block(parent_block.text)
 	
 	# Count occupied slots
 	var command_count = 0
@@ -120,6 +120,20 @@ func adjust_slot_count() -> void:
 	while slots.size() < target_count:
 		create_slot()
 
+func _get_max_slots_for_block(block_text: String) -> int:
+	# Определяем максимальное количество слотов по тексту блока
+	if block_text == "начало хода":
+		return 10
+	elif block_text == "Повторить 2 раз" or block_text == "Повторить 3 раз":
+		return 2
+	elif block_text in ItemData.TEXT_TO_ITEM_TYPE:
+		# Для блоков навыков из ItemData
+		var item_type = ItemData.TEXT_TO_ITEM_TYPE[block_text]
+		return ItemData.get_slot_count_by_item_type(item_type)
+	else:
+		# Для остальных блоков навыков
+		return 1
+
 func prepare_for_insertion(target_slot: CommandSlot) -> void:
 	if not target_slot in slots:
 		return
@@ -131,16 +145,8 @@ func prepare_for_insertion(target_slot: CommandSlot) -> void:
 	
 	var hover_index = slots.find(target_slot)
 	
-	# Determine max slots based on block type
-	var max_slots
-	if parent_block.type == ItemData.BlockType.CONDITION:
-		max_slots = ItemData.get_slot_count(ItemData.BlockType.CONDITION, parent_block.text)
-	elif parent_block.type == ItemData.BlockType.ABILITY:
-		max_slots = ItemData.get_slot_count(ItemData.BlockType.ABILITY, parent_block.text)
-	elif parent_block.type == ItemData.BlockType.LOOP:
-		max_slots = ItemData.get_slot_count(ItemData.BlockType.LOOP, parent_block.text)
-	else:
-		max_slots = 3
+	# Determine max slots based on block text
+	var max_slots = _get_max_slots_for_block(parent_block.text)
 	
 	# Create new empty slot if last slot is occupied and not exceeding max limit
 	if slots.size() < max_slots and slots.back().command:

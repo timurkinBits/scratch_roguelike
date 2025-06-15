@@ -1,34 +1,23 @@
 extends Node
 
-# Константы для типов предметов
+# Константы для типов предметов (теперь только блоки без типизации)
 enum ItemType {
 	ABILITY_PLUS_ATTACK,
 	ABILITY_PLUS_MOVE,
 	ABILITY_PLUS_HEAL,
 	ABILITY_PLUS_DEFENSE,
 	LOOP_2_TIMES,
-	LOOP_3_TIMES,
-	CONDITION_BELOW_HALF_HP
+	LOOP_3_TIMES
 }
 
-# Константы для типов блоков
-enum BlockType {
-	NONE,
-	CONDITION,
-	LOOP,
-	ABILITY
-}
-
-# Данные предметов
+# Данные предметов (все теперь просто блоки)
 const ITEMS = {
-	# Конкретные предметы
 	ItemType.ABILITY_PLUS_ATTACK: {
 		"icon": "res://sprites/attack.png",
 		"description": "Навык +1 атака",
 		"cost": 3,
 		"weight": 3.0,
-		"block_type": BlockType.ABILITY,
-		"ability_name": "+1 атака",
+		"block_text": "+1 атака",
 		"slot_count": 1
 	},
 	ItemType.ABILITY_PLUS_MOVE: {
@@ -36,8 +25,7 @@ const ITEMS = {
 		"description": "Навык +1 перемещение",
 		"cost": 2,
 		"weight": 3.0,
-		"block_type": BlockType.ABILITY,
-		"ability_name": "+1 движ.",
+		"block_text": "+1 движ.",
 		"slot_count": 1
 	},
 	ItemType.ABILITY_PLUS_HEAL: {
@@ -45,8 +33,7 @@ const ITEMS = {
 		"description": "Навык +1 лечение",
 		"cost": 5,
 		"weight": 2.0,
-		"block_type": BlockType.ABILITY,
-		"ability_name": "+1 леч.",
+		"block_text": "+1 леч.",
 		"slot_count": 1
 	},
 	ItemType.ABILITY_PLUS_DEFENSE: {
@@ -54,8 +41,7 @@ const ITEMS = {
 		"description": "Навык +1 защита",
 		"cost": 3,
 		"weight": 2.5,
-		"block_type": BlockType.ABILITY,
-		"ability_name": "+1 защита",
+		"block_text": "+1 защита",
 		"slot_count": 1
 	},
 	ItemType.LOOP_2_TIMES: {
@@ -63,8 +49,7 @@ const ITEMS = {
 		"description": "Цикл на 2 повторения",
 		"cost": 6,
 		"weight": 2.0,
-		"block_type": BlockType.LOOP,
-		"loop_name": "Повторить 2 раз",
+		"block_text": "Повторить 2 раз",
 		"slot_count": 2
 	},
 	ItemType.LOOP_3_TIMES: {
@@ -72,18 +57,8 @@ const ITEMS = {
 		"description": "Цикл на 3 повторения",
 		"cost": 8,
 		"weight": 1.0,
-		"block_type": BlockType.LOOP,
-		"loop_name": "Повторить 3 раз",
+		"block_text": "Повторить 3 раз",
 		"slot_count": 2
-	},
-	ItemType.CONDITION_BELOW_HALF_HP: {
-		"icon": "res://sprites/below_half_hp.png",
-		"description": "Условие здоровье < 50%",
-		"cost": 3,
-		"weight": 3.0,
-		"block_type": BlockType.CONDITION,
-		"condition_name": "здоровье < 50%",
-		"slot_count": 3
 	}
 }
 
@@ -93,43 +68,17 @@ const TEXT_TO_ITEM_TYPE = {
 	"+1 атака": ItemType.ABILITY_PLUS_ATTACK,
 	"+1 движ.": ItemType.ABILITY_PLUS_MOVE,
 	"+1 леч.": ItemType.ABILITY_PLUS_HEAL,
-	"+1 защита": ItemType.ABILITY_PLUS_DEFENSE,
-	"здоровье < 50%": ItemType.CONDITION_BELOW_HALF_HP
+	"+1 защита": ItemType.ABILITY_PLUS_DEFENSE
 }
 
-# Цвета и префиксы для блоков
-const BLOCK_CONFIGS = {
-	BlockType.CONDITION: {
-		"prefix": "Если ",
-		"color": Color.YELLOW,
-		"icon": "res://sprites/condition.png"
-	},
-	BlockType.LOOP: {
-		"prefix": "Повторить ",
-		"color": Color.CHOCOLATE,
-		"icon": "res://sprites/loop.png"
-	},
-	BlockType.ABILITY: {
-		"prefix": "Улучшить ",
-		"color": Color.TURQUOISE,
-		"icon": "res://sprites/ability.png"
-	},
-	BlockType.NONE: {
-		"prefix": "none ",
-		"color": Color.WHITE,
-		"icon": ""
-	}
-}
-
-# Награды за испытания (могут включать абстрактные блоки)
+# Награды за испытания
 const CHALLENGE_REWARDS = [
 	ItemType.ABILITY_PLUS_ATTACK,
 	ItemType.ABILITY_PLUS_MOVE,
 	ItemType.ABILITY_PLUS_HEAL,
 	ItemType.ABILITY_PLUS_DEFENSE,
 	ItemType.LOOP_2_TIMES,
-	ItemType.LOOP_3_TIMES,
-	ItemType.CONDITION_BELOW_HALF_HP
+	ItemType.LOOP_3_TIMES
 ]
 
 # Получить список наград за испытания
@@ -166,11 +115,11 @@ func get_item_icon(item_type: int) -> String:
 		return ITEMS[item_type]["icon"]
 	return ""
 
-# Получить тип блока для предмета-блока
-func get_block_type(item_type: int) -> int:
-	if item_type in ITEMS and "block_type" in ITEMS[item_type]:
-		return ITEMS[item_type]["block_type"]
-	return -1
+# Получить текст блока для предмета
+func get_block_text(item_type: int) -> String:
+	if item_type in ITEMS and "block_text" in ITEMS[item_type]:
+		return ITEMS[item_type]["block_text"]
+	return ""
 
 # Получить название способности для предмета-способности
 func get_ability_name(item_type: int) -> String:
@@ -201,12 +150,6 @@ func get_slot_count(block_type: int, text: String) -> int:
 			return ITEMS[item_type]['slot_count']
 	return 0
 
-# Получить конфигурацию блока
-func get_block_config(block_type: int) -> Dictionary:
-	if block_type in BLOCK_CONFIGS:
-		return BLOCK_CONFIGS[block_type]
-	return {}
-
 # Получить название предмета по типу элемента (для поиска соответствия)
 func get_ability_name_for_item_type(item_type: int) -> String:
 	match item_type:
@@ -218,11 +161,14 @@ func get_ability_name_for_item_type(item_type: int) -> String:
 			return "+1 леч."
 		ItemType.ABILITY_PLUS_DEFENSE:
 			return "+1 защита"
-		ItemType.CONDITION_BELOW_HALF_HP:
-			return "здоровье < 50%"
 		ItemType.LOOP_2_TIMES:
 			return "Повторить 2 раз"
 		ItemType.LOOP_3_TIMES:
 			return "Повторить 3 раз" 
 		_:
 			return ""
+			
+func get_slot_count_by_item_type(item_type: int) -> int:
+	if item_type in ITEMS and "slot_count" in ITEMS[item_type]:
+		return ITEMS[item_type]["slot_count"]
+	return 1  # По умолчанию 1 слот

@@ -2,6 +2,8 @@ extends Node
 
 signal points_changed
 signal coins_changed
+signal inventory_changed  # Для покупки новых блоков
+signal block_availability_changed  # Для изменения доступности блоков
 
 var points: Dictionary = {
 	Command.TypeCommand.MOVE: 10,
@@ -13,7 +15,7 @@ var points: Dictionary = {
 var coins: int = 0
 var remaining_points: Dictionary = {}
 
-# Block system
+# Block system - теперь работает только с текстом блоков
 var purchased_blocks: Array[Dictionary] = []
 var next_block_id: int = 0
 
@@ -62,23 +64,23 @@ func spend_coins(amount: int) -> bool:
 		return true
 	return false
 
-# Block management
+# Block management - упрощенная система без типов
 func generate_block_id() -> String:
 	var id = "block_" + str(next_block_id)
 	next_block_id += 1
 	return id
 
-func purchase_block(block_type: int, block_text: String, count: int = 1) -> void:
+func purchase_block(block_text: String, count: int = 1) -> void:
 	for i in range(count):
 		var new_block = {
 			"id": generate_block_id(),
-			"type": block_type,
 			"text": block_text,
 			"used": false
 		}
 		purchased_blocks.append(new_block)
 	
 	points_changed.emit()
+	inventory_changed.emit()  # Только при покупке
 
 func can_use_block_by_id(block_id: String) -> bool:
 	for block in purchased_blocks:
@@ -91,6 +93,7 @@ func use_block(block_id: String) -> bool:
 		if block.id == block_id and not block.used:
 			block.used = true
 			points_changed.emit()
+			block_availability_changed.emit()  # Отдельный сигнал для доступности
 			return true
 	return false
 
@@ -99,56 +102,50 @@ func release_block(block_id: String) -> void:
 		if block.id == block_id and block.used:
 			block.used = false
 			points_changed.emit()
+			block_availability_changed.emit()  # Отдельный сигнал для доступности
 			return
 
 func reset_all_blocks() -> void:
 	for block in purchased_blocks:
 		block.used = false
 	points_changed.emit()
+	block_availability_changed.emit()  # Отдельный сигнал для доступности
 
 func get_all_purchased_blocks() -> Array:
 	return purchased_blocks.duplicate()
 
-# Legacy compatibility functions
-func purchase_ability(ability_name: String, count: int = 1) -> void:
-	purchase_block(ItemData.BlockType.ABILITY, ability_name, count)
-
-func purchase_condition(condition_name: String, count: int = 1) -> void:
-	purchase_block(ItemData.BlockType.CONDITION, condition_name, count)
-
-func purchase_loop(loop_name: String, count: int = 1) -> void:
-	purchase_block(ItemData.BlockType.LOOP, loop_name, count)
-
-func purchase_item(item_type: int, count: int = 1) -> void:
-	var ability_name = ItemData.get_ability_name(item_type)
-	var condition_name = ItemData.get_condition_name(item_type)
-	var loop_name = ItemData.get_loop_name(item_type)
-	
-	if ability_name != "":
-		purchase_ability(ability_name, count)
-	elif condition_name != "":
-		purchase_condition(condition_name, count)
-	elif loop_name != "":
-		purchase_loop(loop_name, count)
-
-# Legacy aliases
-func reset_remaining_blocks() -> void:
-	reset_all_blocks()
-
-func can_use_block(block_type: int, block_text: String = "") -> bool:
-	if block_text == "":
-		for block in purchased_blocks:
-			if block.type == block_type and not block.used:
-				return true
-		return false
-	
+# Проверка доступности блока по тексту
+func can_use_block(block_text: String) -> bool:
 	for block in purchased_blocks:
-		if block.type == block_type and block.text == block_text and not block.used:
+		if block.text == block_text and not block.used:
 			return true
 	return false
 
-func find_available_block(block_type: int, block_text: String) -> Dictionary:
+# Поиск доступного блока по тексту
+func find_available_block(block_text: String) -> Dictionary:
 	for block in purchased_blocks:
-		if block.type == block_type and block.text == block_text and not block.used:
+		if block.text == block_text and not block.used:
 			return block
 	return {}
+
+# Получить количество доступных блоков определенного типа
+func get_available_block_count(block_text: String) -> int:
+	var count = 0
+	for block in purchased_blocks:
+		if block.text == block_text and not block.used:
+			count += 1
+	return count
+
+# Получить общее количество блоков определенного типа (включая использованные)
+func get_total_block_count(block_text: String) -> int:
+	var count = 0
+	for block in purchased_blocks:
+		if block.text == block_text:
+			count += 1
+	return count
+
+# Compatibility functions for ItemData integration
+func purchase_item(item_type: int, count: int = 1) -> void:
+	var block_text = ItemData.get_block_text(item_type)
+	if block_text != "":
+		purchase_block(block_text, count)

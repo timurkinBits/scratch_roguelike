@@ -1,4 +1,3 @@
-# Изменения в turn_executor.gd
 extends Node
 class_name TurnExecutor
 
@@ -39,25 +38,19 @@ func _on_button_pressed() -> void:
 
 ## Выполнение всех фаз хода
 func _execute_turn_phases() -> void:
-	# Фаза 1: Выполнение начальных условий
-	if !await _process_turn_phase("начало хода"): return
+	# Фаза 1: Выполнение блоков "начало хода"
+	if !await _execute_start_turn(): return
 	
-	# Фаза 2: Проверка общих условий
-	if !await _process_generic_conditions(): return
-	
-	# Фаза 3: Выполнение основных команд
+	# Фаза 2: Очистка основных команд
 	if !await _clear_main_commands(): return
 	
-	# Фаза 4: Ход врагов
+	# Фаза 3: Ход врагов
 	if !await _process_enemy_turns(): return
 	
-	# Фаза 5: Финальная проверка условий
-	if !await _process_generic_conditions(): return
-	
-	# Фаза 6: Очистка всех команд
+	# Фаза 4: Очистка всех команд
 	if !await _clear_all(): return
 	
-	# Фаза 7: Подготовка к следующему ходу
+	# Фаза 5: Подготовка к следующему ходу
 	await _prepare_next_turn()
 
 ## Отключение всех интерактивных элементов
@@ -70,14 +63,9 @@ func _turn_interactions(turn: bool) -> void:
 	else:
 		table.modulate = Color(table.modulate, 0.5)
 
-## Обработка фазы хода с определенным триггером
-func _process_turn_phase(trigger_time: String) -> bool:
-	await block_executor.check_and_execute_conditions(trigger_time)
-	return is_instance_valid(player)
-
-## Обработка общих условий
-func _process_generic_conditions() -> bool:
-	await block_executor.check_and_execute_conditions("")
+## Выполнение блоков "начало хода"
+func _execute_start_turn() -> bool:
+	await block_executor.execute_start_turn_blocks()
 	return is_instance_valid(player)
 
 ## Обработка ходов всех врагов

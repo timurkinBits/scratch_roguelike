@@ -8,9 +8,7 @@ var outline_panels: Array[Node] = []
 @onready var command_executor: CommandExecutor = $"../CommandExecutor"
 
 func clear_start_turn_commands_preserve_blocks(start_turn_block: Block) -> void:
-	if not is_instance_valid(start_turn_block) or \
-	   start_turn_block.type != ItemData.BlockType.CONDITION or \
-	   start_turn_block.text != "начало хода":
+	if not is_instance_valid(start_turn_block) or start_turn_block.text != "начало хода":
 		return
 	
 	# Шаг 1: Собираем команды для удаления
@@ -34,35 +32,20 @@ func clear_start_turn_commands_preserve_blocks(start_turn_block: Block) -> void:
 	
 	# Шаг 3: Обновляем слоты с сохранением блоков
 	start_turn_block.slot_manager.update_slots()
+
+## Execute start turn blocks
+func execute_start_turn_blocks() -> bool:
+	var start_turn_blocks = get_tree().get_nodes_in_group("blocks").filter(
+		func(block): return is_instance_valid(block) and block.text == "начало хода")
 	
-	
-## Check and execute condition blocks
-func check_and_execute_conditions(trigger_time: String) -> bool:
-	var condition_blocks = get_tree().get_nodes_in_group("blocks").filter(
-		func(block): return is_instance_valid(block) and block.type == ItemData.BlockType.CONDITION)
-	
-	for block in condition_blocks:
+	for block in start_turn_blocks:
 		if not is_instance_valid(block):
 			continue
-		var should_execute = trigger_time != "" if block.text == trigger_time else \
-		block.text != "начало хода" and check_condition(block.text)
-		
-		if should_execute:
-			await execute_block(block)
-			if !is_instance_valid(player):
-				return false
+		await execute_block(block)
+		if !is_instance_valid(player):
+			return false
 	
 	return true
-
-## Check if a condition is met
-func check_condition(condition: String) -> bool:
-	match condition:
-		"начало хода":
-			return true
-		"здоровье < 50%":
-			return is_instance_valid(player) and player.hp < 5
-		_:
-			return false
 
 ## Execute a block of commands
 func execute_block(block: Block) -> void:
@@ -72,12 +55,20 @@ func execute_block(block: Block) -> void:
 	# Create visual execution indicator
 	var outline = create_outline_panel(block)
 	
-	# Determine iterations (for loops)
-	var iterations = max(1, block.loop_count) if (block.type == ItemData.BlockType.LOOP) else 1
+	# Determine iterations and properties based on block text
+	var iterations = 1
+	var additional_properties = ""
 	
-	# Apply ability properties
-	if block.type == ItemData.BlockType.ABILITY:
-		_apply_ability_properties(block)
+	if block._is_loop_block():
+		if block.text == "Повторить 2 раз":
+			iterations = 2
+		elif block.text == "Повторить 3 раз":
+			iterations = 3
+		else:
+			iterations = max(1, block.loop_count)
+	elif not block._is_start_turn_block():
+		# Это навык - применяем свойства к командам
+		additional_properties = block.text
 	
 	# Execute iterations
 	for i in iterations:
@@ -92,6 +83,9 @@ func execute_block(block: Block) -> void:
 			if slot.command is Block:
 				await execute_block(slot.command)
 			elif slot.command is Command:
+				# Apply ability properties if this is an ability block
+				if additional_properties != "":
+					slot.command.additional_properties = additional_properties
 				await command_executor.execute_command(slot.command)
 		
 		# Delay between loop iterations
@@ -100,12 +94,6 @@ func execute_block(block: Block) -> void:
 	
 	# Remove indicator
 	remove_outline(outline)
-
-## Apply ability properties to commands
-func _apply_ability_properties(block: Block) -> void:
-	for slot in block.slot_manager.slots:
-		if slot.command is Command:
-			slot.command.additional_properties = block.text
 
 ## Create visual execution indicator
 func create_outline_panel(node: Node2D) -> Panel:
@@ -148,9 +136,7 @@ func clear_main_commands() -> void:
 		return
 	
 	var start_turn_blocks = get_tree().get_nodes_in_group("blocks").filter(
-		func(block): return is_instance_valid(block) and \
-					  block.type == ItemData.BlockType.CONDITION and \
-					  block.text == "начало хода")
+		func(block): return is_instance_valid(block) and block.text == "начало хода")
 	
 	for block in start_turn_blocks:
 		await clear_start_turn_commands_preserve_blocks(block)
@@ -202,13 +188,10 @@ func clear_commands(commands_to_free: Array) -> void:
 			command.queue_free()
 
 func clear_all() -> void:
-	
 	# Обрабатываем блоки "начало хода"
 	if is_inside_tree():
 		var start_turn_blocks = get_tree().get_nodes_in_group("blocks").filter(
-			func(block): return is_instance_valid(block) and \
-						  block.type == ItemData.BlockType.CONDITION and \
-						  block.text == "начало хода")
+			func(block): return is_instance_valid(block) and block.text == "начало хода")
 		for block in start_turn_blocks:
 			await clear_start_turn_commands_preserve_blocks(block)
 	
@@ -217,7 +200,7 @@ func clear_all() -> void:
 	var blocks_to_update = []
 	if is_inside_tree():
 		for block in get_tree().get_nodes_in_group("blocks"):
-			if !is_instance_valid(block) or block.type == ItemData.BlockType.CONDITION:
+			if !is_instance_valid(block) or block.text == "начало хода":
 				continue
 			for slot in block.slot_manager.slots:
 				if !is_instance_valid(slot) or !is_instance_valid(slot.command):
@@ -244,7 +227,7 @@ func clear_all() -> void:
 	update_root_blocks()
 
 func _collect_commands_from_block(block: Block, commands: Array, blocks_to_update: Array) -> void:
-	if !is_instance_valid(block) or block.type == ItemData.BlockType.CONDITION:
+	if !is_instance_valid(block) or block.text == "начало хода":
 		return
 	
 	var had_commands = false

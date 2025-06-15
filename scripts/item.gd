@@ -26,12 +26,12 @@ func generate_challenge_reward() -> void:
 	# Получаем случайную награду из списка наград за испытания
 	var challenge_rewards = ItemData.get_challenge_rewards()
 	if challenge_rewards.is_empty():
-		generate_random_type()  # Если список наград пуст, используем обычную генерацию
+		generate_random_type()
 		return
 	
 	# Выбираем случайную награду
 	challenge_rewards.shuffle()
-	type = challenge_rewards[0]  # Берем первый элемент из перемешанного списка
+	type = challenge_rewards[0]
 
 # Выбор случайного типа на основе весов вероятности
 func generate_random_type() -> void:
@@ -58,26 +58,9 @@ func get_available_item_weights() -> Dictionary:
 	var available_weights = {}
 	
 	for item_type in ItemData.ITEMS:
-		if should_include_item_type(item_type):
-			available_weights[item_type] = ItemData.get_item_weight(item_type)
+		available_weights[item_type] = ItemData.get_item_weight(item_type)
 	
 	return available_weights
-
-# Определить, следует ли включить тип предмета
-func should_include_item_type(item_type: int) -> bool:
-	# Получаем текст блока для данного типа предмета
-	var block_text = ItemData.get_ability_name_for_item_type(item_type)
-	if block_text == "":
-		return false
-	
-	# Получаем тип блока
-	var block_type = ItemData.get_block_type(item_type)
-	if block_type == -1:
-		return false
-	
-	# Всегда разрешаем покупку блоков для получения дополнительных использований
-	# В новой системе каждый блок - отдельный экземпляр
-	return true
 
 func use():
 	# Проверяем, хватает ли денег
@@ -89,7 +72,7 @@ func use():
 	# Покупаем предмет
 	Global.spend_coins(cost)
 	
-	# Обрабатываем покупку
+	# Обрабатываем покупку - добавляем блок в инвентарь
 	process_purchase()
 	
 	# Показываем сообщение
@@ -105,24 +88,26 @@ func show_info_message(message: String, duration: float) -> void:
 	await get_tree().create_timer(duration).timeout
 	info.text = ''
 
-# Обработка покупки в зависимости от типа предмета
+# Обработка покупки - добавление блока в инвентарь через Global
 func process_purchase() -> void:
-	var block_text = ItemData.get_ability_name_for_item_type(type)
-	var block_type = ItemData.get_block_type(type)
+	var block_text = ItemData.get_block_text(type)
 	
-	if block_text != "" and block_type != -1:
-		# Используем новую систему блоков с уникальными ID
-		Global.purchase_block(block_type, block_text, 1)
+	if block_text != "":
+		# Добавляем блок в глобальный инвентарь (Global.purchased_blocks)
+		Global.purchase_block(block_text, 1)
+		
+		# Создаем блок на столе
+		var table = get_tree().get_first_node_in_group("table")
+		if table:
+			table.create_purchased_block(block_text)
 
 func _on_area_2d_mouse_entered() -> void:
 	info.get_node("ColorRect").visible = true
 	info.text = ItemData.get_item_description(type)
 	
-	var block_text = ItemData.get_ability_name_for_item_type(type)
-	var block_type = ItemData.get_block_type(type)
-	
-	if block_text != "" and block_type != -1:
-		var slot_count = ItemData.get_slot_count(block_type, block_text)
+	var block_text = ItemData.get_block_text(type)
+	if block_text != "":
+		var slot_count = ItemData.get_slot_count_by_item_type(type)
 		info.text += "\nСлотов: " + str(slot_count)
 	
 	info.text += "\nЦена: " + str(ItemData.get_item_cost(type))
