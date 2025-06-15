@@ -1,0 +1,354 @@
+[gd_scene load_steps=39 format=3 uid="uid://x83t6t456pdf"]
+
+[ext_resource type="PackedScene" uid="uid://pllgtdsxxw2s" path="res://scenes/table.tscn" id="1_2gx6p"]
+[ext_resource type="Script" uid="uid://bs0f6ystj1uo2" path="res://scripts/table.gd" id="2_wk856"]
+[ext_resource type="PackedScene" uid="uid://bti8fmdpm8cgl" path="res://scenes/block.tscn" id="3_jfkan"]
+[ext_resource type="PackedScene" uid="uid://ds71pq7djg3au" path="res://scenes/room.tscn" id="4_r2l36"]
+[ext_resource type="Script" uid="uid://df21f7ju361lo" path="res://scripts/turn_executor.gd" id="5_a1joa"]
+[ext_resource type="PackedScene" uid="uid://dfndr3lvfsah5" path="res://scenes/player.tscn" id="5_k4xvw"]
+[ext_resource type="PackedScene" uid="uid://befuuhuf4myhq" path="res://scenes/command_menu.tscn" id="5_wp0k4"]
+[ext_resource type="Script" uid="uid://b530cyrpyg4y3" path="res://scripts/block_executor.gd" id="5_yxlcp"]
+[ext_resource type="Script" uid="uid://bs1btpaev6mlm" path="res://scripts/command_executor.gd" id="6_ebg2g"]
+[ext_resource type="PackedScene" uid="uid://b405a6pxtd1vg" path="res://scenes/Enemy.tscn" id="8_uc31q"]
+[ext_resource type="PackedScene" uid="uid://cwvs5ft5785x8" path="res://scenes/block_menu.tscn" id="8_xa025"]
+[ext_resource type="PackedScene" uid="uid://kolp0x0ucfeh" path="res://scenes/defense_bar.tscn" id="9_lhr70"]
+[ext_resource type="PackedScene" uid="uid://d3hruys1lpbf3" path="res://scenes/wall.tscn" id="9_qmy6f"]
+[ext_resource type="Script" uid="uid://jcjkaqukp4lb" path="res://scripts/ui.gd" id="9_wp0k4"]
+[ext_resource type="Script" uid="uid://b46fjemq5kbto" path="res://scripts/edit_mode.gd" id="10_ft6cd"]
+[ext_resource type="PackedScene" uid="uid://b1n1mnvax3cup" path="res://scenes/hp_bar.tscn" id="10_wp0k4"]
+[ext_resource type="PackedScene" uid="uid://bfbsx0uvdydab" path="res://scenes/door.tscn" id="11_bb450"]
+[ext_resource type="Texture2D" uid="uid://dnml5jw2a8wx" path="res://sprites/info.png" id="12_2ofn6"]
+[ext_resource type="Texture2D" uid="uid://cni2isbjoq12d" path="res://sprites/Tileset.png" id="12_nfivy"]
+[ext_resource type="Script" uid="uid://okdqbifhl0ui" path="res://scripts/enemy_stats.gd" id="13_3p2gp"]
+[ext_resource type="Texture2D" uid="uid://djwyqrfy3bdly" path="res://sprites/32x32.png" id="13_cvmbd"]
+[ext_resource type="PackedScene" uid="uid://cqa3vxgvdii24" path="res://scenes/heal_point.tscn" id="13_mwfav"]
+[ext_resource type="Texture2D" uid="uid://tnindadpwhan" path="res://sprites/ability.png" id="17_36rkl"]
+[ext_resource type="PackedScene" uid="uid://cbd5bhmk60s5o" path="res://scenes/item.tscn" id="17_xa025"]
+
+[sub_resource type="GDScript" id="GDScript_xa025"]
+script/source = "extends ObjectRoom
+class_name Info
+
+
+@onready var key_edit: LineEdit = $LineEdit
+
+var key: int = 0
+var linked_item: Item  # Прямая ссылка на связанный предмет
+
+func _ready() -> void:
+	super._ready()
+	add_to_group('info')
+	key_edit.visible = false
+	key_edit.text = \"\"
+	call_deferred(\"find_and_link_item\")  # Найти и связаться с предметом после того, как сцена полностью загрузится
+
+# Поиск и связывание с предметом по ключу
+func find_and_link_item() -> void:
+	if key > 0 and !linked_item:
+		for item in get_tree().get_nodes_in_group('items'):
+			if item.key == key:
+				link_with_item(item)
+				break
+
+# Установка связи с предметом
+func link_with_item(item: Item) -> void:
+	if !linked_item:  # Проверка что связь устанавливается только один раз
+		linked_item = item
+		item.link_with_info(self)  # Обратная связь
+
+
+
+func _on_line_edit_text_submitted(_new_text: String) -> void:
+	key = key_edit.text.to_int()
+	key_edit.visible = false
+	var edit_mode = get_tree().get_first_node_in_group(\"edit_mode\")
+	if edit_mode:
+		edit_mode.is_editing_key = false
+	
+	# После изменения ключа пытаемся найти и привязаться к предмету
+	linked_item = null  # Сбрасываем текущую связь
+	find_and_link_item()  # Ищем предмет по новому ключу
+"
+
+[sub_resource type="PackedScene" id="PackedScene_36rkl"]
+_bundled = {
+"conn_count": 1,
+"conns": PackedInt32Array(1073741827, 1073741826, 14, 13, 2, 0, 0),
+"editable_instances": [],
+"names": PackedStringArray("Info", "Node2D", "scale", "script", "Sprite2D", "Sprite2D", "texture", "LineEdit", "LineEdit", "offset_right", "offset_bottom", "max_length", "context_menu_enabled", "_on_line_edit_text_submitted", "text_submitted"),
+"node_count": 3,
+"node_paths": [NodePath("."), NodePath("."), NodePath("."), NodePath("LineEdit")],
+"nodes": PackedInt32Array(-1, -1, 1, 0, -1, 2, 2, 0, 3, 1, 0, 1073741824, 0, 5, 4, -1, 1, 6, 2, 0, 1073741825, 0, 8, 7, -1, 4, 9, 3, 10, 4, 11, 5, 12, 6, 0),
+"variants": [Vector2(1.06871, 1.06871), SubResource("GDScript_xa025"), ExtResource("12_2ofn6"), 68.5625, 31.0, 1, false],
+"version": 3
+}
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_2ofn6"]
+atlas = ExtResource("12_nfivy")
+region = Rect2(96, 64, 16, 16)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_xa025"]
+size = Vector2(42.7482, 42.7482)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_36rkl"]
+atlas = ExtResource("12_nfivy")
+region = Rect2(112, 64, 16, 16)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_fs0b5"]
+size = Vector2(42.7483, 42.7482)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_e2s0e"]
+size = Vector2(31.2195, 33.6842)
+
+[sub_resource type="InputEventKey" id="InputEventKey_u50so"]
+device = -1
+keycode = 32
+unicode = 32
+
+[sub_resource type="Shortcut" id="Shortcut_gdhsm"]
+events = [SubResource("InputEventKey_u50so")]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ft6cd"]
+atlas = ExtResource("13_cvmbd")
+region = Rect2(224, 1312, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_bb450"]
+atlas = ExtResource("13_cvmbd")
+region = Rect2(64, 1312, 32, 32)
+
+[sub_resource type="LabelSettings" id="LabelSettings_ebg2g"]
+font_size = 22
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_xa025"]
+atlas = ExtResource("13_cvmbd")
+region = Rect2(128, 256, 32, 32)
+
+[sub_resource type="LabelSettings" id="LabelSettings_q8u5g"]
+font_size = 83
+
+[node name="Main" type="Node2D"]
+metadata/_edit_horizontal_guides_ = [-43.0]
+
+[node name="Table" parent="." groups=["table"] instance=ExtResource("1_2gx6p")]
+position = Vector2(189, 50)
+script = ExtResource("2_wk856")
+
+[node name="Block" parent="Table" instance=ExtResource("3_jfkan")]
+position = Vector2(186, 14)
+text = "начало хода"
+
+[node name="TurnExecutor" type="Node" parent="Table" node_paths=PackedStringArray("ui_node", "room")]
+script = ExtResource("5_a1joa")
+ui_node = NodePath("../../UI")
+room = NodePath("../../Room")
+
+[node name="BlockExecutor" type="Node" parent="Table/TurnExecutor"]
+script = ExtResource("5_yxlcp")
+
+[node name="CommandExecutor" type="Node" parent="Table/TurnExecutor"]
+script = ExtResource("6_ebg2g")
+
+[node name="CommandMenu" parent="Table" instance=ExtResource("5_wp0k4")]
+position = Vector2(-151, 4)
+
+[node name="block_menu" parent="Table" instance=ExtResource("8_xa025")]
+position = Vector2(-181, 184)
+
+[node name="Room" parent="." instance=ExtResource("4_r2l36")]
+position = Vector2(531, 117)
+scale = Vector2(0.935711, 0.935711)
+enemy_scene = ExtResource("8_uc31q")
+wall_scene = ExtResource("9_qmy6f")
+door_scene = ExtResource("11_bb450")
+info_scene = SubResource("PackedScene_36rkl")
+item_scene = ExtResource("17_xa025")
+allow_layout_editing = true
+normal_room_chance = 50
+shop_room_chance = 30
+
+[node name="Player" parent="Room" instance=ExtResource("5_k4xvw")]
+position = Vector2(360.154, 501.223)
+scale = Vector2(2.5, 2.5)
+
+[node name="EditModeManager" type="Node2D" parent="Room"]
+script = ExtResource("10_ft6cd")
+
+[node name="edit_label" type="Label" parent="Room/EditModeManager"]
+offset_left = 65.191
+offset_top = -119.695
+offset_right = 579.191
+offset_bottom = -96.6951
+text = "Режим редактирования выключен (нажмите E для включения)"
+
+[node name="layout_label" type="Label" parent="Room/EditModeManager"]
+offset_left = 413.589
+offset_top = -67.3285
+offset_right = 453.589
+offset_bottom = -44.3285
+
+[node name="ObjectMenu" type="Node2D" parent="Room/EditModeManager"]
+visible = false
+
+[node name="Wall" type="Sprite2D" parent="Room/EditModeManager/ObjectMenu"]
+position = Vector2(25.8748, -13.6673)
+scale = Vector2(2.7, 2.7)
+texture = SubResource("AtlasTexture_2ofn6")
+
+[node name="Wall_button" type="Area2D" parent="Room/EditModeManager/ObjectMenu/Wall"]
+position = Vector2(7.93109, -1.96658)
+scale = Vector2(0.37037, 0.37037)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Room/EditModeManager/ObjectMenu/Wall/Wall_button"]
+position = Vector2(-22.4827, 5.30977)
+shape = SubResource("RectangleShape2D_xa025")
+
+[node name="Door" type="Sprite2D" parent="Room/EditModeManager/ObjectMenu"]
+position = Vector2(25.8748, 33.3558)
+scale = Vector2(2.7, 2.7)
+texture = SubResource("AtlasTexture_36rkl")
+
+[node name="Door_button" type="Area2D" parent="Room/EditModeManager/ObjectMenu/Door"]
+scale = Vector2(0.37037, 0.37037)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Room/EditModeManager/ObjectMenu/Door/Door_button"]
+shape = SubResource("RectangleShape2D_fs0b5")
+
+[node name="Item" type="Sprite2D" parent="Room/EditModeManager/ObjectMenu"]
+position = Vector2(25.6489, 79.0842)
+scale = Vector2(1.36928, 1.26909)
+texture = ExtResource("17_36rkl")
+
+[node name="ItemButton" type="Area2D" parent="Room/EditModeManager/ObjectMenu/Item"]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Room/EditModeManager/ObjectMenu/Item/ItemButton"]
+position = Vector2(-0.390228, 0.842117)
+shape = SubResource("RectangleShape2D_e2s0e")
+
+[node name="UI" type="Control" parent="." node_paths=PackedStringArray("player", "player_bars", "command_menu")]
+layout_mode = 3
+anchors_preset = 0
+offset_left = 1155.0
+offset_top = 655.0
+offset_right = 1471.0
+offset_bottom = 707.0
+mouse_filter = 2
+script = ExtResource("9_wp0k4")
+player = NodePath("../Room/Player")
+player_bars = NodePath("PlayerBars")
+command_menu = NodePath("../Table/CommandMenu")
+metadata/_edit_use_anchors_ = true
+
+[node name="Button" type="Button" parent="UI"]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = -3.05649
+anchor_top = -0.865231
+anchor_right = -1.80735
+anchor_bottom = -0.115077
+offset_left = -0.147949
+offset_top = -0.00799561
+offset_right = 0.124008
+offset_bottom = -0.0160007
+shortcut = SubResource("Shortcut_gdhsm")
+text = "Запуск"
+metadata/_edit_use_anchors_ = true
+
+[node name="PlayerBars" type="Control" parent="UI"]
+layout_mode = 1
+anchor_left = -0.810127
+anchor_top = -11.25
+anchor_right = -0.810127
+anchor_bottom = -11.25
+offset_right = 40.0
+offset_bottom = 40.0
+mouse_filter = 2
+metadata/_edit_use_anchors_ = true
+
+[node name="defense_bar" parent="UI/PlayerBars" instance=ExtResource("9_lhr70")]
+offset_left = -778.0
+offset_top = -70.0001
+offset_right = -264.0
+offset_bottom = -44.0001
+scale = Vector2(0.9, 1)
+mouse_filter = 2
+
+[node name="hp_bar" parent="UI/PlayerBars" instance=ExtResource("10_wp0k4")]
+offset_left = -778.0
+offset_top = -47.0001
+offset_right = -264.0
+offset_bottom = -21.0001
+scale = Vector2(0.9, 1)
+mouse_filter = 2
+
+[node name="TextureRect" type="TextureRect" parent="UI/PlayerBars"]
+layout_mode = 0
+offset_left = -803.0
+offset_top = -72.0
+offset_right = -771.0
+offset_bottom = -40.0
+scale = Vector2(0.821996, 0.821996)
+texture = SubResource("AtlasTexture_ft6cd")
+
+[node name="TextureRect2" type="TextureRect" parent="UI/PlayerBars"]
+layout_mode = 0
+offset_left = -804.0
+offset_top = -47.0001
+offset_right = -772.0
+offset_bottom = -15.0001
+scale = Vector2(0.822, 0.822)
+texture = SubResource("AtlasTexture_bb450")
+
+[node name="CoinLabel" type="Label" parent="UI/PlayerBars"]
+layout_mode = 0
+offset_left = -859.0
+offset_top = -62.0
+offset_right = -819.0
+offset_bottom = -31.0
+text = "0"
+label_settings = SubResource("LabelSettings_ebg2g")
+
+[node name="TextureRect3" type="TextureRect" parent="UI/PlayerBars"]
+layout_mode = 0
+offset_left = -893.0
+offset_top = -62.0
+offset_right = -853.0
+offset_bottom = -22.0
+scale = Vector2(0.8, 0.8)
+texture = SubResource("AtlasTexture_xa025")
+
+[node name="EnemyStats" type="Control" parent="UI"]
+layout_mode = 1
+anchor_left = -2.07278
+anchor_top = -10.4615
+anchor_right = -2.07278
+anchor_bottom = -10.4615
+offset_left = 516.0
+offset_top = -34.0
+offset_right = 556.0
+offset_bottom = 6.0
+mouse_filter = 2
+script = ExtResource("13_3p2gp")
+hp_scene = ExtResource("13_mwfav")
+metadata/_edit_use_anchors_ = true
+
+[node name="heal_points" type="Control" parent="UI/EnemyStats"]
+anchors_preset = 0
+offset_left = -34.0
+offset_top = 3.0
+offset_right = -34.0
+offset_bottom = 3.0
+mouse_filter = 2
+
+[node name="DefeatLabel" type="Label" parent="UI"]
+visible = false
+layout_mode = 0
+offset_left = -563.0
+offset_top = -431.0
+offset_right = -10.0
+offset_bottom = -317.0
+text = "Поражение..."
+label_settings = SubResource("LabelSettings_q8u5g")
+
+[connection signal="input_event" from="Room/EditModeManager/ObjectMenu/Wall/Wall_button" to="Room/EditModeManager" method="_on_wall_button_input_event"]
+[connection signal="input_event" from="Room/EditModeManager/ObjectMenu/Door/Door_button" to="Room/EditModeManager" method="_on_door_button_input_event"]
+[connection signal="input_event" from="Room/EditModeManager/ObjectMenu/Item/ItemButton" to="Room/EditModeManager" method="_on_item_button_input_event"]

@@ -52,6 +52,14 @@ const OPPOSITE_DIRECTIONS = {
 
 @onready var doors = exit_doors.get_children()
 
+var teleporter_enemy_script = preload("res://scripts/TeleporterEnemy.gd")
+var berserker_enemy_script = preload("res://scripts/BerserkerEnemy.gd")
+
+@export_group("Special Enemy Spawn Chances")
+@export_range(0, 100) var special_enemy_chance: int = 15  # Общий шанс замены врага на особого
+@export_range(0, 100) var teleporter_weight: int = 50     # Вес телепортера среди особых врагов
+@export_range(0, 100) var berserker_weight: int = 50      # Вес берсерка среди особых врагов
+
 var type: RoomType = RoomType.NORMAL
 var max_enemies: int = 3
 var min_enemies: int = 1
@@ -222,17 +230,60 @@ func spawn_enemies() -> void:
 	var enemy_count = min(randi_range(min_enemies, max_enemies), available_positions.size())
 	
 	for i in range(enemy_count):
+		# Всегда создаем базового врага
 		var enemy_instance = enemy_scene.instantiate()
+		
+		# Определяем, будет ли это особый враг
+		if should_spawn_special_enemy():
+			convert_to_special_enemy(enemy_instance)
+		
 		add_child(enemy_instance)
 		
 		var world_position = tile_map.map_to_local(available_positions[i]) * tile_map.scale
 		enemy_instance.position = world_position
 		enemy_instance.scale = Vector2(1.604, 1.604)
 	
+	# Бонусы для элитных комнат применяются ко всем врагам
 	if type == RoomType.ELITE:
 		for enemy in get_tree().get_nodes_in_group('enemies'):
 			enemy.hp += 2
 			enemy.damage += 2
+			enemy.heal_points += 2
+			
+func should_spawn_special_enemy() -> bool:
+	# Базовый шанс
+	var base_chance = special_enemy_chance
+	
+	# Увеличиваем шанс в элитных комнатах
+	if type == RoomType.ELITE:
+		base_chance += 15
+	
+	# Увеличиваем шанс в комнатах испытаний
+	if type == RoomType.CHALLENGE:
+		base_chance += 25
+	
+	# Ограничиваем максимальный шанс
+	base_chance = min(base_chance, 75)
+	print(randi() % 100 < base_chance)
+	return randi() % 100 < base_chance
+	
+func convert_to_special_enemy(enemy_instance: Node) -> void:
+	var total_weight = teleporter_weight + berserker_weight
+	
+	if total_weight == 0:
+		print("Веса особых врагов не заданы, остается обычный враг")
+		return
+	
+	var roll = randi() % total_weight
+	
+	if roll < teleporter_weight:
+		# Превращаем в телепортера
+		enemy_instance.set_script(teleporter_enemy_script)
+		print("Враг превращен в Телепортера!")
+	else:
+		# Превращаем в берсерка
+		enemy_instance.set_script(berserker_enemy_script)
+		print("Враг превращен в Берсерка!")
 
 func clear_enemies() -> void:
 	for enemy in get_tree().get_nodes_in_group("enemies"):
