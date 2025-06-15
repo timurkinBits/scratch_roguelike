@@ -63,7 +63,10 @@ func get_available_item_weights() -> Dictionary:
 	return available_weights
 
 func use():
-	# Проверяем, хватает ли денег
+	if Global.get_all_purchased_blocks().size() >= Global.max_slots:
+		show_info_message('Не хватает места!', 0.6)
+		return
+	
 	var cost = ItemData.get_item_cost(type)
 	if Global.get_coins() < cost:
 		show_info_message('Не хватает денег!', 0.6)

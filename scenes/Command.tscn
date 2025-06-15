@@ -28,8 +28,7 @@ shape = SubResource("RectangleShape2D_qfsrn")
 
 [node name="Icon" type="TextureRect" parent="."]
 z_index = 1
-offset_left = -1.0
-offset_right = 29.0
+offset_right = 30.0
 offset_bottom = 32.0
 scale = Vector2(0.626336, 0.626336)
 
@@ -49,8 +48,8 @@ mouse_filter = 2
 [node name="TextLabel" type="Label" parent="Texture"]
 texture_filter = 6
 layout_mode = 0
-offset_left = 18.0
-offset_right = 95.0
+offset_left = 21.0
+offset_right = 98.0
 offset_bottom = 23.0
 text = "атака"
 label_settings = SubResource("LabelSettings_5kyvh")

@@ -10,10 +10,11 @@ enum ItemType {
 	LOOP_3_TIMES
 }
 
-# Данные предметов (все теперь просто блоки)
+# Данные предметов (все теперь просто блоки) с индивидуальными иконками и цветами
 const ITEMS = {
 	ItemType.ABILITY_PLUS_ATTACK: {
 		"icon": "res://sprites/attack.png",
+		"color": Color.CRIMSON,  # Красный для атаки
 		"description": "Навык +1 атака",
 		"cost": 3,
 		"weight": 3.0,
@@ -22,6 +23,7 @@ const ITEMS = {
 	},
 	ItemType.ABILITY_PLUS_MOVE: {
 		"icon": "res://sprites/move.png",
+		"color": Color.DODGER_BLUE,  # Синий для движения
 		"description": "Навык +1 перемещение",
 		"cost": 2,
 		"weight": 3.0,
@@ -30,6 +32,7 @@ const ITEMS = {
 	},
 	ItemType.ABILITY_PLUS_HEAL: {
 		"icon": "res://sprites/heal.png",
+		"color": Color.LIME_GREEN,  # Зеленый для лечения
 		"description": "Навык +1 лечение",
 		"cost": 5,
 		"weight": 2.0,
@@ -38,6 +41,7 @@ const ITEMS = {
 	},
 	ItemType.ABILITY_PLUS_DEFENSE: {
 		"icon": "res://sprites/defense.png",
+		"color": Color.CADET_BLUE,  # Золотой для защиты
 		"description": "Навык +1 защита",
 		"cost": 3,
 		"weight": 2.5,
@@ -46,6 +50,7 @@ const ITEMS = {
 	},
 	ItemType.LOOP_2_TIMES: {
 		"icon": "res://sprites/loop2.png",
+		"color": Color.CORAL,  # Оранжевый для цикла x2
 		"description": "Цикл на 2 повторения",
 		"cost": 6,
 		"weight": 2.0,
@@ -54,6 +59,7 @@ const ITEMS = {
 	},
 	ItemType.LOOP_3_TIMES: {
 		"icon": "res://sprites/loop3.png",
+		"color": Color.CHOCOLATE,  # Фиолетовый для цикла x3
 		"description": "Цикл на 3 повторения",
 		"cost": 8,
 		"weight": 1.0,
@@ -115,6 +121,12 @@ func get_item_icon(item_type: int) -> String:
 		return ITEMS[item_type]["icon"]
 	return ""
 
+# Получить цвет предмета
+func get_item_color(item_type: int) -> Color:
+	if item_type in ITEMS:
+		return ITEMS[item_type]["color"]
+	return Color.WHITE
+
 # Получить текст блока для предмета
 func get_block_text(item_type: int) -> String:
 	if item_type in ITEMS and "block_text" in ITEMS[item_type]:
@@ -172,3 +184,21 @@ func get_slot_count_by_item_type(item_type: int) -> int:
 	if item_type in ITEMS and "slot_count" in ITEMS[item_type]:
 		return ITEMS[item_type]["slot_count"]
 	return 1  # По умолчанию 1 слот
+
+# Проверить, существует ли иконка для блока с данным текстом
+func has_icon_for_block(block_text: String) -> bool:
+	return block_text in TEXT_TO_ITEM_TYPE
+
+# Получить путь к иконке по тексту блока (удобный метод)
+func get_icon_path_by_text(block_text: String) -> String:
+	if block_text in TEXT_TO_ITEM_TYPE:
+		var item_type = TEXT_TO_ITEM_TYPE[block_text]
+		return get_item_icon(item_type)
+	return ""
+
+# Получить цвет по тексту блока (удобный метод)
+func get_color_by_text(block_text: String) -> Color:
+	if block_text in TEXT_TO_ITEM_TYPE:
+		var item_type = TEXT_TO_ITEM_TYPE[block_text]
+		return get_item_color(item_type)
+	return Color.WHITE

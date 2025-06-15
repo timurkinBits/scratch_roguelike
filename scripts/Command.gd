@@ -40,7 +40,7 @@ var configs = {
 	TypeCommand.USE: {
 		"prefix": "Использовать ",
 		"color": Color.BLUE_VIOLET,
-		"icon": "res://sprites/move.png"
+		"icon": "res://sprites/use.png"
 	},
 	TypeCommand.HEAL: {
 		"prefix": "Лечение ",

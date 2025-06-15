@@ -52,20 +52,49 @@ func _get_block_config() -> Dictionary:
 			"icon": "res://sprites/start_turn.png"
 		}
 	
-	# Конфигурация для циклов
+	# Получаем цвет и иконку из ItemData для блоков из item_data
+	if text in ItemData.TEXT_TO_ITEM_TYPE:
+		var item_type = ItemData.TEXT_TO_ITEM_TYPE[text]
+		var color = ItemData.get_item_color(item_type)
+		var icon_path = ItemData.get_item_icon(item_type)
+		
+		# Конфигурация для циклов
+		if _is_loop_block():
+			return {
+				"prefix": "Повторить ",
+				"color": color,
+				"icon": icon_path
+			}
+		
+		# Конфигурация для навыков (все остальные блоки)
+		return {
+			"prefix": "Улучшить ",
+			"color": color,
+			"icon": icon_path
+		}
+	
+	# Конфигурация по умолчанию для блоков, не найденных в item_data
 	if _is_loop_block():
 		return {
 			"prefix": "Повторить ",
 			"color": Color.CHOCOLATE,
 			"icon": "res://sprites/loop.png"
 		}
+	else:
+		return {
+			"prefix": "Улучшить ",
+			"color": Color.TURQUOISE,
+			"icon": "res://sprites/ability.png"
+		}
+
+func _get_icon_for_block_text(block_text: String) -> String:
+	# Получаем тип предмета по тексту блока
+	if block_text in ItemData.TEXT_TO_ITEM_TYPE:
+		var item_type = ItemData.TEXT_TO_ITEM_TYPE[block_text]
+		return ItemData.get_item_icon(item_type)
 	
-	# Конфигурация для навыков (все остальные блоки)
-	return {
-		"prefix": "Улучшить ",
-		"color": Color.TURQUOISE,
-		"icon": "res://sprites/ability.png"
-	}
+	# Для блоков, которых нет в item_data, возвращаем пустую строку
+	return ""
 
 func _is_loop_block() -> bool:
 	return text.contains("раз") or text == "Повторить 2 раз" or text == "Повторить 3 раз"
@@ -92,7 +121,11 @@ func _get_slot_count() -> int:
 func update_appearance() -> void:
 	texture.modulate = config.get("color", Color.WHITE)
 	if config.has("icon") and config["icon"]:
-		icon.texture = load(config["icon"])
+		var icon_texture = load(config["icon"])
+		if icon_texture:
+			icon.texture = icon_texture
+		else:
+			print("Предупреждение: Не удалось загрузить иконку: " + config["icon"])
 	label.text = _get_display_text()
 
 func _get_display_text() -> String:

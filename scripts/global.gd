@@ -12,8 +12,9 @@ var points: Dictionary = {
 	Command.TypeCommand.DEFENSE: 3
 }
 
-var coins: int = 0
+var coins: int = 999
 var remaining_points: Dictionary = {}
+var max_slots: int = 8
 
 # Block system - теперь работает только с текстом блоков
 var purchased_blocks: Array[Dictionary] = []
@@ -127,25 +128,3 @@ func find_available_block(block_text: String) -> Dictionary:
 		if block.text == block_text and not block.used:
 			return block
 	return {}
-
-# Получить количество доступных блоков определенного типа
-func get_available_block_count(block_text: String) -> int:
-	var count = 0
-	for block in purchased_blocks:
-		if block.text == block_text and not block.used:
-			count += 1
-	return count
-
-# Получить общее количество блоков определенного типа (включая использованные)
-func get_total_block_count(block_text: String) -> int:
-	var count = 0
-	for block in purchased_blocks:
-		if block.text == block_text:
-			count += 1
-	return count
-
-# Compatibility functions for ItemData integration
-func purchase_item(item_type: int, count: int = 1) -> void:
-	var block_text = ItemData.get_block_text(item_type)
-	if block_text != "":
-		purchase_block(block_text, count)
