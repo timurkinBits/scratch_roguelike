@@ -52,8 +52,8 @@ const OPPOSITE_DIRECTIONS = {
 
 @onready var doors = exit_doors.get_children()
 
-var teleporter_enemy_script = preload("res://scripts/TeleporterEnemy.gd")
-var berserker_enemy_script = preload("res://scripts/BerserkerEnemy.gd")
+var teleporter_enemy_script = preload("res://scripts/objects/characters/enemies/TeleporterEnemy.gd")
+var berserker_enemy_script = preload("res://scripts/objects/characters/enemies/BerserkerEnemy.gd")
 
 @export_group("Special Enemy Spawn Chances")
 @export_range(0, 100) var special_enemy_chance: int = 15  # Общий шанс замены врага на особого
@@ -264,14 +264,12 @@ func should_spawn_special_enemy() -> bool:
 	
 	# Ограничиваем максимальный шанс
 	base_chance = min(base_chance, 75)
-	print(randi() % 100 < base_chance)
 	return randi() % 100 < base_chance
 	
 func convert_to_special_enemy(enemy_instance: Node) -> void:
 	var total_weight = teleporter_weight + berserker_weight
 	
 	if total_weight == 0:
-		print("Веса особых врагов не заданы, остается обычный враг")
 		return
 	
 	var roll = randi() % total_weight
@@ -279,11 +277,9 @@ func convert_to_special_enemy(enemy_instance: Node) -> void:
 	if roll < teleporter_weight:
 		# Превращаем в телепортера
 		enemy_instance.set_script(teleporter_enemy_script)
-		print("Враг превращен в Телепортера!")
 	else:
 		# Превращаем в берсерка
 		enemy_instance.set_script(berserker_enemy_script)
-		print("Враг превращен в Берсерка!")
 
 func clear_enemies() -> void:
 	for enemy in get_tree().get_nodes_in_group("enemies"):

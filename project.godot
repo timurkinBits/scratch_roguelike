@@ -17,8 +17,8 @@ config/icon="res://icon.svg"
 
 [autoload]
 
-Global="*res://scripts/global.gd"
-ItemData="*res://scripts/item_data.gd"
+Global="*res://scripts/managers/global.gd"
+ItemData="*res://scripts/managers/table managers/item_data.gd"
 
 [display]
 

@@ -58,8 +58,6 @@ func activate_rage() -> void:
 	
 	# Эффект активации ярости с встроенными анимациями
 	await play_rage_activation_effect()
-	
-	print("Берсерк впал в ярость! Урон: +", rage_damage_bonus, ", Скорость: +", rage_speed_bonus)
 
 func take_turn() -> void:
 	# Проверяем состояние ярости в начале хода
@@ -83,8 +81,6 @@ func deactivate_rage() -> void:
 	
 	# Эффект окончания ярости
 	play_rage_deactivation_effect()
-	
-	print("Ярость берсерка закончилась")
 
 func play_rage_activation_effect() -> void:
 	# Создаем комплексную анимацию активации ярости
@@ -152,7 +148,6 @@ func take_damage(damage_amount: int):
 	if not is_enraged and hp <= heal_points * 0.3 and ability_cooldown <= 0:
 		# Немедленная активация ярости при критическом HP
 		ability_cooldown = 0
-		print("Берсерк получил критический урон и готов к ярости!")
 
 func update_visual() -> void:
 	super.update_visual()

@@ -1,6 +1,6 @@
 [gd_scene load_steps=7 format=3 uid="uid://befuuhuf4myhq"]
 
-[ext_resource type="Script" uid="uid://bsgmj065sao8k" path="res://scripts/command_menu.gd" id="1_lxkem"]
+[ext_resource type="Script" uid="uid://bsgmj065sao8k" path="res://scripts/managers/table managers/command_menu.gd" id="1_lxkem"]
 [ext_resource type="PackedScene" uid="uid://bfi0oibojw25c" path="res://scenes/Command.tscn" id="2_xdt26"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_xdt26"]

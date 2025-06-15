@@ -65,8 +65,6 @@ func teleport_to_player() -> void:
 	await play_teleport_in_effect()
 	
 	update_visual()
-	
-	print("Враг-телепортер телепортировался к игроку!")
 
 func get_teleport_positions_near_player(player_pos: Vector2) -> Array:
 	var positions = []
