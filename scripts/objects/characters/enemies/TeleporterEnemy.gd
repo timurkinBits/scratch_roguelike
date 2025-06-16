@@ -12,7 +12,6 @@ var normal_color: Color = Color(1.0, 1.0, 1.0, 1.0)
 
 func initialize_special_enemy() -> void:
 	has_special_ability = true
-	ability_name = "Телепортация"
 	max_ability_cooldown = 4
 	ability_cooldown = 4
 	
@@ -35,7 +34,7 @@ func can_use_special_ability() -> bool:
 	return distance_to_player > 3 or path_to_player.size() > 4
 
 func use_special_ability() -> void:
-	ability_cooldown = max_ability_cooldown
+	reset_ability_cooldown()
 	await teleport_to_player()
 
 func teleport_to_player() -> void:

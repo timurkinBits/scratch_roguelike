@@ -1,5 +1,3 @@
-# EnemyRegistry.gd
-# Добавить в Project Settings -> AutoLoad как синглтон
 extends Node
 
 # Структура для хранения информации о типе врага
@@ -44,6 +42,12 @@ func register_enemies():
 	register_enemy("skirmisher", EnemyType.new(
 		'res://scripts/objects/characters/enemies/SkirmisherEnemy.gd',
 		70,
+		[]
+	))
+	
+	register_enemy("healer", EnemyType.new(
+		"res://scripts/objects/characters/enemies/HealerEnemy.gd",
+		40,
 		[]
 	))
 

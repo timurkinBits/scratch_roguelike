@@ -17,7 +17,6 @@ var normal_color: Color = Color(1.0, 1.0, 1.0, 1.0)
 
 func initialize_special_enemy() -> void:
 	has_special_ability = true
-	ability_name = "Ярость берсерка"
 	max_ability_cooldown = 6
 	ability_cooldown = 0
 	
@@ -39,13 +38,13 @@ func can_use_special_ability() -> bool:
 	if not super.can_use_special_ability():
 		return false
 	
-	# Используем ярость при низком HP или когда игрок близко
+	# Используем ярость при низком HP
 	var low_health = hp <= heal_points * 0.5
 	
 	return low_health
 
 func use_special_ability() -> void:
-	ability_cooldown = max_ability_cooldown
+	reset_ability_cooldown()
 	await activate_rage()
 
 func activate_rage() -> void:
@@ -145,7 +144,7 @@ func take_damage(damage_amount: int):
 			tween.tween_property(self, "modulate", color, 0.2)
 	
 	# Берсерк может впасть в ярость при получении урона
-	if not is_enraged and hp <= heal_points * 0.3 and ability_cooldown <= 0:
+	if not is_enraged and hp <= heal_points * 0.3 and is_ability_ready():
 		# Немедленная активация ярости при критическом HP
 		ability_cooldown = 0
 

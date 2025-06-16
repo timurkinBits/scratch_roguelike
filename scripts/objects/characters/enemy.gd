@@ -7,11 +7,10 @@ var speed: int = randi_range(2, 5)
 var damage: int = randi_range(2, 5)
 var heal_points: int = randi_range(3, 6)
 
-# Свойства для специальных способностей (теперь упрощены)
+# Свойства для специальных способностей
 var has_special_ability: bool = false
 var ability_cooldown: int = 0
 var max_ability_cooldown: int = 3
-var ability_name: String = ""
 
 @onready var ui_stats: EnemyStats = $'../../UI/EnemyStats'
 @onready var command_executor = $"../../Table/TurnExecutor"
@@ -27,12 +26,9 @@ func _ready() -> void:
 	player = get_parent().get_node("Player")
 	sprite.animation = get_enemy_type() + "_idle"
 	
-	# Вызываем инициализацию специального врага
 	initialize_special_enemy()
 	update_visual()
 
-# Виртуальная функция для инициализации специальных врагов
-# Переопределяется в наследниках для настройки специфических параметров
 func initialize_special_enemy() -> void:
 	pass
 
@@ -99,18 +95,10 @@ func execute_standard_behavior() -> void:
 
 # Виртуальные функции для способностей (переопределяются в наследниках)
 func can_use_special_ability() -> bool:
-	return has_special_ability and ability_cooldown <= 0
+	return has_special_ability and is_ability_ready()
 
 func use_special_ability() -> void:
-	# Базовая реализация - сбрасываем кулдаун
-	ability_cooldown = max_ability_cooldown
-
-# Вспомогательные функции для специальных врагов
-func setup_special_ability(p_ability_name: String, p_cooldown: int = 3) -> void:
-	has_special_ability = true
-	ability_name = p_ability_name
-	max_ability_cooldown = p_cooldown
-	ability_cooldown = 0
+	pass
 
 func reset_ability_cooldown() -> void:
 	ability_cooldown = max_ability_cooldown
