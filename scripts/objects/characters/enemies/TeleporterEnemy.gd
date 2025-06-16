@@ -5,7 +5,7 @@ class_name TeleporterEnemy
 var teleport_range: int = 4
 
 # Цвета для телепортера
-var teleporter_color: Color = Color(0.4, 0.7, 1.0, 1.0)  # Синеватый
+var color: Color = Color(0.4, 0.7, 1.0, 1.0)  # Синеватый
 var teleport_out_color: Color = Color(0.8, 0.4, 1.0, 0.3)  # Фиолетовый полупрозрачный
 var teleport_in_color: Color = Color(0.2, 0.8, 1.0, 1.2)   # Яркий голубой
 var normal_color: Color = Color(1.0, 1.0, 1.0, 1.0)
@@ -21,7 +21,7 @@ func initialize_special_enemy() -> void:
 	speed = max(speed - 3, 1)  # Уменьшаем скорость, так как может телепортироваться
 	
 	# Устанавливаем цвет телепортера
-	modulate = teleporter_color
+	modulate = color
 
 func can_use_special_ability() -> bool:
 	if not super.can_use_special_ability():
@@ -99,7 +99,7 @@ func play_teleport_out_effect() -> void:
 	# 1. Мерцание перед исчезновением
 	for i in range(4):
 		tween.tween_property(self, "modulate", teleport_out_color, 0.08)
-		tween.tween_property(self, "modulate", teleporter_color, 0.08)
+		tween.tween_property(self, "modulate", color, 0.08)
 	
 	# 2. Вращение и уменьшение
 	tween.tween_property(self, "rotation_degrees", 720, 0.6)
@@ -137,7 +137,7 @@ func play_teleport_in_effect() -> void:
 	tween.tween_property(self, "rotation_degrees", -360, 0.4)
 	
 	# 4. Возврат к нормальному цвету
-	tween.tween_property(self, "modulate", teleporter_color, 0.4)
+	tween.tween_property(self, "modulate", color, 0.4)
 	
 	# 5. Импульсные волны после появления
 	await tween.finished
@@ -152,7 +152,7 @@ func take_damage(damage_amount: int):
 		
 		# Мерцание при получении урона
 		damage_tween.tween_property(self, "modulate", Color(1.5, 1.5, 1.5, 1.0), 0.1)
-		damage_tween.tween_property(self, "modulate", teleporter_color, 0.2)
+		damage_tween.tween_property(self, "modulate", color, 0.2)
 		
 		# Легкое дрожание
 		var original_pos = position
@@ -168,8 +168,8 @@ func update_visual() -> void:
 		# Создаем циклическое мерцание
 		var glow_tween = create_tween()
 		glow_tween.set_loops()
-		glow_tween.tween_property(self, "modulate", teleporter_color * 1.2, 1.0)
-		glow_tween.tween_property(self, "modulate", teleporter_color * 0.8, 1.0)
+		glow_tween.tween_property(self, "modulate", color * 1.2, 1.0)
+		glow_tween.tween_property(self, "modulate", color * 0.8, 1.0)
 
 #func get_enemy_type() -> String:
 	## Переопределяем для уникального внешнего вида

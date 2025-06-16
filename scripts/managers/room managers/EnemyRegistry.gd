@@ -29,26 +29,23 @@ func _ready():
 
 # Регистрация стандартных врагов
 func register_enemies():
-	# Телепортер - доступен во всех комнатах
 	register_enemy("teleporter", EnemyType.new(
 		"res://scripts/objects/characters/enemies/TeleporterEnemy.gd",
-		50,
-		[] # Пустой массив = доступен везде
+		60,
+		[]
 	))
 	
-	# Берсерк - доступен во всех комнатах
 	register_enemy("berserker", EnemyType.new(
 		"res://scripts/objects/characters/enemies/BerserkerEnemy.gd", 
-		50,
-		[] # Пустой массив = доступен везде
+		40,
+		[]
 	))
 	
-	# Пример врага только для элитных комнат:
-	# register_enemy("boss_minion", EnemyType.new(
-	#	"res://scripts/objects/characters/enemies/BossMinion.gd",
-	#	30,
-	#	[Global.RoomType.ELITE]
-	# ))
+	register_enemy("skirmisher", EnemyType.new(
+		'res://scripts/objects/characters/enemies/SkirmisherEnemy.gd',
+		70,
+		[]
+	))
 
 # Регистрация нового типа врага
 func register_enemy(id: String, enemy_type: EnemyType):

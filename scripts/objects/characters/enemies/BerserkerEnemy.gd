@@ -11,7 +11,7 @@ var original_damage: int
 var original_speed: int
 
 # Цвета для берсерка
-var berserker_color: Color = Color(0.8, 0.3, 0.3, 1.0)  # Темно-красный
+var color: Color = Color(0.8, 0.3, 0.3, 1.0)  # Темно-красный
 var rage_color: Color = Color(1.5, 0.2, 0.2, 1.0)      # Ярко-красный
 var normal_color: Color = Color(1.0, 1.0, 1.0, 1.0)
 
@@ -33,7 +33,7 @@ func initialize_special_enemy() -> void:
 	hp += 2
 	
 	# Устанавливаем цвет берсерка
-	modulate = berserker_color
+	modulate = color
 
 func can_use_special_ability() -> bool:
 	if not super.can_use_special_ability():
@@ -90,7 +90,7 @@ func play_rage_activation_effect() -> void:
 	# 1. Быстрое мигание красным
 	for i in range(3):
 		tween.tween_property(self, "modulate", rage_color, 0.1)
-		tween.tween_property(self, "modulate", berserker_color, 0.1)
+		tween.tween_property(self, "modulate", color, 0.1)
 	
 	# 2. Увеличение размера с "взрывом"
 	var original_scale = scale
@@ -122,7 +122,7 @@ func play_rage_deactivation_effect() -> void:
 	tween.set_parallel(true)
 	
 	# Постепенное затухание цвета и размера
-	tween.tween_property(self, "modulate", berserker_color, 1.0)
+	tween.tween_property(self, "modulate", color, 1.0)
 	tween.tween_property(self, "scale", Vector2(2.5, 2.5), 0.8)
 	
 	# Легкое дрожание при истощении
@@ -133,7 +133,7 @@ func play_rage_deactivation_effect() -> void:
 	tween.tween_property(self, "position", original_pos, 0.2)
 
 func take_damage(damage_amount: int):
-	super.take_damage(damage_amount)
+	super.take_damage(damage_amount / 2)
 	
 	# Эффект получения урона для берсерка
 	if not is_dead:
@@ -142,7 +142,7 @@ func take_damage(damage_amount: int):
 		if is_enraged:
 			tween.tween_property(self, "modulate", rage_color, 0.2)
 		else:
-			tween.tween_property(self, "modulate", berserker_color, 0.2)
+			tween.tween_property(self, "modulate", color, 0.2)
 	
 	# Берсерк может впасть в ярость при получении урона
 	if not is_enraged and hp <= heal_points * 0.3 and ability_cooldown <= 0:
@@ -167,8 +167,8 @@ func update_visual() -> void:
 			shake_tween.tween_property(self, "position", base_pos, 0.1)
 	else:
 		# Обычный вид берсерка
-		if modulate != berserker_color:
-			modulate = berserker_color
+		if modulate != color:
+			modulate = color
 
 #func get_enemy_type() -> String:
 	## Переопределяем для уникального внешнего вида

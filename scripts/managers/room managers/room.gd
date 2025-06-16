@@ -11,15 +11,15 @@ signal room_changed(direction: String)
 
 # Настройки шансов для каждого типа комнаты
 @export_group("Room Spawn Chances")
-@export_range(0, 100) var normal_room_chance: int = 60
-@export_range(0, 100) var shop_room_chance: int = 20
+@export_range(0, 100) var normal_room_chance: int = 50
+@export_range(0, 100) var shop_room_chance: int = 30
 @export_range(0, 100) var elite_room_chance: int = 10
 @export_range(0, 100) var challenge_room_chance: int = 10
 
 # Настройки шансов замены обычных врагов на специальных
 @export_group("Special Enemy Replacement Chances")
-@export_range(0, 100) var normal_room_special_chance: int = 15
-@export_range(0, 100) var elite_room_special_chance: int = 30
+@export_range(0, 100) var normal_room_special_chance: int = 25
+@export_range(0, 100) var elite_room_special_chance: int = 45
 @export_range(0, 100) var challenge_room_special_chance: int = 0
 @export_range(0, 100) var shop_room_special_chance: int = 0
 
