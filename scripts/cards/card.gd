@@ -22,10 +22,15 @@ const Z_INDEX_DRAGGING := 100
 const HOVER_THRESHOLD := 0.5
 
 var table: Node2D = null
+# Добавляем статический счетчик для уникальных z-индексов
+static var next_z_index := Z_INDEX_NORMAL
 
 func _ready() -> void:
 	add_to_group('cards')
 	table = find_parent("Table")
+	# Устанавливаем начальный z-индекс
+	z_index = next_z_index
+	next_z_index += 1
 	
 func get_size() -> Vector2:
 	return Vector2.ZERO  # Override in subclasses
@@ -35,6 +40,7 @@ func start_drag() -> void:
 		return
 		
 	is_being_dragged = true
+	# Устанавливаем максимальный z-индекс для перетаскиваемой карты
 	z_index = Z_INDEX_DRAGGING
 	drag_offset = global_position - get_global_mouse_position()
 	
@@ -57,31 +63,59 @@ func finish_drag() -> void:
 		return
 		
 	is_being_dragged = false
-	z_index = Z_INDEX_NORMAL
+	# После завершения перетаскивания присваиваем новый уникальный z-индекс
+	# который будет выше всех остальных неперетаскиваемых карт
+	z_index = next_z_index
+	next_z_index += 1
 	
+	# ВАЖНО: не сбрасываем hover состояние до размещения карты
 	handle_card_placement()
+	# Сбрасываем hover состояние только после размещения
 	reset_hover_state()
 	drag_finished.emit()
 
 func handle_card_placement() -> void:
 	var table_rect = table.get_table_rect()
+	var card_placed = false
 	
 	if table.is_turn_in_progress:
 		enforce_table_boundaries(global_position, table_rect)
 	elif hovered_slot and is_instance_valid(hovered_slot):
-		if would_fit_in_boundaries(hovered_slot, table_rect):
+		# Проверяем, можем ли мы разместить карту в этом слоте
+		if can_place_in_slot(hovered_slot, table_rect):
 			place_card_in_slot(hovered_slot)
+			card_placed = true
 		else:
 			enforce_table_boundaries(global_position, table_rect)
 	else:
 		enforce_table_boundaries(global_position, table_rect)
 	
+	# Если карта не была размещена в слот, отменяем подготовку к вставке
+	if not card_placed and affected_block and is_instance_valid(affected_block):
+		affected_block.slot_manager.cancel_insertion()
+	
 	# Очищаем ссылку на исходный слот после завершения размещения
 	original_slot = null
 
+func can_place_in_slot(target_slot: CommandSlot, table_rect: Rect2) -> bool:
+	if not is_instance_valid(target_slot) or not is_instance_valid(target_slot.block):
+		return false
+	
+	# Если слот уже занят, проверяем, подготовлен ли он для вставки
+	if target_slot.command != null and not has_shifted_commands:
+		return false
+	
+	# Проверяем границы стола
+	return would_fit_in_boundaries(target_slot, table_rect)
+
 func reset_hover_state() -> void:
+	# Сбрасываем состояние hover только если карта не была размещена
 	if affected_block and is_instance_valid(affected_block):
-		affected_block.slot_manager.cancel_insertion()
+		# Проверяем, была ли карта успешно размещена
+		var card_was_placed = (slot != null and is_instance_valid(slot))
+		if not card_was_placed:
+			affected_block.slot_manager.cancel_insertion()
+	
 	affected_block = null
 	hover_timer = 0.0
 	has_shifted_commands = false
@@ -107,6 +141,7 @@ func place_card_in_slot(target_slot: CommandSlot) -> void:
 	
 	# Обновляем слоты блока
 	if is_instance_valid(target_slot.block):
+		target_slot.block.slot_manager.finalize_insertion()
 		target_slot.block.slot_manager.update_slots()
 		check_parent_block_boundaries(target_slot.block, table.get_table_rect())
 
@@ -193,6 +228,7 @@ func handle_hover_logic(delta: float) -> void:
 	elif has_shifted_commands and affected_block:
 		if is_instance_valid(affected_block):
 			affected_block.slot_manager.cancel_insertion()
+		affected_block = null
 		has_shifted_commands = false
 		hover_timer = 0.0
 	else:
@@ -207,9 +243,43 @@ func _input(event: InputEvent) -> void:
 		if not event.pressed and is_being_dragged:
 			finish_drag()
 
+# Обновленная функция для обработки событий мыши с учетом z-индекса
 func _on_area_input_event(_viewport: Node, event: InputEvent, _shape_idx: int) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
 		if event.pressed:
-			start_drag()
+			# Проверяем, является ли эта карта самой верхней в точке клика
+			if is_topmost_card_at_position():
+				start_drag()
 		elif is_being_dragged:
 			finish_drag()
+
+# Новая функция для проверки, является ли карта самой верхней в точке клика
+func is_topmost_card_at_position() -> bool:
+	var mouse_pos = get_global_mouse_position()
+	var cards_at_position = []
+	
+	# Собираем все карты под курсором
+	for card in get_tree().get_nodes_in_group('cards'):
+		if card == self:
+			continue
+		if card.is_menu_card:
+			continue
+		if not is_instance_valid(card):
+			continue
+			
+		# Проверяем, находится ли мышь над картой
+		var card_rect = Rect2(card.global_position, card.get_size() * card.scale)
+		if card_rect.has_point(mouse_pos):
+			cards_at_position.append(card)
+	
+	# Проверяем наш z-индекс против всех других карт в этой позиции
+	for card in cards_at_position:
+		if card.z_index > self.z_index:
+			return false
+	
+	return true
+
+# Функция для принудительного поднятия карты наверх (может быть полезна)
+func bring_to_front() -> void:
+	z_index = next_z_index
+	next_z_index += 1

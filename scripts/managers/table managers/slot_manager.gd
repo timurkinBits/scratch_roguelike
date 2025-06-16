@@ -10,6 +10,8 @@ var parent_block: Block
 var slots: Array[CommandSlot] = []
 var slot_offset_start := Vector2(28, 32)
 var original_slot_commands: Array = []
+var insertion_prepared := false
+var insertion_slot: CommandSlot = null
 
 func _init(block: Block, start_offset: Vector2) -> void:
 	parent_block = block
@@ -148,7 +150,7 @@ func _get_max_slots_for_block(block_text: String) -> int:
 		return 1
 
 func prepare_for_insertion(target_slot: CommandSlot) -> void:
-	if not target_slot in slots:
+	if not target_slot in slots or insertion_prepared:
 		return
 	
 	# Store original commands state
@@ -156,6 +158,8 @@ func prepare_for_insertion(target_slot: CommandSlot) -> void:
 	for slot in slots:
 		original_slot_commands.append(slot.command)
 	
+	insertion_prepared = true
+	insertion_slot = target_slot
 	var hover_index = slots.find(target_slot)
 	
 	# Determine max slots based on block text
@@ -182,12 +186,27 @@ func prepare_for_insertion(target_slot: CommandSlot) -> void:
 	
 	update_all_slot_positions()
 
+func finalize_insertion() -> void:
+	# Завершаем процесс вставки - очищаем сохраненное состояние
+	if insertion_prepared:
+		original_slot_commands.clear()
+		insertion_prepared = false
+		insertion_slot = null
+
 func cancel_insertion() -> void:
-	if original_slot_commands.is_empty():
+	if not insertion_prepared or original_slot_commands.is_empty():
 		return
 	
 	# Restore original slot commands
 	var restore_size = min(slots.size(), original_slot_commands.size())
+	
+	# Remove extra slots that were created during preparation
+	while slots.size() > original_slot_commands.size():
+		var slot = slots.pop_back()
+		if is_instance_valid(slot):
+			slot.queue_free()
+	
+	# Restore commands to their original positions
 	for i in restore_size:
 		if i < slots.size():
 			slots[i].command = original_slot_commands[i]
@@ -198,14 +217,12 @@ func cancel_insertion() -> void:
 				elif slots[i].command is Block:
 					slots[i].command.parent_slot = slots[i]
 	
-	# Remove extra slots that were created during preparation
-	while slots.size() > original_slot_commands.size():
-		var slot = slots.pop_back()
-		if is_instance_valid(slot):
-			slot.queue_free()
-	
+	# Clear state
 	original_slot_commands.clear()
-	update_slots()
+	insertion_prepared = false
+	insertion_slot = null
+	
+	update_all_slot_positions()
 
 func update_command_positions(base_z_index: int) -> void:
 	for slot in slots:
@@ -214,7 +231,11 @@ func update_command_positions(base_z_index: int) -> void:
 		
 		slot.command.global_position = parent_block.to_global(slot.position)
 		slot.command.visible = true
-		slot.command.z_index = base_z_index - 1
+		
+		# Устанавливаем z-индекс для вложенных команд относительно родительского блока
+		# но сохраняем их собственную иерархию z-индексов
+		if slot.command.z_index < Card.Z_INDEX_DRAGGING:
+			slot.command.z_index = base_z_index - 1
 		
 		if slot.command is Block:
-			slot.command.update_command_positions(base_z_index - 1)
+			slot.command.update_command_positions(slot.command.z_index)

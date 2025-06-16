@@ -48,7 +48,7 @@ func _get_block_config() -> Dictionary:
 	if text == "начало хода":
 		return {
 			"prefix": "",
-			"color": Color.GREEN,
+			"color": Color.YELLOW,
 			"icon": "res://sprites/start_turn.png"
 		}
 	
