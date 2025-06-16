@@ -5,6 +5,13 @@ signal coins_changed
 signal inventory_changed  # Для покупки новых блоков
 signal block_availability_changed  # Для изменения доступности блоков
 
+enum RoomType {
+	NORMAL,
+	ELITE,
+	SHOP,
+	CHALLENGE
+}
+
 var points: Dictionary = {
 	Command.TypeCommand.MOVE: 10,
 	Command.TypeCommand.ATTACK: 30,

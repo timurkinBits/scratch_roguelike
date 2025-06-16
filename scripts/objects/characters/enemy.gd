@@ -7,7 +7,7 @@ var speed: int = randi_range(2, 5)
 var damage: int = randi_range(2, 5)
 var heal_points: int = randi_range(3, 6)
 
-# Новые свойства для специальных способностей
+# Свойства для специальных способностей (теперь упрощены)
 var has_special_ability: bool = false
 var ability_cooldown: int = 0
 var max_ability_cooldown: int = 3
@@ -26,10 +26,13 @@ func _ready() -> void:
 	hp = heal_points
 	player = get_parent().get_node("Player")
 	sprite.animation = get_enemy_type() + "_idle"
+	
+	# Вызываем инициализацию специального врага
 	initialize_special_enemy()
 	update_visual()
 
 # Виртуальная функция для инициализации специальных врагов
+# Переопределяется в наследниках для настройки специфических параметров
 func initialize_special_enemy() -> void:
 	pass
 
@@ -41,7 +44,7 @@ func get_enemy_type() -> String:
 	else:
 		return "strong_enemy"
 
-# Модифицированная логика хода врага с учетом способностей
+# Основная логика хода врага
 func take_turn() -> void:
 	if is_dead:
 		return
@@ -58,7 +61,11 @@ func take_turn() -> void:
 		await use_special_ability()
 		return
 	
-	# Обычное поведение
+	# Стандартное поведение врага
+	await execute_standard_behavior()
+
+# Стандартное поведение (движение и атака)
+func execute_standard_behavior() -> void:
 	var path = find_path_to_player()
 	
 	if path.size() > 1:
@@ -95,12 +102,73 @@ func can_use_special_ability() -> bool:
 	return has_special_ability and ability_cooldown <= 0
 
 func use_special_ability() -> void:
-	# Базовая реализация - ничего не делает
-	pass
+	# Базовая реализация - сбрасываем кулдаун
+	ability_cooldown = max_ability_cooldown
+
+# Вспомогательные функции для специальных врагов
+func setup_special_ability(p_ability_name: String, p_cooldown: int = 3) -> void:
+	has_special_ability = true
+	ability_name = p_ability_name
+	max_ability_cooldown = p_cooldown
+	ability_cooldown = 0
+
+func reset_ability_cooldown() -> void:
+	ability_cooldown = max_ability_cooldown
+
+func is_ability_ready() -> bool:
+	return ability_cooldown <= 0
+
+# Функции для получения информации о позициях
+func get_all_empty_tiles() -> Array:
+	var empty_tiles = []
+	var room = get_parent()
+	var tilemap = room.get_node("TileMapLayer")
+	var tilemap_rect = tilemap.get_used_rect()
+	
+	var occupied_positions = []
+	# Добавляем позицию игрока
+	if is_instance_valid(player):
+		occupied_positions.append(player.get_tile_position())
+	
+	# Добавляем позиции врагов
+	for enemy in get_tree().get_nodes_in_group("enemies"):
+		if enemy != self:
+			occupied_positions.append(enemy.get_tile_position())
+	
+	# Добавляем позиции барьеров
+	for barrier in get_tree().get_nodes_in_group("barrier"):
+		occupied_positions.append(barrier.get_tile_position())
+	
+	# Ищем свободные тайлы
+	for x in range(tilemap_rect.position.x, tilemap_rect.position.x + tilemap_rect.size.x):
+		for y in range(tilemap_rect.position.y, tilemap_rect.position.y + tilemap_rect.size.y):
+			var tile_pos = Vector2(x, y)
+			if tile_pos not in occupied_positions:
+				empty_tiles.append(tile_pos)
+	
+	return empty_tiles
+
+func get_tiles_around_player(radius: int = 1) -> Array:
+	if not is_instance_valid(player):
+		return []
+	
+	var tiles = []
+	var player_pos = player.get_tile_position()
+	
+	for x in range(-radius, radius + 1):
+		for y in range(-radius, radius + 1):
+			if x == 0 and y == 0:
+				continue
 			
+			var tile_pos = player_pos + Vector2(x, y)
+			if can_move_to_tile(tile_pos):
+				tiles.append(tile_pos)
+	
+	return tiles
+
+# Остальные функции остаются без изменений
 func update_visual() -> void:
 	var animation_prefix = get_enemy_type() + "_"
-
 	sprite.visible = true
 
 	if is_moving:
@@ -238,7 +306,7 @@ func spawn_coin() -> void:
 	coin_instance.position = position
 	
 	var room = get_parent()
-	var is_elite = room.type == room.RoomType.ELITE
+	var is_elite = room.type == Global.RoomType.ELITE
 		
 	var coin_type = Coin.get_random_coin_type(is_elite)
 	coin_instance.set_type(coin_type)

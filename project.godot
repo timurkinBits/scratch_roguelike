@@ -19,6 +19,7 @@ config/icon="res://icon.svg"
 
 Global="*res://scripts/managers/global.gd"
 ItemData="*res://scripts/managers/table managers/item_data.gd"
+EnemyRegistry="*res://scripts/managers/room managers/EnemyRegistry.gd"
 
 [display]
 
@@ -33,6 +34,7 @@ project/assembly_name="scratch_roguelike"
 
 TileMap=""
 table=""
+room=""
 
 [rendering]
 

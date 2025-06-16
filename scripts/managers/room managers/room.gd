@@ -1,14 +1,6 @@
-# Изменения в room.gd
 extends Node2D
 
 signal room_changed(direction: String)
-
-enum RoomType {
-	NORMAL,
-	ELITE,
-	SHOP,
-	CHALLENGE
-}
 
 @export var enemy_scene: PackedScene
 @export var wall_scene: PackedScene
@@ -17,12 +9,19 @@ enum RoomType {
 @export var item_scene: PackedScene
 @export var allow_layout_editing: bool = false
 
-# Добавляем настройки шансов для каждого типа комнаты
+# Настройки шансов для каждого типа комнаты
 @export_group("Room Spawn Chances")
 @export_range(0, 100) var normal_room_chance: int = 60
 @export_range(0, 100) var shop_room_chance: int = 20
 @export_range(0, 100) var elite_room_chance: int = 10
 @export_range(0, 100) var challenge_room_chance: int = 10
+
+# Настройки шансов замены обычных врагов на специальных
+@export_group("Special Enemy Replacement Chances")
+@export_range(0, 100) var normal_room_special_chance: int = 15
+@export_range(0, 100) var elite_room_special_chance: int = 30
+@export_range(0, 100) var challenge_room_special_chance: int = 0
+@export_range(0, 100) var shop_room_special_chance: int = 0
 
 const DOOR_POSITIONS = {
 	"up": Vector2(7, 0),
@@ -32,10 +31,10 @@ const DOOR_POSITIONS = {
 }
 
 const DOOR_ICONS = {
-	RoomType.NORMAL: "res://sprites/normal.png",
-	RoomType.ELITE: "res://sprites/elite.png",
-	RoomType.SHOP: "res://sprites/shop.png",
-	RoomType.CHALLENGE: "res://sprites/challenge.png"
+	Global.RoomType.NORMAL: "res://sprites/normal.png",
+	Global.RoomType.ELITE: "res://sprites/elite.png",
+	Global.RoomType.SHOP: "res://sprites/shop.png",
+	Global.RoomType.CHALLENGE: "res://sprites/challenge.png"
 }
 
 const OPPOSITE_DIRECTIONS = {
@@ -49,28 +48,29 @@ const OPPOSITE_DIRECTIONS = {
 @onready var player: Player = $Player
 @onready var edit_mode_manager = $EditModeManager
 @onready var exit_doors: Node2D = $ExitDoors
-
 @onready var doors = exit_doors.get_children()
 
-var teleporter_enemy_script = preload("res://scripts/objects/characters/enemies/TeleporterEnemy.gd")
-var berserker_enemy_script = preload("res://scripts/objects/characters/enemies/BerserkerEnemy.gd")
-
-@export_group("Special Enemy Spawn Chances")
-@export_range(0, 100) var special_enemy_chance: int = 15  # Общий шанс замены врага на особого
-@export_range(0, 100) var teleporter_weight: int = 50     # Вес телепортера среди особых врагов
-@export_range(0, 100) var berserker_weight: int = 50      # Вес берсерка среди особых врагов
-
-var type: RoomType = RoomType.NORMAL
+var type: Global.RoomType = Global.RoomType.NORMAL
 var max_enemies: int = 3
 var min_enemies: int = 1
 var min_distance_from_player: int = 5
-var door_types_generated: bool = false  # Флаг для отслеживания, были ли сгенерированы типы комнат
+var door_types_generated: bool = false
 
 func _ready() -> void:
 	for exit_door in doors:
 		exit_door.get_node('button').visible = false
+	
+	# Обновляем настройки шансов замены в реестре
+	update_registry_replacement_chances()
+	
 	init_edit_mode()
 	spawn_enemies()
+
+func update_registry_replacement_chances() -> void:
+	EnemyRegistry.set_replacement_chance(Global.RoomType.NORMAL, normal_room_special_chance)
+	EnemyRegistry.set_replacement_chance(Global.RoomType.ELITE, elite_room_special_chance)
+	EnemyRegistry.set_replacement_chance(Global.RoomType.CHALLENGE, challenge_room_special_chance)
+	EnemyRegistry.set_replacement_chance(Global.RoomType.SHOP, shop_room_special_chance)
 
 func init_edit_mode() -> void:
 	edit_mode_manager.init(self, player, tile_map, wall_scene, door_scene, allow_layout_editing)
@@ -88,70 +88,54 @@ func clear_room() -> void:
 	clear_enemies()
 	clear_objects()
 
-# Измененная функция для рандомной генерации типов комнат с учетом весов
+# Генерация типов комнат с учетом весов
 func random_types_rooms() -> void:
-	# Проверяем, были ли уже сгенерированы типы комнат
 	if door_types_generated:
 		return
 	
-	# Устанавливаем флаг, что типы комнат сгенерированы
 	door_types_generated = true
 	
-	# Генерируем тип для каждой двери с учетом шансов
 	for door in doors:
-		# Используем настраиваемые шансы для определения типа комнаты
 		var room_type = get_weighted_room_type()
-		door.type = RoomType.keys()[room_type]
+		door.type = Global.RoomType.keys()[room_type]
 		door.get_node('button').texture = load(DOOR_ICONS[room_type])
 
-# Функция для определения типа комнаты с учетом весов и предотвращения повторений определенных типов
 func get_weighted_room_type() -> int:
-	# Создаем копии оригинальных шансов, которые будем модифицировать
 	var current_normal_chance = normal_room_chance
 	var current_elite_chance = elite_room_chance
 	var current_shop_chance = shop_room_chance
 	var current_challenge_chance = challenge_room_chance
 	
-	# Предотвращаем повторение текущего типа комнаты (кроме обычной комнаты)
+	# Предотвращаем повторение текущего типа комнаты (кроме обычной)
 	match type:
-		RoomType.ELITE:
-			current_elite_chance = 0  # Исключаем элитную комнату из следующего выбора
-		RoomType.SHOP:
-			current_shop_chance = 0   # Исключаем магазин из следующего выбора
-		RoomType.CHALLENGE:
-			current_challenge_chance = 0  # Исключаем испытание из следующего выбора
-		# Обычные комнаты могут повторяться, поэтому для RoomType.NORMAL ничего не меняем
+		Global.RoomType.ELITE:
+			current_elite_chance = 0
+		Global.RoomType.SHOP:
+			current_shop_chance = 0
+		Global.RoomType.CHALLENGE:
+			current_challenge_chance = 0
 	
-	# Создаем общий пул шансов с учетом модификаций
 	var total_chance = current_normal_chance + current_elite_chance + current_shop_chance + current_challenge_chance
 	
-	# Если общий шанс равен 0, устанавливаем обычную комнату по умолчанию
 	if total_chance == 0:
-		return RoomType.NORMAL
+		return Global.RoomType.NORMAL
 	
-	# Выберем случайное число в диапазоне общего шанса
 	var roll = randi() % total_chance
-	
-	# Определяем, какому типу комнаты соответствует выпавшее число
 	var current_sum = 0
 	
-	# Обычная комната
 	current_sum += current_normal_chance
 	if roll < current_sum:
-		return RoomType.NORMAL
+		return Global.RoomType.NORMAL
 	
-	# Элитная комната
 	current_sum += current_elite_chance
 	if roll < current_sum:
-		return RoomType.ELITE
+		return Global.RoomType.ELITE
 	
-	# Магазин
 	current_sum += current_shop_chance
 	if roll < current_sum:
-		return RoomType.SHOP
+		return Global.RoomType.SHOP
 	
-	# Комната испытаний
-	return RoomType.CHALLENGE
+	return Global.RoomType.CHALLENGE
 
 func teleport_player_to_door(door_direction: String) -> void:
 	var target_tile = DOOR_POSITIONS[door_direction]
@@ -167,7 +151,7 @@ func transition_to_new_room(direction: String, door_type = null) -> void:
 	
 	if door_type != null:
 		if typeof(door_type) == TYPE_STRING:
-			type = RoomType[door_type]
+			type = Global.RoomType[door_type]
 		else:
 			type = door_type
 	
@@ -175,31 +159,31 @@ func transition_to_new_room(direction: String, door_type = null) -> void:
 		exit_door.get_node('button').visible = false
 	
 	Global.reset_remaining_points()
-	
-	# Сбрасываем флаг генерации типов комнат при переходе в новую комнату
 	door_types_generated = false
 	
-	# Применяем макет, соответствующий текущему типу комнаты
-	apply_layout_for_current_type()
+	# Обновляем настройки шансов замены при смене комнаты
+	update_registry_replacement_chances()
 	
+	apply_layout_for_current_type()
 	apply_room_type_settings()
 	spawn_enemies()
 	room_changed.emit(direction)
 
 func apply_room_type_settings() -> void:
 	match type:
-		RoomType.NORMAL:
+		Global.RoomType.NORMAL:
 			min_enemies = 1
 			max_enemies = 3
-		RoomType.ELITE:
+		Global.RoomType.ELITE:
 			min_enemies = 2
 			max_enemies = 4
-		RoomType.SHOP:
+		Global.RoomType.SHOP:
 			pass
-		RoomType.CHALLENGE:
+		Global.RoomType.CHALLENGE:
 			min_enemies = 0
 			max_enemies = 0
 
+# Обработчики дверей
 func _on_right_door_input_event(_viewport, event, _shape_idx) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 		transition_to_new_room('right', $ExitDoors/RightDoor.type)
@@ -216,10 +200,11 @@ func _on_up_door_input_event(_viewport, event, _shape_idx) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 		transition_to_new_room('up', $ExitDoors/UpDoor.type)
 
+# Система спавна врагов через реестр
 func spawn_enemies() -> void:
 	clear_enemies()
 	
-	if type == RoomType.SHOP:
+	if type == Global.RoomType.SHOP:
 		return
 	
 	var available_positions = get_available_spawn_positions()
@@ -230,12 +215,15 @@ func spawn_enemies() -> void:
 	var enemy_count = min(randi_range(min_enemies, max_enemies), available_positions.size())
 	
 	for i in range(enemy_count):
-		# Всегда создаем базового врага
 		var enemy_instance = enemy_scene.instantiate()
 		
-		# Определяем, будет ли это особый враг
-		if should_spawn_special_enemy():
-			convert_to_special_enemy(enemy_instance)
+		# Проверяем, нужно ли заменить обычного врага на специального
+		if EnemyRegistry.should_replace_with_special_enemy(type):
+			var special_script_path = EnemyRegistry.get_random_special_enemy_script(type)
+			if special_script_path != "":
+				var special_script = load(special_script_path)
+				if special_script:
+					enemy_instance.set_script(special_script)
 		
 		add_child(enemy_instance)
 		
@@ -243,43 +231,15 @@ func spawn_enemies() -> void:
 		enemy_instance.position = world_position
 		enemy_instance.scale = Vector2(1.604, 1.604)
 	
-	# Бонусы для элитных комнат применяются ко всем врагам
-	if type == RoomType.ELITE:
-		for enemy in get_tree().get_nodes_in_group('enemies'):
-			enemy.hp += 2
-			enemy.damage += 2
-			enemy.heal_points += 2
-			
-func should_spawn_special_enemy() -> bool:
-	# Базовый шанс
-	var base_chance = special_enemy_chance
-	
-	# Увеличиваем шанс в элитных комнатах
-	if type == RoomType.ELITE:
-		base_chance += 15
-	
-	# Увеличиваем шанс в комнатах испытаний
-	if type == RoomType.CHALLENGE:
-		base_chance += 25
-	
-	# Ограничиваем максимальный шанс
-	base_chance = min(base_chance, 75)
-	return randi() % 100 < base_chance
-	
-func convert_to_special_enemy(enemy_instance: Node) -> void:
-	var total_weight = teleporter_weight + berserker_weight
-	
-	if total_weight == 0:
-		return
-	
-	var roll = randi() % total_weight
-	
-	if roll < teleporter_weight:
-		# Превращаем в телепортера
-		enemy_instance.set_script(teleporter_enemy_script)
-	else:
-		# Превращаем в берсерка
-		enemy_instance.set_script(berserker_enemy_script)
+	# Бонусы для элитных комнат
+	if type == Global.RoomType.ELITE:
+		apply_elite_bonuses()
+
+func apply_elite_bonuses() -> void:
+	for enemy in get_tree().get_nodes_in_group('enemies'):
+		enemy.hp += 2
+		enemy.damage += 2
+		enemy.heal_points += 2
 
 func clear_enemies() -> void:
 	for enemy in get_tree().get_nodes_in_group("enemies"):
@@ -320,12 +280,10 @@ func spawn_object_at_position(type_obj: EditMode.PlacementType, tile_position: V
 		EditMode.PlacementType.ITEM:
 			spawn_object(item_scene, tile_position, rotation_degree)
 
-# В room.gd
 func spawn_object(scene: PackedScene, tile_position: Vector2i, rotation_degree: int = 0) -> void:
 	if scene:
 		var instance = scene.instantiate()
 		add_child(instance)
-		# Важно: преобразуем tile_position в целые числа
 		var pos = Vector2i(int(tile_position.x), int(tile_position.y))
 		instance.position = instance.get_world_position_from_tile(pos)
 		if instance.has_method('set_rotation_degree'):
