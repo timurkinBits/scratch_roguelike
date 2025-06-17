@@ -201,6 +201,7 @@ func _on_up_door_input_event(_viewport, event, _shape_idx) -> void:
 		transition_to_new_room('up', $ExitDoors/UpDoor.type)
 
 # Система спавна врагов через реестр
+# Система спавна врагов через реестр
 func spawn_enemies() -> void:
 	clear_enemies()
 	
@@ -214,12 +215,22 @@ func spawn_enemies() -> void:
 	available_positions.shuffle()
 	var enemy_count = min(randi_range(min_enemies, max_enemies), available_positions.size())
 	
+	# Создаем контекст для условий спавна
+	var room_context = {
+		"total_enemies": enemy_count,
+		"room_type": type,
+		"available_positions": available_positions.size()
+	}
+	
 	for i in range(enemy_count):
 		var enemy_instance = enemy_scene.instantiate()
 		
+		# Обновляем контекст для текущего врага
+		room_context["current_spawn_index"] = i
+		
 		# Проверяем, нужно ли заменить обычного врага на специального
-		if EnemyRegistry.should_replace_with_special_enemy(type):
-			var special_script_path = EnemyRegistry.get_random_special_enemy_script(type)
+		if EnemyRegistry.should_replace_with_special_enemy(type, room_context):
+			var special_script_path = EnemyRegistry.get_random_special_enemy_script(type, room_context)
 			if special_script_path != "":
 				var special_script = load(special_script_path)
 				if special_script:

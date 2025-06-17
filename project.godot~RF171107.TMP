@@ -1,0 +1,42 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
+
+config_version=5
+
+[application]
+
+config/name="scratch_roguelike"
+run/main_scene="uid://btb601n6tsxuw"
+config/features=PackedStringArray("4.4", "Forward Plus")
+config/icon="res://icon.svg"
+
+[autoload]
+
+Global="*res://scripts/managers/global.gd"
+ItemData="*res://scripts/managers/table managers/item_data.gd"
+EnemyRegistry="*res://scripts/managers/room managers/EnemyRegistry.gd"
+
+[display]
+
+window/stretch/mode="viewport"
+window/vsync/vsync_mode=0
+
+[dotnet]
+
+project/assembly_name="scratch_roguelike"
+
+[global_group]
+
+TileMap=""
+table=""
+room=""
+
+[rendering]
+
+textures/canvas_textures/default_texture_filter=0
+2d/snap/snap_2d_transforms_to_pixel=true

@@ -269,3 +269,4 @@ func take_damage(damage_amount: int):
 
 #func get_enemy_type() -> String:
 	#return "healer_enemy"
+ 
