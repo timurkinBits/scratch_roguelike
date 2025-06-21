@@ -34,6 +34,98 @@ func create_command_copy(type: int) -> void:
 	new_command.set_number(1)
 	new_command.position = Vector2(8, 8)
 
+# ДОБАВЛЕН: Исправленное создание копии специальной команды
+func create_special_command_copy(command_data: Dictionary) -> void:
+	if is_turn_in_progress:
+		return
+	
+	# Проверяем доступность команды
+	if not Global.can_use_special_command(command_data.id):
+		return
+	
+	# Создаем специальную команду
+	var new_command = command_scene.instantiate()
+	
+	# Заменяем скрипт на SpecialCommand
+	var special_script = preload("res://scripts/cards/special_command.gd")
+	new_command.set_script(special_script)
+	
+	# ИСПРАВЛЕНО: Устанавливаем правильные типы
+	new_command.special_id = command_data.id
+	new_command.special_type = command_data.type  # Тип особой команды из ItemData
+	new_command.type = Command.TypeCommand.NONE if Command.TypeCommand.has("NONE") else -1  # Нейтральный тип
+	new_command.is_menu_card = false
+	
+	# Проверяем настройки из ItemData
+	var special_data = ItemData.get_special_command_data(command_data.type)
+	if not special_data.is_empty():
+		new_command.has_value = special_data.has_value
+	else:
+		new_command.has_value = true  # По умолчанию
+	
+	table_texture.add_child(new_command)
+	
+	# Позиционируем команду
+	position_new_command(new_command)
+	
+	# Отмечаем команду как использованную
+	Global.use_special_command(command_data.id)
+	
+	# Обновляем внешний вид после добавления в дерево
+	new_command.call_deferred("update_appearance")
+
+# Позиционирование новой команды на столе
+func position_new_command(command: Node) -> void:
+	var table_rect = table_texture.get_rect()
+	var command_size = Vector2(80, 60)  # Примерный размер команды
+	var margin = 20
+	
+	var x = margin
+	var y = margin
+	var row_height = command_size.y + margin
+	
+	# Проверяем пересечения с существующими командами
+	var existing_commands = get_all_commands()
+	var placed = false
+	
+	while not placed and y < table_rect.size.y - command_size.y:
+		while x < table_rect.size.x - command_size.x:
+			var test_rect = Rect2(Vector2(x, y), command_size)
+			var intersects = false
+			
+			for existing_command in existing_commands:
+				if existing_command == command or not is_instance_valid(existing_command):
+					continue
+				var existing_rect = Rect2(existing_command.position, command_size)
+				if test_rect.intersects(existing_rect):
+					intersects = true
+					break
+			
+			if not intersects:
+				command.position = Vector2(x, y)
+				placed = true
+				break
+			
+			x += command_size.x + margin
+		
+		if not placed:
+			x = margin
+			y += row_height
+	
+	# Если не удалось найти место, ставим в углу
+	if not placed:
+		command.position = Vector2(8, 8)
+
+# Получить все команды на столе
+func get_all_commands() -> Array:
+	var commands = []
+	for child in table_texture.get_children():
+		if child.has_method("get_class") and child.get_class() == "Command":
+			commands.append(child)
+		elif child.get_script() and child.get_script().get_global_name() == "SpecialCommand":
+			commands.append(child)
+	return commands
+
 # Создание блока с использованием ID из инвентаря
 func create_block_copy(block_text: String, block_id: String = "") -> void:
 	if is_turn_in_progress:

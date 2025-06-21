@@ -9,6 +9,6 @@ script = ExtResource("1_2my6y")
 offset_left = -6.0
 offset_top = -6.0
 offset_right = 178.0
-offset_bottom = 412.0
+offset_bottom = 379.0
 mouse_filter = 2
 color = Color(0.231373, 0.227451, 0.227451, 1)

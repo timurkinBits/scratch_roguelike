@@ -85,7 +85,31 @@ func _clear_main_commands() -> bool:
 ## Очистка всех команд
 func _clear_all() -> bool:
 	await block_executor.clear_all()
+	# Возвращаем особые команды после очистки всех команд
+	await _reset_special_commands()
 	return is_instance_valid(player)
+
+## Сброс особых команд и возврат их в слоты (НЕ сбрасывает очки!)
+func _reset_special_commands() -> void:
+	# Освобождаем все особые команды на столе
+	if is_inside_tree():
+		for command in get_tree().get_nodes_in_group("special_commands"):
+			if is_instance_valid(command) and not command.is_menu_card:
+				# Для одноразовых команд - потребляем при завершении хода
+				if command.special_id != "" and not command.has_value:
+					Global.consume_special_command(command.special_id)
+				# Для команд с очками - просто освобождаем
+				elif command.special_id != "" and command.has_value:
+					Global.release_special_command(command.special_id)
+				
+				# Удаляем команду со стола
+				command.queue_free()
+	
+	# Ждем один кадр чтобы команды удалились
+	await get_tree().process_frame
+	
+	# НЕ сбрасываем очки особых команд здесь!
+	# Очки сбрасываются только при переходе в новую комнату
 
 ## Подготовка к следующему ходу
 func _prepare_next_turn() -> void:
@@ -116,6 +140,9 @@ func end_game_player_dead() -> void:
 	
 	await block_executor.clear_all()
 	
+	# При смерти игрока полностью сбрасываем особые команды
+	await _reset_special_commands_on_death()
+	
 	# Отключаем кнопку и показываем экран поражения
 	_turn_interactions(false)
 	room.visible = false
@@ -126,3 +153,21 @@ func end_game_player_dead() -> void:
 		await get_tree().create_timer(2).timeout
 		get_tree().change_scene_to_file("res://scenes/main_menu.tscn")
 		Global.coins = 0
+
+## Полный сброс особых команд при смерти игрока
+func _reset_special_commands_on_death() -> void:
+	# Освобождаем все особые команды на столе
+	if is_inside_tree():
+		for command in get_tree().get_nodes_in_group("special_commands"):
+			if is_instance_valid(command) and not command.is_menu_card:
+				# Освобождаем команду в Global
+				if command.special_id != "":
+					Global.release_special_command(command.special_id)
+				# Удаляем команду со стола
+				command.queue_free()
+	
+	# Ждем один кадр чтобы команды удалились
+		await get_tree().process_frame
+	
+	# Полностью сбрасываем все особые команды (включая очки)
+	Global.reset_special_commands()

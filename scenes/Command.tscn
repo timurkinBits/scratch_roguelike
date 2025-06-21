@@ -4,7 +4,7 @@
 [ext_resource type="Texture2D" uid="uid://dwcjksqiy8sbm" path="res://sprites/arrow_up.svg" id="2_r3s1r"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_qfsrn"]
-size = Vector2(312.218, 65.0218)
+size = Vector2(517.006, 65.0218)
 
 [sub_resource type="LabelSettings" id="LabelSettings_5kyvh"]
 font_size = 13
@@ -22,7 +22,7 @@ script = ExtResource("1_u6u2w")
 [node name="Area2D" type="Area2D" parent="."]
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D"]
-position = Vector2(46.5, 10)
+position = Vector2(77, 10)
 scale = Vector2(0.297869, 0.307589)
 shape = SubResource("RectangleShape2D_qfsrn")
 
@@ -35,21 +35,21 @@ scale = Vector2(0.626336, 0.626336)
 [node name="Texture" type="Control" parent="."]
 layout_mode = 3
 anchors_preset = 0
-offset_right = 119.0
+offset_right = 180.0
 offset_bottom = 20.0
 mouse_filter = 2
 
 [node name="Sprite" type="ColorRect" parent="Texture"]
 layout_mode = 0
-offset_right = 119.0
+offset_right = 180.0
 offset_bottom = 20.0
 mouse_filter = 2
 
 [node name="TextLabel" type="Label" parent="Texture"]
 texture_filter = 6
 layout_mode = 0
-offset_left = 21.0
-offset_right = 98.0
+offset_left = 19.0
+offset_right = 154.0
 offset_bottom = 23.0
 text = "атака"
 label_settings = SubResource("LabelSettings_5kyvh")
@@ -58,9 +58,9 @@ horizontal_alignment = 1
 [node name="NumLabel" type="Label" parent="Texture"]
 texture_filter = 6
 layout_mode = 0
-offset_left = 92.0
+offset_left = 153.0
 offset_top = -2.0
-offset_right = 119.0
+offset_right = 180.0
 offset_bottom = 21.0
 text = "1"
 label_settings = SubResource("LabelSettings_r3s1r")
@@ -85,9 +85,9 @@ color = Color(0, 0, 0, 0.360784)
 visible = false
 z_index = 20
 layout_mode = 0
-offset_left = 119.0
+offset_left = 180.0
 offset_top = -6.0
-offset_right = 927.0
+offset_right = 988.0
 offset_bottom = 802.0
 scale = Vector2(0.01854, 0.01854)
 icon = ExtResource("2_r3s1r")
@@ -96,9 +96,9 @@ icon = ExtResource("2_r3s1r")
 visible = false
 z_index = 20
 layout_mode = 0
-offset_left = 134.0
+offset_left = 195.0
 offset_top = 26.0
-offset_right = 942.0
+offset_right = 1003.0
 offset_bottom = 834.0
 rotation = 3.14159
 scale = Vector2(0.01854, 0.01854)

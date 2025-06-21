@@ -363,19 +363,15 @@ func force_reset_drag_state() -> void:
 func is_drag_blocked() -> bool:
 	"""Проверяет, заблокировано ли перетаскивание с подробной диагностикой"""
 	if is_menu_card:
-		print("Drag blocked: menu card")
 		return true
 	
 	if not is_instance_valid(table):
-		print("Drag blocked: invalid table")
 		return true
 		
 	if table.is_turn_in_progress:
-		print("Drag blocked: turn in progress")
 		return true
 		
 	if is_being_dragged:
-		print("Drag blocked: already dragging")
 		return true
 	
 	return false

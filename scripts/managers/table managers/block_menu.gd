@@ -6,7 +6,7 @@ var block_slots: Array[Block] = []
 
 func _ready() -> void:
 	add_to_group("block_menu")
-	block_slots.resize(Global.max_slots)
+	block_slots.resize(Global.max_slots_for_blocks)
 	
 	# Подключаем правильные сигналы
 	Global.connect("inventory_changed", refresh_menu)  # Только для покупки новых блоков
@@ -20,7 +20,7 @@ func refresh_menu() -> void:
 	clear_menu()
 	
 	var purchased_blocks = Global.get_all_purchased_blocks()
-	for i in range(min(purchased_blocks.size(), Global.max_slots)):
+	for i in range(min(purchased_blocks.size(), Global.max_slots_for_blocks)):
 		var block_data = purchased_blocks[i]
 		create_block_in_slot(block_data, i)
 
@@ -60,10 +60,6 @@ func _on_block_clicked(viewport: Node, event: InputEvent, shape_idx: int, block_
 	
 	# Create copy on table
 	table_node.create_block_copy(block.text, block_id)
-	
-	# ИСПРАВЛЕНИЕ 1: НЕ обновляем визуальное состояние сразу после создания копии
-	# Состояние должно обновляться только через сигнал block_availability_changed
-	# который срабатывает когда блок действительно используется или освобождается
 
 # Обновить доступность всех блоков в меню
 func update_all_availability() -> void:
@@ -87,12 +83,6 @@ func update_all_availability() -> void:
 		if area:
 			area.input_pickable = is_available
 
-# ИСПРАВЛЕНИЕ 2: Новый метод для сброса использования блоков в начале хода
-func reset_all_blocks_for_new_turn() -> void:
-	"""Сбрасывает использование всех блоков в начале нового хода"""
+func reset_all_blocks() -> void:
 	Global.reset_all_blocks()
 	update_all_availability()
-
-# Устаревший метод - оставляем для совместимости
-func reset_all_blocks() -> void:
-	reset_all_blocks_for_new_turn()

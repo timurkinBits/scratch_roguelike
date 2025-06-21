@@ -161,9 +161,9 @@ func _get_max_slots_for_block(block_text: String) -> int:
 		return 10
 	elif block_text == "Повторить 2 раз" or block_text == "Повторить 3 раз":
 		return 2
-	elif block_text in ItemData.TEXT_TO_ITEM_TYPE:
+	elif block_text in ItemData.TEXT_TO_BLOCK_TYPE:
 		# Для блоков навыков из ItemData
-		var item_type = ItemData.TEXT_TO_ITEM_TYPE[block_text]
+		var item_type = ItemData.TEXT_TO_BLOCK_TYPE[block_text]
 		return ItemData.get_slot_count_by_item_type(item_type)
 	else:
 		# Для остальных блоков навыков

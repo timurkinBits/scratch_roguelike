@@ -1,4 +1,4 @@
-[gd_scene load_steps=39 format=3 uid="uid://x83t6t456pdf"]
+[gd_scene load_steps=40 format=3 uid="uid://x83t6t456pdf"]
 
 [ext_resource type="PackedScene" uid="uid://pllgtdsxxw2s" path="res://scenes/table.tscn" id="1_2gx6p"]
 [ext_resource type="Script" uid="uid://bs0f6ystj1uo2" path="res://scripts/managers/table managers/table.gd" id="2_wk856"]
@@ -14,6 +14,7 @@
 [ext_resource type="PackedScene" uid="uid://kolp0x0ucfeh" path="res://scenes/defense_bar.tscn" id="9_lhr70"]
 [ext_resource type="PackedScene" uid="uid://d3hruys1lpbf3" path="res://scenes/wall.tscn" id="9_qmy6f"]
 [ext_resource type="Script" uid="uid://jcjkaqukp4lb" path="res://scripts/managers/table managers/ui.gd" id="9_wp0k4"]
+[ext_resource type="PackedScene" uid="uid://ygdlbk8dsquu" path="res://scenes/special_command_menu.tscn" id="9_xa025"]
 [ext_resource type="Script" uid="uid://b46fjemq5kbto" path="res://scripts/managers/room managers/edit_mode.gd" id="10_ft6cd"]
 [ext_resource type="PackedScene" uid="uid://b1n1mnvax3cup" path="res://scenes/hp_bar.tscn" id="10_wp0k4"]
 [ext_resource type="PackedScene" uid="uid://bfbsx0uvdydab" path="res://scenes/door.tscn" id="11_bb450"]
@@ -134,7 +135,7 @@ position = Vector2(189, 50)
 script = ExtResource("2_wk856")
 
 [node name="Block" parent="Table" instance=ExtResource("3_jfkan")]
-position = Vector2(186, 14)
+position = Vector2(157, 14)
 text = "начало хода"
 
 [node name="TurnExecutor" type="Node" parent="Table" node_paths=PackedStringArray("ui_node", "room")]
@@ -149,10 +150,13 @@ script = ExtResource("5_yxlcp")
 script = ExtResource("6_ebg2g")
 
 [node name="CommandMenu" parent="Table" instance=ExtResource("5_wp0k4")]
-position = Vector2(-151, 4)
+position = Vector2(-185, 4)
 
 [node name="block_menu" parent="Table" instance=ExtResource("8_xa025")]
-position = Vector2(-181, 184)
+position = Vector2(-181, 215)
+
+[node name="special_command_menu" parent="Table" instance=ExtResource("9_xa025")]
+position = Vector2(-183, 182)
 
 [node name="Room" parent="." groups=["room"] instance=ExtResource("4_r2l36")]
 position = Vector2(531, 117)

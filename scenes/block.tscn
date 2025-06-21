@@ -3,10 +3,10 @@
 [ext_resource type="Script" uid="uid://cuagnks6lfimo" path="res://scripts/cards/Block.gd" id="1_xy3v5"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_bwmav"]
-size = Vector2(170, 22)
+size = Vector2(212, 22)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_cgrg5"]
-size = Vector2(170, 22)
+size = Vector2(212, 22)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_omwid"]
 size = Vector2(20, 67)
@@ -27,14 +27,14 @@ metadata/_edit_use_anchors_ = true
 
 [node name="TextureUp" type="ColorRect" parent="Texture"]
 layout_mode = 0
-offset_right = 170.0
+offset_right = 213.0
 offset_bottom = 22.0
 mouse_filter = 2
 
 [node name="TextureDown" type="ColorRect" parent="Texture"]
 layout_mode = 0
 offset_top = 90.0
-offset_right = 170.0
+offset_right = 213.0
 offset_bottom = 112.0
 mouse_filter = 2
 
@@ -49,11 +49,11 @@ metadata/_edit_use_anchors_ = true
 collision_layer = 2
 
 [node name="CollisionUp" type="CollisionShape2D" parent="Area2D"]
-position = Vector2(85, 11)
+position = Vector2(106, 11)
 shape = SubResource("RectangleShape2D_bwmav")
 
 [node name="CollisionDown" type="CollisionShape2D" parent="Area2D"]
-position = Vector2(85, 101)
+position = Vector2(106, 101)
 shape = SubResource("RectangleShape2D_cgrg5")
 
 [node name="CollisionLeft" type="CollisionShape2D" parent="Area2D"]
@@ -64,11 +64,11 @@ shape = SubResource("RectangleShape2D_omwid")
 [node name="Label" type="Label" parent="."]
 offset_left = 20.0
 offset_top = 1.0
-offset_right = 51.0
-offset_bottom = 19.0
+offset_right = 210.0
+offset_bottom = 22.0
 text = "Если"
 label_settings = SubResource("LabelSettings_8r6n6")
-horizontal_alignment = 2
+horizontal_alignment = 1
 
 [node name="Icon" type="Sprite2D" parent="."]
 position = Vector2(10, 11)

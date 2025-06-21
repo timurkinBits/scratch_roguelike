@@ -5,23 +5,27 @@ class_name Item
 @onready var info: Label = $Label
 @onready var background: ColorRect = $Label/BackGround
 
-var type: int  # Использует ItemData.ItemType
+var type: int  # Использует ItemData.ItemType или ItemData.SpecialCommandType
+var is_special_command: bool = false  # Флаг для различения обычных блоков и особых команд
 
 func _ready() -> void:
 	super._ready()
 	add_to_group('items')
 	add_to_group('barrier')
 	
-	# Проверяем, находимся ли мы в комнате испытаний
+	# Генерируем случайный тип (блок или особая команда)
 	generate_random_type()
 	
 	# Устанавливаем иконку после определения типа
-	icon.texture = load(ItemData.get_item_icon(type))
+	if is_special_command:
+		icon.texture = load(ItemData.get_special_command_icon(type))
+	else:
+		icon.texture = load(ItemData.get_item_icon(type))
 
-# Выбор случайного типа на основе весов вероятности
+# Выбор случайного типа на основе весов вероятности (блоки + особые команды)
 func generate_random_type() -> void:
-	# Получаем доступные типы предметов с их весами
-	var available_weights = get_available_item_weights()
+	# Получаем доступные типы предметов и особых команд с их весами
+	var available_weights = get_all_available_weights()
 	
 	# Рассчитываем общий вес
 	var total_weight = 0.0
@@ -32,27 +36,42 @@ func generate_random_type() -> void:
 	var rand_value = randf() * total_weight
 	var current_sum = 0.0
 	
-	for item_type in available_weights.keys():
-		current_sum += available_weights[item_type]
+	for item_info in available_weights.keys():
+		current_sum += available_weights[item_info]
 		if rand_value <= current_sum:
-			type = item_type
+			type = item_info.type
+			is_special_command = item_info.is_special
 			return
 
-# Получить доступные типы предметов с их весами
-func get_available_item_weights() -> Dictionary:
+# Получить все доступные типы (блоки + особые команды) с их весами для магазина
+func get_all_available_weights() -> Dictionary:
 	var available_weights = {}
 	
-	for item_type in ItemData.ITEMS:
-		available_weights[item_type] = ItemData.get_item_weight(item_type)
+	# Добавляем обычные блоки с весами для магазина
+	for item_type in ItemData.BLOCKS:
+		var item_info = {"type": item_type, "is_special": false}
+		available_weights[item_info] = ItemData.get_block_shop_weight(item_type)
+	
+	# Добавляем особые команды с финальными весами для магазина
+	for item_type in ItemData.SPECIAL_COMMANDS:
+		var item_info = {"type": item_type, "is_special": true}
+		available_weights[item_info] = ItemData.get_special_command_shop_weight(item_type)
 	
 	return available_weights
 
 func use():
-	if Global.get_all_purchased_blocks().size() >= Global.max_slots:
-		show_info_message('Не хватает места!', 0.6)
-		return
+	# Проверяем ограничения по слотам
+	if is_special_command:
+		if Global.get_all_purchased_special_commands().size() >= Global.max_slots_for_commands:
+			show_info_message('Не хватает места для особой команды!', 0.6)
+			return
+	else:
+		if Global.get_all_purchased_blocks().size() >= Global.max_slots_for_blocks:
+			show_info_message('Не хватает места для блока!', 0.6)
+			return
 	
-	var cost = ItemData.get_item_cost(type)
+	# Получаем стоимость
+	var cost = get_item_cost()
 	if Global.get_coins() < cost:
 		show_info_message('Не хватает денег!', 0.6)
 		return
@@ -60,15 +79,36 @@ func use():
 	# Покупаем предмет
 	Global.spend_coins(cost)
 	
-	# Обрабатываем покупку - добавляем блок в инвентарь
+	# Обрабатываем покупку
 	process_purchase()
 	
 	# Показываем сообщение
-	var item_name = ItemData.get_item_description(type)
+	var item_name = get_item_name()
 	show_info_message('Добавлено: ' + item_name, 0.8)
 	
 	# Удаляем предмет
 	queue_free()
+
+# Получить стоимость предмета
+func get_item_cost() -> int:
+	if is_special_command:
+		return ItemData.get_special_command_cost(type)
+	else:
+		return ItemData.get_item_cost(type)
+
+# Получить название предмета
+func get_item_name() -> String:
+	if is_special_command:
+		return ItemData.get_special_command_name(type)
+	else:
+		return ItemData.get_item_description(type)
+
+# Получить описание предмета
+func get_item_description() -> String:
+	if is_special_command:
+		return ItemData.get_special_command_description(type)
+	else:
+		return ItemData.get_item_description(type)
 
 # Вспомогательная функция для отображения сообщений
 func show_info_message(message: String, duration: float) -> void:
@@ -76,18 +116,27 @@ func show_info_message(message: String, duration: float) -> void:
 	await get_tree().create_timer(duration).timeout
 	info.text = ''
 
-# Обработка покупки - добавление блока в инвентарь через Global
+# Обработка покупки
 func process_purchase() -> void:
-	var block_text = ItemData.get_block_text(type)
-	
-	if block_text != "":
-		# Добавляем блок в глобальный инвентарь (Global.purchased_blocks)
-		Global.purchase_block(block_text, 1)
+	if is_special_command:
+		# Покупаем особую команду
+		Global.purchase_special_command(type, 1)
 		
-		# Создаем блок на столе
-		var table = get_tree().get_first_node_in_group("table")
-		if table:
-			table.create_purchased_block(block_text)
+		# Уведомляем меню особых команд об обновлении
+		var special_menu = get_tree().get_first_node_in_group("special_command_menu")
+		if special_menu:
+			special_menu.refresh_menu()
+	else:
+		# Покупаем обычный блок
+		var block_text = ItemData.get_block_text(type)
+		if block_text != "":
+			# Добавляем блок в глобальный инвентарь
+			Global.purchase_block(block_text, 1)
+			
+			# Создаем блок на столе
+			var table = get_tree().get_first_node_in_group("table")
+			if table:
+				table.create_purchased_block(block_text)
 
 # Функция для обновления размера фона в зависимости от текста
 func update_background_size() -> void:
@@ -114,14 +163,21 @@ func update_background_size() -> void:
 
 func _on_area_2d_mouse_entered() -> void:
 	background.visible = true
-	info.text = ItemData.get_item_description(type)
+	info.text = get_item_description()
 	
-	var block_text = ItemData.get_block_text(type)
-	if block_text != "":
-		var slot_count = ItemData.get_slot_count_by_item_type(type)
-		info.text += "\nСлотов: " + str(slot_count)
+	if is_special_command:
+		# Информация для особой команды
+		var special_data = ItemData.get_special_command_data(type)
+		if special_data.has_value:
+			info.text += "\nМаксимальное значение: " + str(special_data.max_value)
+	else:
+		# Информация для обычного блока
+		var block_text = ItemData.get_block_text(type)
+		if block_text != "":
+			var slot_count = ItemData.get_slot_count_by_item_type(type)
+			info.text += "\nСлотов: " + str(slot_count)
 	
-	info.text += "\nЦена: " + str(ItemData.get_item_cost(type))
+	info.text += "\nЦена: " + str(get_item_cost())
 	
 	# Обновляем размер фона после установки текста
 	update_background_size()

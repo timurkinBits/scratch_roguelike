@@ -53,8 +53,8 @@ func _get_block_config() -> Dictionary:
 		}
 	
 	# Получаем цвет и иконку из ItemData для блоков из item_data
-	if text in ItemData.TEXT_TO_ITEM_TYPE:
-		var item_type = ItemData.TEXT_TO_ITEM_TYPE[text]
+	if text in ItemData.TEXT_TO_BLOCK_TYPE:
+		var item_type = ItemData.TEXT_TO_BLOCK_TYPE[text]
 		var color = ItemData.get_item_color(item_type)
 		var icon_path = ItemData.get_item_icon(item_type)
 		
@@ -89,8 +89,8 @@ func _get_block_config() -> Dictionary:
 
 func _get_icon_for_block_text(block_text: String) -> String:
 	# Получаем тип предмета по тексту блока
-	if block_text in ItemData.TEXT_TO_ITEM_TYPE:
-		var item_type = ItemData.TEXT_TO_ITEM_TYPE[block_text]
+	if block_text in ItemData.TEXT_TO_BLOCK_TYPE:
+		var item_type = ItemData.TEXT_TO_BLOCK_TYPE[block_text]
 		return ItemData.get_item_icon(item_type)
 	
 	# Для блоков, которых нет в item_data, возвращаем пустую строку
