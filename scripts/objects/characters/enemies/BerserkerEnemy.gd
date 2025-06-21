@@ -132,7 +132,7 @@ func play_rage_deactivation_effect() -> void:
 	tween.tween_property(self, "position", original_pos, 0.2)
 
 func take_damage(damage_amount: int):
-	super.take_damage(damage_amount / 2)
+	super.take_damage(damage_amount)
 	
 	# Эффект получения урона для берсерка
 	if not is_dead:

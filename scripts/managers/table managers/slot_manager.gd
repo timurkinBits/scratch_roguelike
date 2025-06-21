@@ -54,33 +54,53 @@ func update_all_slot_positions() -> void:
 		var increment = SLOT_OFFSET
 		if is_instance_valid(slot.command):
 			slot.command.global_position = parent_block.to_global(slot.position)
+			# ИСПРАВЛЕНИЕ 1: Более безопасное обновление связей
 			if slot.command is Command:
-				slot.command.slot = slot
+				if slot.command.slot != slot:
+					slot.command.slot = slot
 			elif slot.command is Block:
-				slot.command.parent_slot = slot
+				if slot.command.parent_slot != slot:
+					slot.command.parent_slot = slot
 				slot.command.update_command_positions(slot.command.z_index)
 				increment = slot.command.get_total_height() + SLOT_HEIGHT_INCREMENT
 		current_y += increment
 
 func update_slots() -> void:
+	if not is_instance_valid(parent_block):
+		print("Warning: parent_block is not valid in SlotManager.update_slots()")
+		return
+	
 	shift_commands_up()
 	adjust_slot_count()
 	update_all_slot_positions()
 	
-	# Проверяем и восстанавливаем связи только если идет ход
+	# Проверяем и восстанавливаем связи только если это необходимо
 	if is_inside_tree():
 		var table = get_tree().get_first_node_in_group('table')
-		if table and table.is_turn_in_progress:
-			restore_command_links()
+		# ИСПРАВЛЕНИЕ: Восстанавливаем связи всегда, не только во время хода
+		if table:
+			call_deferred("restore_command_links")
 	
+	call_deferred("emit_slots_updated_signal")
+
+func emit_slots_updated_signal() -> void:
 	emit_signal("slots_updated")
 
+# ИСПРАВЛЕНИЕ 4: Улучшенная функция восстановления связей
 func restore_command_links() -> void:
-	# Восстанавливаем связи между командами и слотами только во время хода
+	"""Восстанавливает связи между командами и слотами"""
 	for block in get_tree().get_nodes_in_group("blocks"):
-		if is_instance_valid(block) and block.parent_slot:
-			block.parent_slot.command = block
-			block.update_command_positions(block.z_index)
+		if not is_instance_valid(block):
+			continue
+			
+		if is_instance_valid(block.parent_slot):
+			# Проверяем, что связь не нарушена
+			if block.parent_slot.command != block:
+				block.parent_slot.command = block
+			
+			# Обновляем позиции команд
+			if block.has_method('update_command_positions'):
+				block.update_command_positions(block.z_index)
 
 func shift_commands_up() -> void:
 	# Collect valid commands
@@ -149,8 +169,14 @@ func _get_max_slots_for_block(block_text: String) -> int:
 		# Для остальных блоков навыков
 		return 1
 
+# ИСПРАВЛЕНИЕ 5: Улучшенная подготовка к вставке
 func prepare_for_insertion(target_slot: CommandSlot) -> void:
 	if not target_slot in slots or insertion_prepared:
+		return
+	
+	# ИСПРАВЛЕНИЕ 6: Проверяем валидность всех объектов
+	if not is_instance_valid(target_slot) or not is_instance_valid(parent_block):
+		print("Warning: Invalid objects in prepare_for_insertion")
 		return
 	
 	# Store original commands state
@@ -193,8 +219,17 @@ func finalize_insertion() -> void:
 		insertion_prepared = false
 		insertion_slot = null
 
+# ИСПРАВЛЕНИЕ 7: Улучшенная отмена вставки
 func cancel_insertion() -> void:
 	if not insertion_prepared or original_slot_commands.is_empty():
+		return
+	
+	# ИСПРАВЛЕНИЕ 8: Дополнительные проверки валидности
+	if not is_instance_valid(parent_block):
+		print("Warning: parent_block is not valid in cancel_insertion")
+		original_slot_commands.clear()
+		insertion_prepared = false
+		insertion_slot = null
 		return
 	
 	# Restore original slot commands

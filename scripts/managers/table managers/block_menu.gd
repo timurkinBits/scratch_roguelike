@@ -42,8 +42,13 @@ func create_block_in_slot(block_data: Dictionary, slot_index: int) -> void:
 	block_slots[slot_index] = block
 	block.position = Vector2(0, slot_index * 30)
 	
+	# Сразу устанавливаем правильную доступность при создании
+	var is_available = Global.can_use_block_by_id(block_data.id)
+	block.modulate.a = 1.0 if is_available else 0.3
+	
 	var area = block.get_node("Area2D")
 	if area:
+		area.input_pickable = is_available
 		area.input_event.connect(_on_block_clicked.bind(block_data.id, block))
 
 func _on_block_clicked(viewport: Node, event: InputEvent, shape_idx: int, block_id: String, block: Block) -> void:
@@ -56,13 +61,9 @@ func _on_block_clicked(viewport: Node, event: InputEvent, shape_idx: int, block_
 	# Create copy on table
 	table_node.create_block_copy(block.text, block_id)
 	
-	# Сразу обновляем визуальное состояние блока в меню
-	var is_available = Global.can_use_block_by_id(block_id)
-	block.modulate.a = 1.0 if is_available else 0.3
-	
-	var area = block.get_node("Area2D")
-	if area:
-		area.input_pickable = is_available
+	# ИСПРАВЛЕНИЕ 1: НЕ обновляем визуальное состояние сразу после создания копии
+	# Состояние должно обновляться только через сигнал block_availability_changed
+	# который срабатывает когда блок действительно используется или освобождается
 
 # Обновить доступность всех блоков в меню
 func update_all_availability() -> void:
@@ -86,7 +87,12 @@ func update_all_availability() -> void:
 		if area:
 			area.input_pickable = is_available
 
-# Сбросить использование всех блоков (для начала нового хода)
-func reset_all_blocks() -> void:
+# ИСПРАВЛЕНИЕ 2: Новый метод для сброса использования блоков в начале хода
+func reset_all_blocks_for_new_turn() -> void:
+	"""Сбрасывает использование всех блоков в начале нового хода"""
 	Global.reset_all_blocks()
 	update_all_availability()
+
+# Устаревший метод - оставляем для совместимости
+func reset_all_blocks() -> void:
+	reset_all_blocks_for_new_turn()

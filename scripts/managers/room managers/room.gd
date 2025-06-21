@@ -65,7 +65,7 @@ func _ready() -> void:
 	
 	init_edit_mode()
 	spawn_enemies()
-
+	
 func update_registry_replacement_chances() -> void:
 	EnemyRegistry.set_replacement_chance(Global.RoomType.NORMAL, normal_room_special_chance)
 	EnemyRegistry.set_replacement_chance(Global.RoomType.ELITE, elite_room_special_chance)
@@ -168,6 +168,8 @@ func transition_to_new_room(direction: String, door_type = null) -> void:
 	apply_room_type_settings()
 	spawn_enemies()
 	room_changed.emit(direction)
+	
+	DifficultyManager.increase_difficulty_for_room(type)
 
 func apply_room_type_settings() -> void:
 	match type:
@@ -200,8 +202,6 @@ func _on_up_door_input_event(_viewport, event, _shape_idx) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 		transition_to_new_room('up', $ExitDoors/UpDoor.type)
 
-# Система спавна врагов через реестр
-# Система спавна врагов через реестр
 func spawn_enemies() -> void:
 	clear_enemies()
 	
@@ -213,7 +213,12 @@ func spawn_enemies() -> void:
 		return
 	
 	available_positions.shuffle()
-	var enemy_count = min(randi_range(min_enemies, max_enemies), available_positions.size())
+	
+	# ИСПРАВЛЕНО: Используем масштабированные значения для определения количества врагов
+	var scaled_max_enemies = DifficultyManager.get_scaled_max_enemies(max_enemies)
+	var scaled_min_enemies = min(min_enemies, scaled_max_enemies)  # Убеждаемся что min не больше max
+	
+	var enemy_count = min(randi_range(scaled_min_enemies, scaled_max_enemies), available_positions.size())
 	
 	# Создаем контекст для условий спавна
 	var room_context = {
@@ -222,32 +227,68 @@ func spawn_enemies() -> void:
 		"available_positions": available_positions.size()
 	}
 	
+	var special_enemy_count = 0  # Для отладки
+	
 	for i in range(enemy_count):
 		var enemy_instance = enemy_scene.instantiate()
 		
 		# Обновляем контекст для текущего врага
 		room_context["current_spawn_index"] = i
 		
-		# Проверяем, нужно ли заменить обычного врага на специального
-		if EnemyRegistry.should_replace_with_special_enemy(type, room_context):
+		# ИСПРАВЛЕНО: Проверяем замену на специального врага с отладкой
+		var should_replace = EnemyRegistry.should_replace_with_special_enemy(type, room_context)
+		
+		if should_replace:
 			var special_script_path = EnemyRegistry.get_random_special_enemy_script(type, room_context)
 			if special_script_path != "":
 				var special_script = load(special_script_path)
 				if special_script:
 					enemy_instance.set_script(special_script)
+					special_enemy_count += 1
 		
 		add_child(enemy_instance)
+		
+		# ВАЖНО: Применяем масштабирование сложности после добавления в сцену
+		apply_difficulty_scaling_to_enemy(enemy_instance)
 		
 		var world_position = tile_map.map_to_local(available_positions[i]) * tile_map.scale
 		enemy_instance.position = world_position
 		enemy_instance.scale = Vector2(1.604, 1.604)
 	
-	# Бонусы для элитных комнат
+	# Бонусы для элитных комнат применяются ПОСЛЕ масштабирования сложности
 	if type == Global.RoomType.ELITE:
 		apply_elite_bonuses()
 
+# ИСПРАВЛЕНО: Функция для применения масштабирования сложности к врагу
+func apply_difficulty_scaling_to_enemy(enemy: Enemy) -> void:
+	# Сохраняем базовые значения если они еще не сохранены
+	if not enemy.has_meta("base_hp"):
+		enemy.set_meta("base_hp", enemy.heal_points)
+	if not enemy.has_meta("base_damage"):
+		enemy.set_meta("base_damage", enemy.damage)  
+	if not enemy.has_meta("base_speed"):
+		enemy.set_meta("base_speed", enemy.speed)
+	
+	# Применяем масштабирование на основе базовых значений
+	var base_hp = enemy.get_meta("base_hp")
+	var base_damage = enemy.get_meta("base_damage")
+	var base_speed = enemy.get_meta("base_speed")
+	
+	var old_hp = enemy.heal_points
+	var old_damage = enemy.damage
+	var old_speed = enemy.speed
+	
+	enemy.heal_points = DifficultyManager.get_scaled_hp(base_hp)
+	enemy.hp = enemy.heal_points  # Устанавливаем текущие ХП
+	enemy.damage = DifficultyManager.get_scaled_damage(base_damage)
+	enemy.speed = DifficultyManager.get_scaled_speed(base_speed)
+
 func apply_elite_bonuses() -> void:
 	for enemy in get_tree().get_nodes_in_group('enemies'):
+		# Элитные бонусы применяются поверх масштабирования сложности
+		var old_hp = enemy.hp
+		var old_damage = enemy.damage
+		
 		enemy.hp += 2
 		enemy.damage += 2
 		enemy.heal_points += 2

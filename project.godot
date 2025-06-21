@@ -20,6 +20,7 @@ config/icon="res://icon.svg"
 Global="*res://scripts/managers/global.gd"
 ItemData="*res://scripts/managers/table managers/item_data.gd"
 EnemyRegistry="*res://scripts/managers/room managers/EnemyRegistry.gd"
+DifficultyManager="*res://scripts/managers/room managers/DifficultyManager.gd"
 
 [display]
 

@@ -19,7 +19,7 @@ var points: Dictionary = {
 	Command.TypeCommand.DEFENSE: 3
 }
 
-var coins: int = 999
+var coins: int = 99
 var remaining_points: Dictionary = {}
 var max_slots: int = 8
 

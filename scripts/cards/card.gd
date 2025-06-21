@@ -31,16 +31,32 @@ func _ready() -> void:
 	# Устанавливаем начальный z-индекс
 	z_index = next_z_index
 	next_z_index += 1
-	
+
 func get_size() -> Vector2:
 	return Vector2.ZERO  # Override in subclasses
 
 func start_drag() -> void:
-	if is_menu_card or table.is_turn_in_progress:
+	# Проверяем все условия блокировки
+	if is_menu_card:
+		print("Блокировка: карта меню")
+		return
+	
+	if not is_instance_valid(table):
+		print("Блокировка: стол недоступен")
 		return
 		
+	if table.is_turn_in_progress:
+		print("Блокировка: ход в процессе")
+		return
+	
+	if is_being_dragged:
+		print("Блокировка: уже перетаскивается")
+		return
+	
+	# Принудительно поднимаем карту наверх перед началом перетаскивания
+	bring_to_front()
+		
 	is_being_dragged = true
-	# Устанавливаем максимальный z-индекс для перетаскиваемой карты
 	z_index = Z_INDEX_DRAGGING
 	drag_offset = global_position - get_global_mouse_position()
 	
@@ -48,15 +64,30 @@ func start_drag() -> void:
 	if slot and is_instance_valid(slot):
 		original_slot = slot
 		var parent_block = slot.block
-		# Очищаем слот
 		slot.command = null
 		slot = null
-		# Обновляем слоты блока сразу после извлечения
 		if is_instance_valid(parent_block):
 			parent_block.slot_manager.update_slots()
 	
 	reset_hover_state()
 	drag_started.emit()
+	
+	if self is Block:
+		bring_nested_commands_to_front()
+		
+func force_unlock_drag() -> void:
+	"""Принудительно разблокирует перетаскивание после завершения хода"""
+	if is_being_dragged:
+		finish_drag()
+	
+	# Сбрасываем все возможные блокировки
+	is_being_dragged = false
+	reset_hover_state()
+	
+	# Обеспечиваем корректный z-индекс
+	if z_index == Z_INDEX_DRAGGING:
+		z_index = next_z_index
+		next_z_index += 1
 
 func finish_drag() -> void:
 	if not is_being_dragged:
@@ -243,26 +274,24 @@ func _input(event: InputEvent) -> void:
 		if not event.pressed and is_being_dragged:
 			finish_drag()
 
-# Обновленная функция для обработки событий мыши с учетом z-индекса
 func _on_area_input_event(_viewport: Node, event: InputEvent, _shape_idx: int) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
-		if event.pressed:
+		if event.pressed and not is_being_dragged:
 			# Проверяем, является ли эта карта самой верхней в точке клика
 			if is_topmost_card_at_position():
-				start_drag()
+				if not is_drag_blocked():
+					call_deferred("start_drag")
 		elif is_being_dragged:
 			finish_drag()
 
-# Новая функция для проверки, является ли карта самой верхней в точке клика
+# ИСПРАВЛЕНИЕ 4: Кардинально улучшенная функция проверки самой верхней карты
 func is_topmost_card_at_position() -> bool:
 	var mouse_pos = get_global_mouse_position()
-	var cards_at_position = []
+	var cards_under_mouse = []
 	
-	# Собираем все карты под курсором
+	# Собираем все карты под курсором с их z-индексами
 	for card in get_tree().get_nodes_in_group('cards'):
-		if card == self:
-			continue
-		if card.is_menu_card:
+		if card == self or card.is_menu_card:
 			continue
 		if not is_instance_valid(card):
 			continue
@@ -270,16 +299,109 @@ func is_topmost_card_at_position() -> bool:
 		# Проверяем, находится ли мышь над картой
 		var card_rect = Rect2(card.global_position, card.get_size() * card.scale)
 		if card_rect.has_point(mouse_pos):
-			cards_at_position.append(card)
+			cards_under_mouse.append({
+				"card": card,
+				"z_index": card.z_index,
+				"nesting_level": get_nesting_level(card)
+			})
 	
-	# Проверяем наш z-индекс против всех других карт в этой позиции
-	for card in cards_at_position:
-		if card.z_index > self.z_index:
-			return false
+	# Если под мышью нет других карт, эта карта самая верхняя
+	if cards_under_mouse.is_empty():
+		return true
 	
-	return true
+	# Сортируем карты по z-индексу, затем по уровню вложенности
+	cards_under_mouse.sort_custom(func(a, b): 
+		if a.z_index != b.z_index:
+			return a.z_index > b.z_index
+		return a.nesting_level > b.nesting_level
+	)
+	
+	# Проверяем, является ли наша карта самой верхней
+	var our_z = z_index
+	var our_nesting = get_nesting_level(self)
+	var top_card = cards_under_mouse[0]
+	
+	if our_z > top_card.z_index:
+		return true
+	elif our_z == top_card.z_index:
+		return our_nesting >= top_card.nesting_level
+	
+	return false
+
+# Новая функция для определения уровня вложенности карты
+func get_nesting_level(card: Card) -> int:
+	var level = 0
+	var current_slot = null
+	
+	if card is Block and card.parent_slot:
+		current_slot = card.parent_slot
+	elif card is Command and card.slot:
+		current_slot = card.slot
+	
+	while current_slot and is_instance_valid(current_slot):
+		level += 1
+		var parent_block = current_slot.block
+		if not is_instance_valid(parent_block):
+			break
+			
+		if parent_block.parent_slot:
+			current_slot = parent_block.parent_slot
+		else:
+			break
+	
+	return level
+
+# ИСПРАВЛЕНИЕ 5: Функция для принудительного восстановления состояния
+func force_reset_drag_state() -> void:
+	"""Принудительно сбрасывает состояние перетаскивания в случае ошибок"""
+	if is_being_dragged:
+		is_being_dragged = false
+		z_index = next_z_index
+		next_z_index += 1
+		reset_hover_state()
+
+func is_drag_blocked() -> bool:
+	"""Проверяет, заблокировано ли перетаскивание с подробной диагностикой"""
+	if is_menu_card:
+		print("Drag blocked: menu card")
+		return true
+	
+	if not is_instance_valid(table):
+		print("Drag blocked: invalid table")
+		return true
+		
+	if table.is_turn_in_progress:
+		print("Drag blocked: turn in progress")
+		return true
+		
+	if is_being_dragged:
+		print("Drag blocked: already dragging")
+		return true
+	
+	return false
 
 # Функция для принудительного поднятия карты наверх (может быть полезна)
 func bring_to_front() -> void:
 	z_index = next_z_index
 	next_z_index += 1
+
+# НОВАЯ ФУНКЦИЯ: Поднимает все вложенные команды вместе с блоком
+func bring_nested_commands_to_front() -> void:
+	"""Поднимает все вложенные команды на передний план вместе с блоком"""
+	if not self is Block:
+		return
+	
+	var slot_manager = self.get("slot_manager")
+	if not slot_manager:
+		return
+	
+	for slot in slot_manager.slots:
+		if not is_instance_valid(slot) or not is_instance_valid(slot.command):
+			continue
+		
+		# Устанавливаем высокий z-индекс для вложенных команд
+		slot.command.z_index = Z_INDEX_DRAGGING - 1
+		
+		# Рекурсивно поднимаем вложенные блоки
+		if slot.command is Block:
+			slot.command.bring_nested_commands_to_front()
