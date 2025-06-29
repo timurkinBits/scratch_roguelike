@@ -7,32 +7,6 @@ var outline_panels: Array[Node] = []
 @onready var player: Player = $"../../../Room/Player"
 @onready var command_executor: CommandExecutor = $"../CommandExecutor"
 
-func clear_start_turn_commands_preserve_blocks(start_turn_block: Block) -> void:
-	if not is_instance_valid(start_turn_block) or start_turn_block.text != "начало хода":
-		return
-	
-	# Шаг 1: Собираем команды для удаления
-	var commands_to_remove = []
-	for slot in start_turn_block.slot_manager.slots:
-		if is_instance_valid(slot) and is_instance_valid(slot.command) and slot.command is Command:
-			commands_to_remove.append(slot.command)
-	
-	# Шаг 2: Удаляем команды с анимацией
-	if not commands_to_remove.is_empty():
-		var tween = create_tween().set_parallel(true)
-		for command in commands_to_remove:
-			if is_instance_valid(command) and command.has_node("Texture"):
-				tween.tween_property(command.get_node("Texture"), "modulate:a", 0.0, 0.3)
-		await tween.finished
-		
-		for command in commands_to_remove:
-			if is_instance_valid(command):
-				command.slot.command = null
-				command.queue_free()
-	
-	# Шаг 3: Обновляем слоты с сохранением блоков
-	start_turn_block.slot_manager.update_slots()
-
 ## Execute start turn blocks
 func execute_start_turn_blocks() -> bool:
 	var start_turn_blocks = get_tree().get_nodes_in_group("blocks").filter(
@@ -131,15 +105,130 @@ func clear_outlines() -> void:
 			panel.queue_free()
 	outline_panels.clear()
 
-func clear_main_commands() -> void:
+
+
+## НОВЫЙ ЕДИНЫЙ МЕТОД: Полная очистка всех элементов с возвратом в меню
+func clear_all_elements() -> void:
 	if not is_inside_tree():
 		return
 	
-	var start_turn_blocks = get_tree().get_nodes_in_group("blocks").filter(
-		func(block): return is_instance_valid(block) and block.text == "начало хода")
+	var elements_to_clear = []
+	var blocks_to_update = []
 	
-	for block in start_turn_blocks:
-		await clear_start_turn_commands_preserve_blocks(block)
+	# Проходим по всем блокам
+	for block in get_tree().get_nodes_in_group("blocks"):
+		if not is_instance_valid(block):
+			continue
+		
+		var block_had_content = false
+		
+		# Собираем все элементы из слотов блока
+		for slot in block.slot_manager.slots:
+			if is_instance_valid(slot) and is_instance_valid(slot.command):
+				var element = slot.command
+				var release_method = ""
+				
+				if element is SpecialCommand:
+					# Определяем метод освобождения для команды
+					if element.special_id.is_empty():
+						release_method = "release_points"
+					else:
+						release_method = "release_special_command"
+				elif element is Block:
+					# Сначала рекурсивно собираем элементы из вложенного блока
+					_collect_elements_from_block_recursive(element, elements_to_clear)
+					# Сам блок тоже освобождаем
+					release_method = "release_block"
+				
+				elements_to_clear.append({
+					"element": element,
+					"slot": slot,
+					"release_method": release_method
+				})
+				block_had_content = true
+		
+		if block_had_content and not blocks_to_update.has(block):
+			blocks_to_update.append(block)
+	
+	# Очищаем все собранные элементы
+	await _clear_elements_with_animation(elements_to_clear)
+	
+	# Обновляем все затронутые блоки
+	for block in blocks_to_update:
+		if is_instance_valid(block):
+			block.slot_manager.shift_commands_up()
+			block.slot_manager.adjust_slot_count()
+			block.slot_manager.update_all_slot_positions()
+	
+	# Обновляем иерархию блоков
+	update_root_blocks()
+
+## Рекурсивный сбор элементов из блока
+func _collect_elements_from_block_recursive(block: Block, elements_array: Array) -> void:
+	if not is_instance_valid(block):
+		return
+	
+	for slot in block.slot_manager.slots:
+		if is_instance_valid(slot) and is_instance_valid(slot.command):
+			var element = slot.command
+			var release_method = ""
+			
+			if element is SpecialCommand:
+				if element.special_id.is_empty():
+					release_method = "release_points"
+				else:
+					release_method = "release_special_command"
+			elif element is Block:
+				# Рекурсивно обрабатываем вложенный блок
+				_collect_elements_from_block_recursive(element, elements_array)
+				release_method = "release_block"
+			
+			elements_array.append({
+				"element": element,
+				"slot": slot,
+				"release_method": release_method
+			})
+
+## Единый метод для очистки элементов с анимацией и освобождением ресурсов
+func _clear_elements_with_animation(elements_to_clear: Array) -> void:
+	if elements_to_clear.is_empty():
+		return
+	
+	# Анимация исчезновения
+	var tween = create_tween().set_parallel(true)
+	for element_data in elements_to_clear:
+		var element = element_data.element
+		if is_instance_valid(element) and element.has_node("Texture"):
+			tween.tween_property(element.get_node("Texture"), "modulate:a", 0.0, 0.3)
+	await tween.finished
+	
+	# Освобождение ресурсов и удаление элементов
+	for element_data in elements_to_clear:
+		var element = element_data.element
+		var slot = element_data.slot
+		var release_method = element_data.release_method
+		
+		if not is_instance_valid(element):
+			continue
+		
+		# Освобождаем ресурсы в Global в зависимости от типа элемента
+		match release_method:
+			"release_points":
+				if element is Command:
+					Global.release_points(element.type_command, element.value)
+			"release_special_command":
+				if element is Command and not element.special_id.is_empty():
+					if element.has_value:
+						Global.release_special_points(element.special_id, element.value)
+					Global.release_special_command(element.special_id)
+			"release_block":
+				if element is Block and not element.block_id.is_empty():
+					Global.release_block(element.block_id)
+		
+		# Очищаем слот и удаляем элемент
+		if is_instance_valid(slot):
+			slot.command = null
+		element.queue_free()
 
 ## Update all root blocks
 func update_root_blocks() -> void:
@@ -168,83 +257,7 @@ func update_block_recursive(block: Block) -> void:
 	
 	block.update_command_positions(block.z_index)
 
-## Clear commands with animation
-func clear_commands(commands_to_free: Array) -> void:
-	if commands_to_free.is_empty():
-		return
-	
-	# Fade-out animation
-	var tween = create_tween().set_parallel(true)
-	for command in commands_to_free:
-		if is_instance_valid(command) and command.has_node("Texture"):
-			tween.tween_property(command.get_node("Texture"), "modulate:a", 0.0, 0.3)
-	await tween.finished
-	
-	# Free commands
-	for command in commands_to_free:
-		if is_instance_valid(command):
-			if command.slot:
-				command.slot.command = null
-			command.queue_free()
-
 func clear_all() -> void:
-	# Обрабатываем блоки "начало хода"
-	if is_inside_tree():
-		var start_turn_blocks = get_tree().get_nodes_in_group("blocks").filter(
-			func(block): return is_instance_valid(block) and block.text == "начало хода")
-		for block in start_turn_blocks:
-			await clear_start_turn_commands_preserve_blocks(block)
-	
-	# Собираем команды для удаления из остальных блоков
-	var commands_to_free = []
-	var blocks_to_update = []
-	if is_inside_tree():
-		for block in get_tree().get_nodes_in_group("blocks"):
-			if !is_instance_valid(block) or block.text == "начало хода":
-				continue
-			for slot in block.slot_manager.slots:
-				if !is_instance_valid(slot) or !is_instance_valid(slot.command):
-					continue
-				if slot.command is Command:
-					commands_to_free.append(slot.command)
-					slot.command = null
-					if !blocks_to_update.has(block):
-						blocks_to_update.append(block)
-				elif slot.command is Block:
-					_collect_commands_from_block(slot.command, commands_to_free, blocks_to_update)
-	
-	# Удаляем команды с анимацией
-	await clear_commands(commands_to_free)
-	
-	# Обновляем слоты затронутых блоков
-	for block in blocks_to_update:
-		if is_instance_valid(block):
-			block.slot_manager.shift_commands_up()
-			block.slot_manager.adjust_slot_count()
-			block.slot_manager.update_all_slot_positions()
-	
-	# Обновляем иерархию блоков
-	update_root_blocks()
-
-func _collect_commands_from_block(block: Block, commands: Array, blocks_to_update: Array) -> void:
-	if !is_instance_valid(block) or block.text == "начало хода":
-		return
-	
-	var had_commands = false
-	
-	for slot in block.slot_manager.slots:
-		if !is_instance_valid(slot) or !is_instance_valid(slot.command):
-			continue
-			
-		if slot.command is Command:
-			# Собираем только команды, но не блоки
-			commands.append(slot.command)
-			slot.command = null
-			had_commands = true
-		elif slot.command is Block:
-			# Для блока рекурсивно вызываем эту функцию,
-			# но не изменяем связь с текущим слотом
-			_collect_commands_from_block(slot.command, commands, blocks_to_update)
-	
-	if had_commands and !blocks_to_update.has(block):
-		blocks_to_update.append(block)
+	await clear_all_elements()
+	Global.reset_all_blocks()
+	Global.reset_special_commands()

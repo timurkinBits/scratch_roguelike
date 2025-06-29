@@ -159,7 +159,7 @@ func transition_to_new_room(direction: String, door_type = null) -> void:
 		exit_door.get_node('button').visible = false
 	
 	Global.reset_remaining_points()
-	Global.reset_special_commands()
+	Global.restore_special_commands_for_new_room()
 	door_types_generated = false
 	
 	# Обновляем настройки шансов замены при смене комнаты

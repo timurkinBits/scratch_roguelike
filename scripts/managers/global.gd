@@ -1,49 +1,51 @@
 extends Node
 
+# Сигналы
 signal points_changed
 signal coins_changed
-signal inventory_changed  # Для покупки новых блоков
-signal block_availability_changed  # Для изменения доступности блоков
+signal inventory_changed
+signal block_availability_changed
 signal special_command_availability_changed
 
-enum RoomType {
-	NORMAL,
-	ELITE,
-	SHOP,
-	CHALLENGE
-}
+enum RoomType { NORMAL, ELITE, SHOP, CHALLENGE }
 
+# Очки команд
 var points: Dictionary = {
 	Command.TypeCommand.MOVE: 10,
 	Command.TypeCommand.ATTACK: 30,
 	Command.TypeCommand.HEAL: 3,
 	Command.TypeCommand.DEFENSE: 3
 }
-
-var coins: int = 999
 var remaining_points: Dictionary = {}
+
+# Монеты и ограничения
+var coins: int = 999
 var max_slots_for_blocks: int = 8
 var max_slots_for_commands: int = 1
 
-# Block system - теперь работает только с текстом блоков
+# Система блоков
 var purchased_blocks: Array[Dictionary] = []
 var next_block_id: int = 0
 
-# Special commands system - с системой очков
+# Система особых команд
 var purchased_special_commands: Array[Dictionary] = []
 var next_special_command_id: int = 0
-var special_command_points: Dictionary = {}  # Очки для особых команд по ID
-var remaining_special_points: Dictionary = {}  # Оставшиеся очки для особых команд
+var special_command_points: Dictionary = {}
+var remaining_special_points: Dictionary = {}
+# НОВОЕ: Текущие максимальные значения команд (могут уменьшаться)
+var current_max_special_points: Dictionary = {}
+# НОВОЕ: Изначальные максимальные значения (для восстановления в новой комнате)
+var original_max_special_points: Dictionary = {}
 
 func _ready() -> void:
 	reset_remaining_points()
 	reset_all_blocks()
 
-# Points management
+# === УПРАВЛЕНИЕ ОЧКАМИ ===
+
 func reset_remaining_points() -> void:
 	remaining_points = points.duplicate()
-	# Также сбрасываем очки особых команд
-	reset_special_command_points()
+	_reset_special_points()
 	points_changed.emit()
 
 func get_remaining_points(command_type) -> int:
@@ -54,7 +56,6 @@ func get_remaining_points(command_type) -> int:
 func use_points(command_type, value) -> void:
 	if command_type in [Command.TypeCommand.USE, Command.TypeCommand.TURN]:
 		return
-	
 	if command_type in remaining_points:
 		remaining_points[command_type] = max(0, remaining_points[command_type] - value)
 		points_changed.emit()
@@ -62,39 +63,61 @@ func use_points(command_type, value) -> void:
 func release_points(command_type, value) -> void:
 	if command_type in [Command.TypeCommand.USE, Command.TypeCommand.TURN]:
 		return
-	
 	if command_type in remaining_points:
 		remaining_points[command_type] = min(points[command_type], remaining_points[command_type] + value)
 		points_changed.emit()
 
-# === SPECIAL COMMAND POINTS MANAGEMENT ===
+# === ОЧКИ ОСОБЫХ КОМАНД ===
 
-func reset_special_command_points() -> void:
+func _reset_special_points() -> void:
 	remaining_special_points.clear()
-	for command_data in purchased_special_commands:
-		var command_id = command_data.id
-		if special_command_points.has(command_id):
-			remaining_special_points[command_id] = special_command_points[command_id]
+	for cmd in purchased_special_commands:
+		if current_max_special_points.has(cmd.id):
+			remaining_special_points[cmd.id] = current_max_special_points[cmd.id]
 
 func get_remaining_special_points(command_id: String) -> int:
 	return remaining_special_points.get(command_id, 0)
 
-# ИСПРАВЛЕНО: Метод use_special_points теперь вызывает сигнал доступности
+# НОВОЕ: Получить текущий максимум очков команды
+func get_current_max_special_points(command_id: String) -> int:
+	return current_max_special_points.get(command_id, 0)
+
 func use_special_points(command_id: String, value: int) -> void:
 	if command_id in remaining_special_points:
 		remaining_special_points[command_id] = max(0, remaining_special_points[command_id] - value)
 		points_changed.emit()
-		special_command_availability_changed.emit()  # ДОБАВЛЕНО
+		special_command_availability_changed.emit()
 
-# ИСПРАВЛЕНО: Метод release_special_points теперь вызывает сигнал доступности
 func release_special_points(command_id: String, value: int) -> void:
-	if command_id in remaining_special_points and command_id in special_command_points:
-		var max_points = special_command_points[command_id]
+	if command_id in remaining_special_points and command_id in current_max_special_points:
+		var max_points = current_max_special_points[command_id]
 		remaining_special_points[command_id] = min(max_points, remaining_special_points[command_id] + value)
 		points_changed.emit()
-		special_command_availability_changed.emit()  # ДОБАВЛЕНО
+		special_command_availability_changed.emit()
 
-# Coins management
+# НОВОЕ: Уменьшить максимальное значение команды (при использовании)
+func deplete_special_command_max(command_id: String, used_value: int) -> void:
+	if command_id in current_max_special_points:
+		current_max_special_points[command_id] = max(0, current_max_special_points[command_id] - used_value)
+		# Если текущие очки больше нового максимума, уменьшаем их
+		if command_id in remaining_special_points:
+			remaining_special_points[command_id] = min(remaining_special_points[command_id], current_max_special_points[command_id])
+		special_command_availability_changed.emit()
+
+# НОВОЕ: Восстановить максимальные значения всех команд (при входе в новую комнату)
+func restore_special_commands_for_new_room() -> void:
+	for cmd in purchased_special_commands:
+		var command_id = cmd.id
+		if original_max_special_points.has(command_id):
+			current_max_special_points[command_id] = original_max_special_points[command_id]
+			remaining_special_points[command_id] = original_max_special_points[command_id]
+	
+	# Сбрасываем статус использования и потребления
+	reset_special_commands()
+	special_command_availability_changed.emit()
+
+# === УПРАВЛЕНИЕ МОНЕТАМИ ===
+
 func add_coins(amount: int) -> void:
 	coins += amount
 	coins_changed.emit()
@@ -109,23 +132,22 @@ func spend_coins(amount: int) -> bool:
 		return true
 	return false
 
-# Block management - упрощенная система без типов
-func generate_block_id() -> String:
+# === СИСТЕМА БЛОКОВ ===
+
+func _generate_block_id() -> String:
 	var id = "block_" + str(next_block_id)
 	next_block_id += 1
 	return id
 
 func purchase_block(block_text: String, count: int = 1) -> void:
 	for i in range(count):
-		var new_block = {
-			"id": generate_block_id(),
+		purchased_blocks.append({
+			"id": _generate_block_id(),
 			"text": block_text,
 			"used": false
-		}
-		purchased_blocks.append(new_block)
-	
+		})
 	points_changed.emit()
-	inventory_changed.emit()  # Только при покупке
+	inventory_changed.emit()
 
 func can_use_block_by_id(block_id: String) -> bool:
 	for block in purchased_blocks:
@@ -138,7 +160,7 @@ func use_block(block_id: String) -> bool:
 		if block.id == block_id and not block.used:
 			block.used = true
 			points_changed.emit()
-			block_availability_changed.emit()  # Отдельный сигнал для доступности
+			block_availability_changed.emit()
 			return true
 	return false
 
@@ -147,35 +169,34 @@ func release_block(block_id: String) -> void:
 		if block.id == block_id and block.used:
 			block.used = false
 			points_changed.emit()
-			block_availability_changed.emit()  # Отдельный сигнал для доступности
+			block_availability_changed.emit()
 			return
 
 func reset_all_blocks() -> void:
 	for block in purchased_blocks:
 		block.used = false
 	points_changed.emit()
-	block_availability_changed.emit()  # Отдельный сигнал для доступности
+	block_availability_changed.emit()
 
 func get_all_purchased_blocks() -> Array:
 	return purchased_blocks.duplicate()
 
-# Проверка доступности блока по тексту
+# Поиск блока по тексту
 func can_use_block(block_text: String) -> bool:
 	for block in purchased_blocks:
 		if block.text == block_text and not block.used:
 			return true
 	return false
 
-# Поиск доступного блока по тексту
 func find_available_block(block_text: String) -> Dictionary:
 	for block in purchased_blocks:
 		if block.text == block_text and not block.used:
 			return block
 	return {}
 
-# === SPECIAL COMMANDS MANAGEMENT - С СИСТЕМОЙ ОЧКОВ ===
+# === СИСТЕМА ОСОБЫХ КОМАНД ===
 
-func generate_special_command_id() -> String:
+func _generate_special_command_id() -> String:
 	var id = "special_cmd_" + str(next_special_command_id)
 	next_special_command_id += 1
 	return id
@@ -186,110 +207,94 @@ func purchase_special_command(special_type: int, count: int = 1) -> void:
 		return
 	
 	for i in range(count):
-		var command_id = generate_special_command_id()
-		var new_command = {
+		var command_id = _generate_special_command_id()
+		purchased_special_commands.append({
 			"id": command_id,
 			"type": special_type,
 			"name": special_data.name,
 			"used": false,
-			"consumed": false  # Для команд без значений - отслеживает потребление
-		}
-		purchased_special_commands.append(new_command)
+			"consumed": false
+		})
 		
-		# Устанавливаем очки для особой команды
-		if special_data.has_value:
-			# Для команд со значениями - очки равны максимальному значению
-			var max_value = special_data.get("max_value", 1)
-			special_command_points[command_id] = max_value
-			remaining_special_points[command_id] = max_value
-		else:
-			# Для команд без значений - 1 очко (одноразовые)
-			special_command_points[command_id] = 1
-			remaining_special_points[command_id] = 1
+		# Установка очков команды
+		var max_value = special_data.get("max_value", 1) if special_data.has_value else 1
+		special_command_points[command_id] = max_value
+		remaining_special_points[command_id] = max_value
+		# НОВОЕ: Сохраняем изначальный и текущий максимум
+		original_max_special_points[command_id] = max_value
+		current_max_special_points[command_id] = max_value
 	
 	special_command_availability_changed.emit()
 
-# ИСПРАВЛЕНО: Улучшенная проверка доступности особых команд
 func can_use_special_command(command_id: String) -> bool:
-	for command in purchased_special_commands:
-		if command.id == command_id:
-			var basic_available = not command.used and not command.get("consumed", false)
-			
-			# Для команд со значениями дополнительно проверяем очки
-			if basic_available and command.has("type"):
-				var special_data = ItemData.get_special_command_data(command.type)
-				if not special_data.is_empty() and special_data.has_value:
-					# Команда доступна только если есть хотя бы 1 очко
-					return has_available_special_points(command_id)
-			
-			return basic_available
+	for cmd in purchased_special_commands:
+		if cmd.id == command_id:
+			var available = not cmd.used and not cmd.consumed
+			# ИЗМЕНЕНО: Проверка текущего максимума вместо изначального
+			if available and cmd.has("type"):
+				var data = ItemData.get_special_command_data(cmd.type)
+				if not data.is_empty():
+					if data.has_value:
+						# Команда доступна только если у неё есть текущий максимум > 0
+						return current_max_special_points.get(command_id, 0) > 0
+					else:
+						# Одноразовая команда доступна если не использована
+						return true
+			return available
 	return false
 
 func use_special_command(command_id: String) -> bool:
-	for command in purchased_special_commands:
-		if command.id == command_id and not command.used and not command.get("consumed", false):
-			command.used = true
+	for cmd in purchased_special_commands:
+		if cmd.id == command_id and not cmd.used and not cmd.consumed:
+			cmd.used = true
 			special_command_availability_changed.emit()
 			return true
 	return false
 
-# Потребление особой команды без значений (удаляет навсегда до сброса комнаты)
 func consume_special_command(command_id: String) -> void:
-	for command_data in purchased_special_commands:
-		if command_data.id == command_id:
-			command_data.consumed = true
-			command_data.used = false  # Освобождаем used, но остается consumed
+	for cmd in purchased_special_commands:
+		if cmd.id == command_id:
+			cmd.consumed = true
+			cmd.used = false
 			special_command_availability_changed.emit()
 			return
 
 func release_special_command(command_id: String) -> void:
-	for command_data in purchased_special_commands:
-		if command_data.id == command_id:
-			# Освобождаем used, но не consumed (consumed команды остаются недоступными)
-			command_data.used = false
+	for cmd in purchased_special_commands:
+		if cmd.id == command_id:
+			cmd.used = false
 			special_command_availability_changed.emit()
 			return
 
-# ИСПРАВЛЕНО: В методе reset_special_commands() также сбрасываем очки:
 func reset_special_commands() -> void:
-	for command in purchased_special_commands:
-		command.used = false
-		command.consumed = false  # Сбрасываем и потребление
-	# Сбрасываем очки особых команд
-	reset_special_command_points()
+	for cmd in purchased_special_commands:
+		cmd.used = false
+		cmd.consumed = false
+	_reset_special_points()
 	special_command_availability_changed.emit()
 
-# ИСПРАВЛЕНО: Новый метод для проверки, есть ли доступные очки
 func has_available_special_points(command_id: String) -> bool:
 	return get_remaining_special_points(command_id) > 0
 
-# Проверка, потреблена ли команда
 func is_special_command_consumed(command_id: String) -> bool:
-	for command in purchased_special_commands:
-		if command.id == command_id:
-			return command.get("consumed", false)
+	for cmd in purchased_special_commands:
+		if cmd.id == command_id:
+			return cmd.get("consumed", false)
 	return false
 
 func get_all_purchased_special_commands() -> Array:
 	return purchased_special_commands.duplicate()
 
 func get_special_command_data(command_id: String) -> Dictionary:
-	for command in purchased_special_commands:
-		if command.id == command_id:
-			# Дополняем данные из ItemData
-			var result = command.duplicate()
-			if command.has("type") and command.type is int and command.type in ItemData.SpecialCommandType.values():
-				var item_data = ItemData.get_special_command_data(command.type)
+	for cmd in purchased_special_commands:
+		if cmd.id == command_id:
+			var result = cmd.duplicate()
+			if cmd.has("type") and cmd.type is int:
+				var item_data = ItemData.get_special_command_data(cmd.type)
 				if not item_data.is_empty():
-					result["icon"] = item_data.icon
-					result["color"] = item_data.color
-					result["description"] = item_data.description
-					result["cost"] = item_data.cost
-					result["has_value"] = item_data.has_value
+					result.merge(item_data)
 			return result
 	return {}
 
-# Проверка, можно ли использовать особую команду с определенным значением
 func can_use_special_command_with_value(command_id: String, value: int) -> bool:
-	var remaining = get_remaining_special_points(command_id)
-	return remaining >= value
+	return get_remaining_special_points(command_id) >= value

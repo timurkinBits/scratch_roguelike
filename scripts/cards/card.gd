@@ -60,14 +60,24 @@ func start_drag() -> void:
 	z_index = Z_INDEX_DRAGGING
 	drag_offset = global_position - get_global_mouse_position()
 	
-	# Сохраняем ссылку на исходный слот для правильного обновления
+	# ИСПРАВЛЕНИЕ: Корректная очистка связей при извлечении из слота
 	if slot and is_instance_valid(slot):
 		original_slot = slot
 		var parent_block = slot.block
+		
+		# Очищаем связи
 		slot.command = null
 		slot = null
+		
+		# Для блоков также очищаем parent_slot
+		if self is Block:
+			self.parent_slot = null
+			# Уведомляем блок о том, что он был извлечен
+			call_deferred("on_extracted_from_slot")
+		
+		# Немедленно обновляем родительский блок
 		if is_instance_valid(parent_block):
-			parent_block.slot_manager.update_slots()
+			parent_block.force_update_slots()
 	
 	reset_hover_state()
 	drag_started.emit()
@@ -121,9 +131,15 @@ func handle_card_placement() -> void:
 	else:
 		enforce_table_boundaries(global_position, table_rect)
 	
-	# Если карта не была размещена в слот, отменяем подготовку к вставке
-	if not card_placed and affected_block and is_instance_valid(affected_block):
-		affected_block.slot_manager.cancel_insertion()
+	# ИСПРАВЛЕНИЕ: Более надежная отмена подготовки к вставке
+	if not card_placed:
+		if affected_block and is_instance_valid(affected_block):
+			affected_block.slot_manager.cancel_insertion()
+		
+		# Если карта не была размещена и у нас был исходный слот,
+		# проверяем, нужно ли обновить исходный родительский блок
+		if original_slot and is_instance_valid(original_slot) and is_instance_valid(original_slot.block):
+			original_slot.block.force_update_slots()
 	
 	# Очищаем ссылку на исходный слот после завершения размещения
 	original_slot = null
@@ -140,13 +156,16 @@ func can_place_in_slot(target_slot: CommandSlot, table_rect: Rect2) -> bool:
 	return would_fit_in_boundaries(target_slot, table_rect)
 
 func reset_hover_state() -> void:
-	# Сбрасываем состояние hover только если карта не была размещена
+	# Отменяем подготовку к вставке если она была начата
 	if affected_block and is_instance_valid(affected_block):
 		# Проверяем, была ли карта успешно размещена
 		var card_was_placed = (slot != null and is_instance_valid(slot))
 		if not card_was_placed:
 			affected_block.slot_manager.cancel_insertion()
+			# Дополнительно обновляем блок после отмены
+			affected_block.call_deferred("force_update_slots")
 	
+	# Очищаем все состояния
 	affected_block = null
 	hover_timer = 0.0
 	has_shifted_commands = false
@@ -167,13 +186,17 @@ func place_card_in_slot(target_slot: CommandSlot) -> void:
 	target_slot.command = self
 	slot = target_slot
 	
+	# Для блоков устанавливаем parent_slot
+	if self is Block:
+		self.parent_slot = target_slot
+	
 	# Устанавливаем позицию относительно блока
 	position = Vector2.ZERO
 	
 	# Обновляем слоты блока
 	if is_instance_valid(target_slot.block):
 		target_slot.block.slot_manager.finalize_insertion()
-		target_slot.block.slot_manager.update_slots()
+		target_slot.block.force_update_slots()
 		check_parent_block_boundaries(target_slot.block, table.get_table_rect())
 
 func check_parent_block_boundaries(block: Block, table_rect: Rect2) -> void:

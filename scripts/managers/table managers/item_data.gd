@@ -12,6 +12,7 @@ enum BlockType {
 
 # Константы для типов специальных команд (отдельные от обычных команд)
 enum SpecialCommandType {
+	
 }
 
 const BLOCKS = {

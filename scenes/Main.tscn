@@ -153,7 +153,7 @@ script = ExtResource("6_ebg2g")
 position = Vector2(-185, 4)
 
 [node name="block_menu" parent="Table" instance=ExtResource("8_xa025")]
-position = Vector2(-181, 215)
+position = Vector2(-184, 217)
 
 [node name="special_command_menu" parent="Table" instance=ExtResource("9_xa025")]
 position = Vector2(-183, 182)

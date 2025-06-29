@@ -70,21 +70,98 @@ func update_slots() -> void:
 		print("Warning: parent_block is not valid in SlotManager.update_slots()")
 		return
 	
+	# Проверяем и очищаем невалидные команды перед обновлением
+	clean_invalid_commands()
+	
 	shift_commands_up()
 	adjust_slot_count()
 	update_all_slot_positions()
 	
-	# Проверяем и восстанавливаем связи только если это необходимо
+	# Проверяем и восстанавливаем связи
 	if is_inside_tree():
-		var table = get_tree().get_first_node_in_group('table')
-		# ИСПРАВЛЕНИЕ: Восстанавливаем связи всегда, не только во время хода
-		if table:
-			call_deferred("restore_command_links")
+		call_deferred("validate_and_restore_links")
 	
 	call_deferred("emit_slots_updated_signal")
+	
+func validate_and_restore_links() -> void:
+	"""Проверяет и восстанавливает все связи между командами и слотами"""
+	for i in range(slots.size()):
+		var slot = slots[i]
+		if not is_instance_valid(slot):
+			continue
+			
+		if is_instance_valid(slot.command):
+			# Проверяем корректность обратной связи
+			if slot.command is Command:
+				if slot.command.slot != slot:
+					slot.command.slot = slot
+			elif slot.command is Block:
+				if slot.command.parent_slot != slot:
+					slot.command.parent_slot = slot
+				
+				# Обновляем позиции для блоков
+				slot.command.update_command_positions(slot.command.z_index)
+	
+func clean_invalid_commands() -> void:
+	"""Очищает невалидные команды из слотов"""
+	for slot in slots:
+		if is_instance_valid(slot) and slot.command and not is_instance_valid(slot.command):
+			slot.command = null
 
 func emit_slots_updated_signal() -> void:
 	emit_signal("slots_updated")
+	
+func force_rebuild_slots() -> void:
+	"""Принудительно перестраивает все слоты с нуля"""
+	if not is_instance_valid(parent_block):
+		return
+	
+	# Собираем все валидные команды
+	var valid_commands = []
+	for slot in slots:
+		if is_instance_valid(slot) and is_instance_valid(slot.command):
+			valid_commands.append(slot.command)
+	
+	# Очищаем все слоты
+	for slot in slots:
+		if is_instance_valid(slot):
+			slot.command = null
+	
+	# Пересоздаем структуру слотов
+	var target_slot_count = _get_target_slot_count(valid_commands.size())
+	
+	# Удаляем лишние слоты
+	while slots.size() > target_slot_count:
+		var slot = slots.pop_back()
+		if is_instance_valid(slot):
+			slot.queue_free()
+	
+	# Создаем недостающие слоты
+	while slots.size() < target_slot_count:
+		create_slot()
+	
+	# Заполняем слоты командами
+	for i in range(valid_commands.size()):
+		if i < slots.size():
+			slots[i].command = valid_commands[i]
+			# Восстанавливаем обратные связи
+			_restore_command_slot_link(valid_commands[i], slots[i])
+	
+	# Обновляем позиции
+	update_all_slot_positions()
+	emit_signal("slots_updated")
+	
+func _get_target_slot_count(command_count: int) -> int:
+	"""Определяет целевое количество слотов"""
+	var max_slots = _get_max_slots_for_block(parent_block.text)
+	return min(command_count + 1, max_slots)
+	
+func _restore_command_slot_link(command, slot: CommandSlot) -> void:
+	"""Восстанавливает связь между командой и слотом"""
+	if command is Command:
+		command.slot = slot
+	elif command is Block:
+		command.parent_slot = slot
 
 # ИСПРАВЛЕНИЕ 4: Улучшенная функция восстановления связей
 func restore_command_links() -> void:
@@ -103,26 +180,47 @@ func restore_command_links() -> void:
 				block.update_command_positions(block.z_index)
 
 func shift_commands_up() -> void:
-	# Collect valid commands
+	# Collect valid commands with their original positions
 	var valid_items = []
-	for slot in slots:
+	for i in range(slots.size()):
+		var slot = slots[i]
 		if is_instance_valid(slot) and is_instance_valid(slot.command):
-			valid_items.append(slot.command)
+			valid_items.append({
+				"command": slot.command,
+				"original_index": i
+			})
 	
-	# Clear all slots first
+	# Clear all slot commands first
 	for slot in slots:
 		if is_instance_valid(slot):
 			slot.command = null
 	
-	# Fill slots with commands from top
-	for i in min(valid_items.size(), slots.size()):
+	# Fill slots with commands from top, maintaining order
+	for i in range(min(valid_items.size(), slots.size())):
 		if is_instance_valid(slots[i]):
-			slots[i].command = valid_items[i]
-			# Устанавливаем обратные связи
-			if valid_items[i] is Command:
-				valid_items[i].slot = slots[i]
-			elif valid_items[i] is Block:
-				valid_items[i].parent_slot = slots[i]
+			var command = valid_items[i]["command"]
+			slots[i].command = command
+			
+			# Restore bidirectional links
+			_restore_command_slot_link(command, slots[i])
+			
+func validate_slot_integrity() -> bool:
+	"""Проверяет целостность всех связей в слотах"""
+	for slot in slots:
+		if not is_instance_valid(slot):
+			return false
+			
+		if slot.command:
+			if not is_instance_valid(slot.command):
+				return false
+				
+			# Проверяем обратные связи
+			if slot.command is Command and slot.command.slot != slot:
+				return false
+			elif slot.command is Block and slot.command.parent_slot != slot:
+				return false
+	
+	return true
 
 func adjust_slot_count() -> void:
 	# Create at least one slot if none exist

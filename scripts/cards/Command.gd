@@ -4,7 +4,7 @@ class_name Command
 enum TypeCommand { NONE, TURN, ATTACK, MOVE, USE, HEAL, DEFENSE }
 
 @export var type: TypeCommand = TypeCommand.NONE
-var value: int = 0
+var value: int = 1
 var is_settings: bool = false
 var block: Block
 var additional_properties: String = ""
@@ -19,7 +19,7 @@ signal menu_card_clicked(type: int)
 @onready var down_button: Button = $Texture/Down
 @onready var ui_node: UI = $'../../../UI'
 
-# Command configurations
+# Конфигурации команд
 var configs = {
 	TypeCommand.ATTACK: {
 		"prefix": "Атака ",
@@ -27,7 +27,7 @@ var configs = {
 		"icon": "res://sprites/attack.png"
 	},
 	TypeCommand.MOVE: {
-		"prefix": "Перейти ",
+		"prefix": "Движение ",
 		"color": Color.BLUE,
 		"icon": "res://sprites/move.png"
 	},
@@ -51,11 +51,6 @@ var configs = {
 		"prefix": "Защита ",
 		"color": Color.SILVER,
 		"icon": "res://sprites/defense.png"
-	},
-	TypeCommand.NONE: {
-		"prefix": "none ",
-		"color": Color.WHITE,
-		"icon": ""
 	}
 }
 
@@ -75,30 +70,30 @@ func _initialize_turn_value() -> void:
 	if type == TypeCommand.TURN and value == 0:
 		value = configs[type]["values"][0]
 
+# Обновление внешнего вида
 func update_appearance() -> void:
-	var config = _get_config()
+	var config = configs.get(type, {})
 	
-	sprite.color = config["color"]
-	text_label.text = config["prefix"]
-	icon.texture = load(config["icon"]) if config["icon"] else null
+	sprite.color = config.get("color", Color.WHITE)
+	text_label.text = config.get("prefix", "")
+	
+	if config.has("icon") and config["icon"]:
+		icon.texture = load(config["icon"])
 	
 	_update_number_display()
 	
 	if is_settings:
 		_update_all_buttons()
 
-func _get_config() -> Dictionary:
-	return configs.get(type, configs[TypeCommand.NONE])
-
 func _update_number_display() -> void:
 	if is_menu_card:
 		num_label.visible = false
 		return
 	
-	var should_show_number = type in [TypeCommand.TURN, TypeCommand.ATTACK, 
-									  TypeCommand.MOVE, TypeCommand.HEAL, TypeCommand.DEFENSE]
+	var should_show = type in [TypeCommand.TURN, TypeCommand.ATTACK, 
+							   TypeCommand.MOVE, TypeCommand.HEAL, TypeCommand.DEFENSE]
 	
-	if should_show_number:
+	if should_show:
 		num_label.text = str(value)
 		num_label.visible = true
 	else:
@@ -107,6 +102,7 @@ func _update_number_display() -> void:
 func get_size() -> Vector2:
 	return $Texture.size
 
+# Установка значения
 func set_number(new_value: int) -> void:
 	if type == TypeCommand.TURN:
 		_handle_turn_value_change(new_value)
@@ -128,22 +124,22 @@ func _handle_turn_value_change(new_value: int) -> void:
 	num_label.text = str(value)
 
 func _handle_standard_value_change(new_value: int) -> void:
-	# Release current points
+	# Освобождаем текущие очки
 	if not is_menu_card and value > 0:
 		Global.release_points(type, value)
 	
-	# Calculate available points
+	# Вычисляем доступные очки
 	var max_available = Global.get_remaining_points(type)
 	if not is_menu_card:
 		max_available += value
 	
-	# Set new value within limits
+	# Устанавливаем новое значение
 	value = clamp(new_value, 1, min(max_available, _get_max_points()))
 	
-	# Use new points
+	# Тратим новые очки
 	if not is_menu_card:
 		Global.use_points(type, value)
-		if ui_node and is_instance_valid(ui_node):
+		if ui_node:
 			ui_node.change_scores(type)
 	
 	num_label.text = str(value)
@@ -152,13 +148,9 @@ func _handle_standard_value_change(new_value: int) -> void:
 		_update_all_buttons()
 
 func _get_max_points() -> int:
-	match type:
-		TypeCommand.ATTACK: return Global.points[TypeCommand.ATTACK]
-		TypeCommand.MOVE: return Global.points[TypeCommand.MOVE]
-		TypeCommand.HEAL: return Global.points[TypeCommand.HEAL]
-		TypeCommand.DEFENSE: return Global.points[TypeCommand.DEFENSE]
-		_: return 0
+	return Global.points.get(type, 0)
 
+# Обновление состояния кнопок
 func _update_all_buttons() -> void:
 	for command in get_tree().get_nodes_in_group("commands"):
 		command.update_buttons_state()
@@ -171,6 +163,7 @@ func update_buttons_state() -> void:
 	up_button.disabled = (value >= remaining + value) or (value >= _get_max_points())
 	down_button.disabled = (value <= 1)
 
+# Обработка событий мыши
 func _on_area_2d_input_event(viewport: Node, event: InputEvent, shape_idx: int) -> void:
 	super._on_area_input_event(viewport, event, shape_idx)
 	
@@ -195,6 +188,7 @@ func _handle_right_click() -> void:
 		Global.release_points(type, value)
 		queue_free()
 
+# Обработка кнопок
 func _on_up_pressed() -> void:
 	if type == TypeCommand.TURN:
 		set_number(value + 1)
@@ -225,8 +219,8 @@ func change_settings(settings: bool) -> void:
 	up_button.visible = settings
 	down_button.visible = settings
 
+# Очистка при удалении
 func _exit_tree() -> void:
-	# Clean up slot reference
 	if slot and is_instance_valid(slot):
 		var parent_block = slot.block
 		slot.command = null

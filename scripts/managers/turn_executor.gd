@@ -20,7 +20,7 @@ func _ready() -> void:
 	if button:
 		button.pressed.connect(_on_button_pressed)
 	if player:
-		player.tree_exited.connect(_on_player_dead)
+		player.tree_exited.connect(end_game_player_dead)
 
 ## Обработка нажатия на кнопку "Выполнить"
 func _on_button_pressed() -> void:
@@ -41,16 +41,13 @@ func _execute_turn_phases() -> void:
 	# Фаза 1: Выполнение блоков "начало хода"
 	if !await _execute_start_turn(): return
 	
-	# Фаза 2: Очистка основных команд
-	if !await _clear_main_commands(): return
-	
-	# Фаза 3: Ход врагов
+	# Фаза 2: Ход врагов
 	if !await _process_enemy_turns(): return
 	
-	# Фаза 4: Очистка всех команд
-	if !await _clear_all(): return
+	# Фаза 3: Полная очистка всех элементов и возврат в меню
+	if !await _clear_all_elements_and_reset(): return
 	
-	# Фаза 5: Подготовка к следующему ходу
+	# Фаза 4: Подготовка к следующему ходу
 	await _prepare_next_turn()
 
 ## Отключение всех интерактивных элементов
@@ -77,39 +74,43 @@ func _process_enemy_turns() -> bool:
 				return false
 	return true
 
-## Очистка основных команд
-func _clear_main_commands() -> bool:
-	await block_executor.clear_main_commands()
+## ИЗМЕНЕНО: Полная очистка всех элементов и сброс в Global + обработка истощения команд
+func _clear_all_elements_and_reset() -> bool:
+	# НОВОЕ: Обрабатываем истощение специальных команд перед очисткой
+	await _process_special_command_depletion()
+	
+	# Очищаем все элементы (команды и блоки) со всех слотов
+	await block_executor.clear_all_elements()
+	
+	# Сброс состояния в Global - делает все элементы снова доступными
+	Global.reset_all_blocks()
+	Global.reset_special_commands()
+	
 	return is_instance_valid(player)
 
-## Очистка всех команд
-func _clear_all() -> bool:
-	await block_executor.clear_all()
-	# Возвращаем особые команды после очистки всех команд
-	await _reset_special_commands()
-	return is_instance_valid(player)
-
-## Сброс особых команд и возврат их в слоты (НЕ сбрасывает очки!)
-func _reset_special_commands() -> void:
-	# Освобождаем все особые команды на столе
-	if is_inside_tree():
-		for command in get_tree().get_nodes_in_group("special_commands"):
-			if is_instance_valid(command) and not command.is_menu_card:
-				# Для одноразовых команд - потребляем при завершении хода
-				if command.special_id != "" and not command.has_value:
-					Global.consume_special_command(command.special_id)
-				# Для команд с очками - просто освобождаем
-				elif command.special_id != "" and command.has_value:
-					Global.release_special_command(command.special_id)
+## НОВОЕ: Обработка истощения специальных команд после хода
+func _process_special_command_depletion() -> void:
+	# Получаем все специальные команды на столе
+	var special_commands = get_tree().get_nodes_in_group("special_commands")
+	
+	for command in special_commands:
+		if is_instance_valid(command) and not command.is_menu_card:
+			var special_command = command as SpecialCommand
+			if special_command and special_command.special_id != "":
+				var command_data = Global.get_special_command_data(special_command.special_id)
 				
-				# Удаляем команду со стола
-				command.queue_free()
-	
-	# Ждем один кадр чтобы команды удалились
-	await get_tree().process_frame
-	
-	# НЕ сбрасываем очки особых команд здесь!
-	# Очки сбрасываются только при переходе в новую комнату
+				if not command_data.is_empty():
+					var special_data = ItemData.get_special_command_data(command_data.type)
+					
+					if not special_data.is_empty():
+						if special_data.has_value and special_command.has_value:
+							# Команда со значениями - уменьшаем максимум на использованное значение
+							if special_command.value > 0:
+								Global.deplete_special_command_max(special_command.special_id, special_command.value)
+						else:
+							# Одноразовая команда - помечаем как потребленную
+							if special_command.value > 0:  # Если команда была использована
+								Global.consume_special_command(special_command.special_id)
 
 ## Подготовка к следующему ходу
 func _prepare_next_turn() -> void:
@@ -130,18 +131,12 @@ func _prepare_next_turn() -> void:
 		# Генерируем типы комнат только если комната очищена от врагов
 		room.random_types_rooms()
 
-## Обработка смерти игрока
-func _on_player_dead() -> void:
-	await end_game_player_dead()
-
 ## Завершение игры при смерти игрока
 func end_game_player_dead() -> void:
 	block_executor.clear_outlines()
 	
-	await block_executor.clear_all()
-	
-	# При смерти игрока полностью сбрасываем особые команды
-	await _reset_special_commands_on_death()
+	# Используем новый единый метод очистки
+	await block_executor.clear_all_elements()
 	
 	# Отключаем кнопку и показываем экран поражения
 	_turn_interactions(false)
@@ -153,21 +148,3 @@ func end_game_player_dead() -> void:
 		await get_tree().create_timer(2).timeout
 		get_tree().change_scene_to_file("res://scenes/main_menu.tscn")
 		Global.coins = 0
-
-## Полный сброс особых команд при смерти игрока
-func _reset_special_commands_on_death() -> void:
-	# Освобождаем все особые команды на столе
-	if is_inside_tree():
-		for command in get_tree().get_nodes_in_group("special_commands"):
-			if is_instance_valid(command) and not command.is_menu_card:
-				# Освобождаем команду в Global
-				if command.special_id != "":
-					Global.release_special_command(command.special_id)
-				# Удаляем команду со стола
-				command.queue_free()
-	
-	# Ждем один кадр чтобы команды удалились
-		await get_tree().process_frame
-	
-	# Полностью сбрасываем все особые команды (включая очки)
-	Global.reset_special_commands()
